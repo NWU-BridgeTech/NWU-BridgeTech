@@ -15,7 +15,7 @@ const Login = () => {
             </div>
             
         <div className="brand">
-          <b>BridgeTech</b>
+          <b>Bridge</b><b>Tech</b>
         </div>
         <h2>Login</h2>
         <form>
