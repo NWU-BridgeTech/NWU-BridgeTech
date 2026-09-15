@@ -1,6 +1,9 @@
-@BridgeTech.Api_HostAddress = http://localhost:5174
+@host = http://localhost:5174
 
-GET {{BridgeTech.Api_HostAddress}}/weatherforecast/
+### Check PostgreSQL connection
+GET {{host}}/api/database/status
 Accept: application/json
 
-###
+### Get modules from PostgreSQL
+GET {{host}}/api/modules
+Accept: application/json
