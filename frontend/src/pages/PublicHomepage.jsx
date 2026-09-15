@@ -92,7 +92,7 @@ export default function PublicHomepage() {
         <div className="container hero-grid">
           <div>
             <div className="eyebrow">Built for computer science students</div>
-            <h1>Get closer to the work you&rsquo;ll actually do.</h1>
+            <h1>Get closer to the work you'll actually do.</h1>
             <p>
               BridgeTech helps students move from understanding concepts to
               using the tools and workflows that show up in real software
