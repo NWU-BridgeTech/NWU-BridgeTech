@@ -1,0 +1,32 @@
+name: Backend Build
+
+on:
+  pull_request:
+    branches: [main, backend, frontend]
+    paths:
+      - 'BridgeTech.Api/**'
+  push:
+    branches: [main, backend]
+    paths:
+      - 'BridgeTech.Api/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        working-directory: BridgeTech.Api
+        run: dotnet restore
+
+      - name: Build
+        working-directory: BridgeTech.Api
+        run: dotnet build --no-restore --configuration Release
