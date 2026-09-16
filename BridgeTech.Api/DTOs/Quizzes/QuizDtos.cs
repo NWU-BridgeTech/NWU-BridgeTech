@@ -55,7 +55,7 @@ public class QuizQuestionResponse
 
 public class QuizQuestionAdmin
 {
-    public Guid? QuestionId { get; set; }
+    public Guid QuestionId { get; set; }
     public Guid QuizId { get; set; }
     public string QuestionText { get; set; } = string.Empty;
     public QuestionType QuestionType { get; set; }
@@ -66,13 +66,14 @@ public class QuizQuestionAdmin
 public class CreateQuizQuestionRequest
 {
     [Required]
-    public Guid QuizId { get; set; }
+    public Guid? QuizId { get; set; }
 
     [Required]
     [StringLength(500, MinimumLength = 3)]
     public string QuestionText { get; set; } = string.Empty;
 
     [Required]
+    [EnumDataType(typeof(QuestionType))]
     public QuestionType QuestionType { get; set; }
 
     [Range(0, short.MaxValue)]
@@ -90,7 +91,7 @@ public class UpdateQuizQuestionRequest
     public short? OrderIndex { get; set; }
 }
 
-public class QuizOptionResponse
+public class QuizOptionResponse //for student view
 {
     public Guid QuestionId { get; set; }
     public string OptionText { get; set; } = string.Empty;
@@ -169,7 +170,7 @@ public class QuizAnswerSubmissionRequest
     public Guid? QuestionId { get; set; }
 
     [Required]
-    public Guid OptionId { get; set; }
+    public Guid? OptionId { get; set; }
 }
 
 public class QuizAnswerResponse
