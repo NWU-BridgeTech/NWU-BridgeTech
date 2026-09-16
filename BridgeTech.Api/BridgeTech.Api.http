@@ -7,3 +7,16 @@ Accept: application/json
 ### Get modules from PostgreSQL
 GET {{host}}/api/modules
 Accept: application/json
+
+### Get users from PostgresSQL
+Get {{host}}/api/users
+Accept: application/json
+
+
+### Get users from PostgresSQL
+GET {{host}}/api/certificates/21f26bda-2f2d-43f5-bf80-3b1bc5dd12fd
+Accept: application/json
+
+### Get all certificates
+GET {{host}}/api/exercises
+Accept: application/json
