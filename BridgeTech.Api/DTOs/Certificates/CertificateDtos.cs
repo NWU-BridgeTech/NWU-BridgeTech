@@ -20,7 +20,7 @@ public class CreateCertificateRequest
     public Guid ModuleId { get; set; }
 
     [Required]
-    [StringLength(128, MinimumLength = 10)]
+    [StringLength(64, MinimumLength = 64)]
     public string CertificateHash { get; set; } = string.Empty;
 
     [Required]

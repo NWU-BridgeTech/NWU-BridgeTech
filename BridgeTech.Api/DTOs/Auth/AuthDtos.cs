@@ -25,10 +25,17 @@ public class RegisterRequest
     [StringLength(128, MinimumLength = 8)]
     public string Password { get; set; } = string.Empty;
 
-    [StringLength(50)]
+    [StringLength(39)]
     public string? GithubUsername { get; set; }
+}
 
-    public UserRole Role { get; set; } = UserRole.Student;
+public class UpdateUserRole
+{
+    [Required]
+    public Guid UserId { get; set; }
+
+    [Required]
+    public string NewRole { get; set; } = string.Empty;
 }
 
 public class LoginRequest

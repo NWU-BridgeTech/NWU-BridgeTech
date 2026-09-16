@@ -19,7 +19,7 @@ public class ExerciseResponse
 public class CreateExerciseRequest
 {
     [Required]
-    public Guid ModuleId { get; set; }
+    public Guid? ModuleId { get; set; }
 
     [Required]
     [StringLength(200, MinimumLength = 3)]
@@ -29,6 +29,7 @@ public class CreateExerciseRequest
     public string? Description { get; set; }
 
     [Required]
+    [EnumDataType(typeof(VerificationType))]
     public VerificationType VerificationType { get; set; }
 
     public JsonElement? VerificationCriteria { get; set; }

@@ -15,7 +15,7 @@ public class QuizResponse
 public class CreateQuizRequest
 {
     [Required]
-    public Guid ModuleId { get; set; }
+    public Guid? ModuleId { get; set; }
 
     [Required]
     [StringLength(200, MinimumLength = 3)]
@@ -53,13 +53,23 @@ public class QuizQuestionResponse
     public List<QuizOptionResponse> Options { get; set; } = new();
 }
 
+public class QuizQuestionAdmin
+{
+    public Guid? QuestionId { get; set; }
+    public Guid QuizId { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public QuestionType QuestionType { get; set; }
+    public short OrderIndex { get; set; }
+    public List<QuizOptionAdmin> Options { get; set; } = new();
+}
+
 public class CreateQuizQuestionRequest
 {
     [Required]
     public Guid QuizId { get; set; }
 
     [Required]
-    [StringLength(1000, MinimumLength = 3)]
+    [StringLength(500, MinimumLength = 3)]
     public string QuestionText { get; set; } = string.Empty;
 
     [Required]
@@ -71,7 +81,7 @@ public class CreateQuizQuestionRequest
 
 public class UpdateQuizQuestionRequest
 {
-    [StringLength(1000, MinimumLength = 3)]
+    [StringLength(500, MinimumLength = 3)]
     public string? QuestionText { get; set; }
 
     public QuestionType? QuestionType { get; set; }
@@ -81,6 +91,13 @@ public class UpdateQuizQuestionRequest
 }
 
 public class QuizOptionResponse
+{
+    public Guid QuestionId { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public short OrderIndex { get; set; }
+}
+
+public class QuizOptionAdmin
 {
     public Guid OptionId { get; set; }
     public Guid QuizId { get; set; }
@@ -93,10 +110,10 @@ public class QuizOptionResponse
 public class CreateQuizOptionRequest
 {
     [Required]
-    public Guid QuizId { get; set; }
+    public Guid? QuizId { get; set; }
 
     [Required]
-    public Guid QuestionId { get; set; }
+    public Guid? QuestionId { get; set; }
 
     [Required]
     [StringLength(500, MinimumLength = 1)]
@@ -132,10 +149,7 @@ public class QuizAttemptResponse
 public class CreateQuizAttemptRequest
 {
     [Required]
-    public Guid UserId { get; set; }
-
-    [Required]
-    public Guid QuizId { get; set; }
+    public Guid? QuizId { get; set; }
 
     public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
 }
@@ -143,7 +157,7 @@ public class CreateQuizAttemptRequest
 public class SubmitQuizAttemptRequest
 {
     [Required]
-    public Guid AttemptId { get; set; }
+    public Guid? AttemptId { get; set; }
 
     [Required]
     public List<QuizAnswerSubmissionRequest> Answers { get; set; } = new();
@@ -152,7 +166,7 @@ public class SubmitQuizAttemptRequest
 public class QuizAnswerSubmissionRequest
 {
     [Required]
-    public Guid QuestionId { get; set; }
+    public Guid? QuestionId { get; set; }
 
     [Required]
     public Guid OptionId { get; set; }
