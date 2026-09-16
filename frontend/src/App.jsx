@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 
 function AdminSection({ title }) {
   return (
@@ -93,8 +94,16 @@ function App() {
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/system-status" element={<SystemStatus />} />
+        <Route
+          path="/system-status"
+          element={<SystemStatus />}
+        />
         <Route path="/login" element={<Login />} />
+
+        <Route
+          path="/signup"
+          element={<SignUp />}
+        />
 
         <Route
           path="/admin/modules"
