@@ -12,7 +12,6 @@ function AdminSection({ title }) {
   return (
     <div className="admin-page">
       <div className="app">
-
         <aside className="side">
           <div className="brand">
             Bridge<b>Tech</b>
@@ -75,13 +74,10 @@ function AdminSection({ title }) {
           <div className="content">
             <section className="card">
               <h3>{title}</h3>
-              <p className="sub">
-                This section will be built here.
-              </p>
+              <p className="sub">This section will be built here.</p>
             </section>
           </div>
         </main>
-
       </div>
     </div>
   );
@@ -91,21 +87,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
         <Route path="/admin" element={<Admin />} />
-        <Route
-          path="/system-status"
-          element={<SystemStatus />}
-        />
+        <Route path="/system-status" element={<SystemStatus />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/signup"
-          element={<SignUp />}
-        />
+        <Route path="/signup" element={<SignUp />} />
 
         <Route
           path="/admin/modules"
@@ -141,7 +130,6 @@ function App() {
           path="/admin/settings"
           element={<AdminSection title="Settings" />}
         />
-
       </Routes>
     </BrowserRouter>
   );
