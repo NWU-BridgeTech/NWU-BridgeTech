@@ -194,7 +194,7 @@ export default function PublicHomepage() {
           Bridge<i>Tech</i>
         </div>
         <div className="actions">
-          <a className="button" href="client.html">
+          <a className="button" href="/login">
             Sign in
           </a>
           <a className="button dark" href="client.html">
