@@ -1,20 +1,71 @@
+using BridgeTech.Api.DTOs.Auth;
+using BridgeTech.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-// Authentication endpoints will delegate registration, login, and token work
-// to the authentication service once that service is configured.
 public class AuthController : ControllerBase
 {
-    [HttpGet("status")]
-    // Exposes the current authentication configuration state to API clients.
-    public IActionResult GetStatus()
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        return StatusCode(StatusCodes.Status501NotImplemented, new
+        _authService = authService;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterRequest request)
+    {
+        try
         {
-            message = "Authentication endpoints are not configured yet."
-        });
+            var response = await _authService.RegisterAsync(request);
+
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest request)
+    {
+        try
+        {
+            var response = await _authService.LoginAsync(request);
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new
+            {
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
+    {
+        try
+        {
+            var response = await _authService.RefreshTokenAsync(request);
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new
+            {
+                message = ex.Message
+            });
+        }
     }
 }
