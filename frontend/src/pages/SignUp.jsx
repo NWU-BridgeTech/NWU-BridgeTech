@@ -182,6 +182,15 @@ export default function SignUpPage() {
       .replace(/[^a-zA-Z0-9._-]/g, "")
       .slice(0, 50);
 
+    // The backend requires usernames to be between 3 and 50 characters.
+    if (username.length < 3) {
+      setErrors({
+        email:
+          "Your email address must contain at least 3 characters before the @ symbol.",
+      });
+      return;
+    }
+
     try {
       const response = await fetch(
         "http://localhost:5174/api/auth/register",
