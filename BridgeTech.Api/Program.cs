@@ -1,36 +1,65 @@
+using System.Text;
 using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Register the EF Core context with dependency injection. The connection string
-// is loaded from User Secrets in Development and is never stored in source code.
-// Npgsql is the PostgreSQL provider used by the application.
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
         .UseSnakeCaseNamingConvention());
 
-// Discover controller classes and expose their attribute-based HTTP routes.
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+string jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT key is not configured.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)),
+
+            ValidateIssuer = false,
+            ValidateAudience = false,
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // OpenAPI is enabled during local development to make the API easy to inspect.
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+app.UseCors("Frontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Map [Route] and [Http...] attributes from every controller to endpoint routes.
 app.MapControllers();
 
 app.Run();
