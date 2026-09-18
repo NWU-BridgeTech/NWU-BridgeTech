@@ -191,10 +191,6 @@ export default function SignUpPage() {
           Bridge<i>Tech</i>
         </a>
 
-        <p className="su-top-note">
-          <span>Already have an account? </span>
-          <a href="/login">Sign in</a>
-        </p>
       </header>
 
       <main id="main" className="su-grid">
