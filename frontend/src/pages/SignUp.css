@@ -1,5 +1,7 @@
 /* SignUp.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+/* SignUp.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 .bt {
   --blue: #315db6;
@@ -107,7 +109,9 @@
 .su-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
   min-height: calc(100vh - 79px);
+  align-items: stretch;
   align-items: stretch;
 }
 
@@ -115,6 +119,8 @@
 
 .su-form-wrap {
   display: flex;
+  align-items: left;
+  justify-content: left;
   align-items: left;
   justify-content: left;
   padding: 56px 40px;
@@ -180,7 +186,12 @@
   font-size: 15px;
   color: var(--ink);
   background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .input::placeholder {
@@ -357,6 +368,7 @@
   width: 100%;
   align-self: stretch;
   display: block;
+  order: -1;
 }
 
 .su-photo img {
