@@ -1,7 +1,5 @@
-// SignUp.jsx
 import React, { useState } from "react";
 import "./SignUp.css";
-
 
 function BridgeMark() {
   return (
@@ -131,7 +129,8 @@ export default function SignUpPage() {
   const [photoFailed, setPhotoFailed] = useState(false);
 
   const confirmMismatch =
-    form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
+    form.confirmPassword.length > 0 &&
+    form.confirmPassword !== form.password;
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -163,20 +162,83 @@ export default function SignUpPage() {
     return next;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const next = validate();
     setErrors(next);
 
-    if (Object.keys(next).length === 0) {
-      // Replace with your real signup call.
-      console.log("BridgeTech signup:", {
-        name: form.name,
-        email: form.email,
+    if (Object.keys(next).length !== 0) {
+      return;
+    }
+
+    const nameParts = form.name.trim().split(/\s+/);
+
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || firstName;
+
+    const username = form.email
+      .split("@")[0]
+      .replace(/[^a-zA-Z0-9._-]/g, "")
+      .slice(0, 50);
+
+    // The backend requires usernames to be between 3 and 50 characters.
+    if (username.length < 3) {
+      setErrors({
+        email:
+          "Your email address must contain at least 3 characters before the @ symbol.",
       });
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:5174/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            firstName,
+            lastName,
+            email: form.email,
+            password: form.password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({
+          submit: data.message || "Unable to create your account.",
+        });
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          userId: data.userId,
+          username: data.username,
+          email: data.email,
+          role: data.role,
+        })
+      );
 
       setSubmitted(true);
+    } catch (error) {
+      console.error("Signup error:", error);
+
+      setErrors({
+        submit:
+          "Unable to connect to the server. Please make sure the backend is running.",
+      });
     }
   }
 
@@ -198,16 +260,28 @@ export default function SignUpPage() {
       </header>
 
       <main id="main" className="su-grid">
+
+        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
-              <h2>Check your inbox</h2>
+              <h2>Account created</h2>
 
               <p>
-                We've sent a confirmation link to{" "}
-                <strong>{form.email}</strong>. Follow it to activate your
-                account and start your first track.
+                Your BridgeTech account has been created successfully with{" "}
+                <strong>{form.email}</strong>. You can now start working
+                through your learning tracks.
               </p>
+
+              <button
+                type="button"
+                className="button dark button-full"
+                onClick={() => {
+                  window.location.href = "/login";
+                }}
+              >
+                Sign in
+              </button>
             </div>
           ) : (
             <form className="su-form" onSubmit={handleSubmit} noValidate>
@@ -311,7 +385,9 @@ export default function SignUpPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="su-confirm-password">Confirm password</label>
+                <label htmlFor="su-confirm-password">
+                  Confirm password
+                </label>
 
                 <input
                   id="su-confirm-password"
@@ -323,7 +399,9 @@ export default function SignUpPage() {
                   onChange={(e) =>
                     update("confirmPassword", e.target.value)
                   }
-                  aria-invalid={Boolean(errors.confirmPassword || confirmMismatch)}
+                  aria-invalid={Boolean(
+                    errors.confirmPassword || confirmMismatch
+                  )}
                   aria-describedby={
                     errors.confirmPassword || confirmMismatch
                       ? "su-confirm-password-error"
@@ -332,7 +410,10 @@ export default function SignUpPage() {
                 />
 
                 {(errors.confirmPassword || confirmMismatch) && (
-                  <p className="field-error" id="su-confirm-password-error">
+                  <p
+                    className="field-error"
+                    id="su-confirm-password-error"
+                  >
                     {errors.confirmPassword || "Passwords don't match."}
                   </p>
                 )}
@@ -351,7 +432,8 @@ export default function SignUpPage() {
                 />
 
                 <label htmlFor="su-agree">
-                  I agree to the <a href="/terms">Terms of Service</a> and{" "}
+                  I agree to the{" "}
+                  <a href="/terms">Terms of Service</a> and{" "}
                   <a href="/privacy">Privacy Policy</a>.
                 </label>
               </div>
@@ -362,7 +444,14 @@ export default function SignUpPage() {
                 </p>
               )}
 
-              <button type="submit" className="button dark button-full">
+              {errors.submit && (
+                <p className="field-error">{errors.submit}</p>
+              )}
+
+              <button
+                type="submit"
+                className="button dark button-full"
+              >
                 Create account
               </button>
 
@@ -370,11 +459,11 @@ export default function SignUpPage() {
                 Already have an account?{" "}
                 <a href="/login">Sign in</a>
               </p>
-
             </form>
           )}
         </div>
 
+        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
@@ -385,7 +474,10 @@ export default function SignUpPage() {
               onError={() => setPhotoFailed(true)}
             />
           ) : (
-            <div className="su-photo-fallback" aria-hidden="true" />
+            <div
+              className="su-photo-fallback"
+              aria-hidden="true"
+            />
           )}
 
           <div className="su-mark" aria-hidden="true">
@@ -394,9 +486,11 @@ export default function SignUpPage() {
 
           <div className="su-photo-copy">
             <p className="eyebrow">BridgeTech</p>
+
             <h2>Build Skills for the work ahead</h2>
           </div>
         </figure>
+
       </main>
     </div>
   );
