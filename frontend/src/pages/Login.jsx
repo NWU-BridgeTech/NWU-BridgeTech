@@ -31,7 +31,7 @@ const Login = () => {
             </a>
           </div>
           <div className="login-Footer">
-            <p>Don't have an account? <a href="/register">Sign up</a></p>
+            <p>Don't have an account? <a href="/signup">Sign up</a></p>
           </div>
           <button type="submit" className="btn blue submit-btn">
             Login
