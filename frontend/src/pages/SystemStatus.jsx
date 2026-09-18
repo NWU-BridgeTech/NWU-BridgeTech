@@ -1,4 +1,4 @@
-import React from "react";
+import AppLayout from "../layouts/AppLayout";
 
 /**
  * BridgeTech — Admin: System status
@@ -91,47 +91,7 @@ export default function SystemStatus() {
     <>
       <style>{STYLES}</style>
 
-      <div className="app">
-        <aside className="side">
-          <div className="brand">
-            Bridge<b>Tech</b>
-          </div>
-          <a className="nav" href="admin.html">
-            ▦ &nbsp; Dashboard
-          </a>
-          <div className="label">LEARNING CONTENT</div>
-          <a className="nav" href="#">
-            ▣ &nbsp; Modules
-          </a>
-          <a className="nav" href="#">
-            ☰ &nbsp; Lessons
-          </a>
-          <a className="nav" href="#">
-            ✓ &nbsp; Assessments
-          </a>
-          <a className="nav" href="#">
-            ↗ &nbsp; Practical exercises
-          </a>
-          <div className="label">PEOPLE</div>
-          <a className="nav" href="#">
-            ◉ &nbsp; Students
-          </a>
-          <a className="nav" href="#">
-            ◌ &nbsp; Administrators
-          </a>
-          <div className="label">SYSTEM</div>
-          <a className="nav active" href="system-status.html">
-            ◆ &nbsp; System status
-          </a>
-          <a className="nav" href="#">
-            ⚙ &nbsp; Settings
-          </a>
-          <a className="nav" href="index.html">
-            ⌂ &nbsp; Public website
-          </a>
-        </aside>
-
-        <main className="main">
+      <AppLayout>
           <header className="top">
             <div>
               <div className="greeting">
@@ -282,8 +242,7 @@ export default function SystemStatus() {
             </div>
             <div>© 2026 BridgeTech</div>
           </footer>
-        </main>
-      </div>
+      </AppLayout>
     </>
   );
 }

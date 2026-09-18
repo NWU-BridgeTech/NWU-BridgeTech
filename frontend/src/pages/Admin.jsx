@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
 
 const metrics = [
@@ -65,45 +66,8 @@ const todos = [
   },
 ];
 
-const sideNav = [
-  {
-    icon: "▣",
-    label: "Modules",
-    path: "/admin/modules",
-  },
-  {
-    icon: "☰",
-    label: "Lessons",
-    path: "/admin/lessons",
-  },
-  {
-    icon: "✓",
-    label: "Assessments",
-    path: "/admin/assessments",
-  },
-  {
-    icon: "↗",
-    label: "Practical exercises",
-    path: "/admin/practical-exercises",
-  },
-];
-
-const peopleNav = [
-  {
-    icon: "◉",
-    label: "Students",
-    path: "/admin/students",
-  },
-  {
-    icon: "◌",
-    label: "Administrators",
-    path: "/admin/administrators",
-  },
-];
-
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("Overview");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [completedTodos, setCompletedTodos] = useState([]);
   const currentHour = new Date().getHours();
 
@@ -125,133 +89,7 @@ export default function Admin() {
   ];
 
   return (
-    <div className="admin-page">
-      <div
-        className={`app ${
-          sidebarCollapsed ? "sidebar-collapsed" : ""
-        }`}
-      >
-
-        {/* SIDEBAR */}
-        <aside className="side">
-
-          <div className="brand">
-            Bridge<b>Tech</b>
-          </div>
-
-          <Link
-            to="/admin"
-            className="nav active"
-            title="Dashboard"
-          >
-            <span className="nav-icon">
-              ▦
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Dashboard</span>
-            )}
-          </Link>
-
-          <div className="label">
-            {!sidebarCollapsed && "LEARNING CONTENT"}
-          </div>
-
-          {sideNav.map((item) => (
-            <Link
-              to={item.path}
-              className="nav"
-              key={item.label}
-              title={item.label}
-            >
-              <span className="nav-icon">
-                {item.icon}
-              </span>
-
-              {!sidebarCollapsed && (
-                <span>{item.label}</span>
-              )}
-            </Link>
-          ))}
-
-          <div className="label">
-            {!sidebarCollapsed && "PEOPLE"}
-          </div>
-
-          {peopleNav.map((item) => (
-            <Link
-              to={item.path}
-              className="nav"
-              key={item.label}
-              title={item.label}
-            >
-              <span className="nav-icon">
-                {item.icon}
-              </span>
-
-              {!sidebarCollapsed && (
-                <span>{item.label}</span>
-              )}
-            </Link>
-          ))}
-
-          <div className="label">
-            {!sidebarCollapsed && "SYSTEM"}
-          </div>
-
-          <Link
-            to="/admin/settings"
-            className="nav"
-            title="Settings"
-          >
-            <span className="nav-icon">
-              ⚙
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Settings</span>
-            )}
-          </Link>
-
-          <Link
-            to="/"
-            className="nav"
-            title="Public website"
-          >
-            <span className="nav-icon">
-              ⌂
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Public website</span>
-            )}
-          </Link>
-
-          {/* SIDEBAR TOGGLE */}
-          <button
-            className="sidebar-toggle"
-            onClick={() =>
-              setSidebarCollapsed(
-                !sidebarCollapsed
-              )
-            }
-            title={
-              sidebarCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-          >
-            {sidebarCollapsed ? "→" : "←"}
-
-            {!sidebarCollapsed && (
-              <span>Collapse</span>
-            )}
-          </button>
-
-        </aside>
-
-        {/* MAIN */}
-        <main className="main">
+    <AppLayout>
 
           {/* HEADER */}
           <header className="top">
@@ -680,9 +518,6 @@ export default function Admin() {
 
           </div>
 
-        </main>
-
-      </div>
-    </div>
+    </AppLayout>
   );
 }
