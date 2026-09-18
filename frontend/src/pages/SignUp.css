@@ -371,8 +371,8 @@
 
 .su-photo {
   position: relative;
+  margin: 0;
   overflow: hidden;
-  background: var(--navy);
 
   min-height: 240px;
   order: -1;

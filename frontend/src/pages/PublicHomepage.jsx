@@ -197,7 +197,7 @@ export default function PublicHomepage() {
           <a className="button" href="/login">
             Sign in
           </a>
-          <a className="button dark" href="client.html">
+          <a className="button dark" href="/signup">
             Get started
           </a>
         </div>
