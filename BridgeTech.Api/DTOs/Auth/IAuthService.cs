@@ -4,9 +4,9 @@ namespace BridgeTech.Api.Services.Auth;
 
 public interface IAuthService
 {
-    Task<AuthResponse> RegisterAsync(RegisterRequest request);
+    Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
 
-    Task<AuthResponse> LoginAsync(LoginRequest request);
+    Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
 
-    Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
+    Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
 }
