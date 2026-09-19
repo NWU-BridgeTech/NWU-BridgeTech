@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
@@ -81,6 +82,14 @@ function App() {
         <Route
           path="/admin/settings"
           element={<AdminSection title="Settings" />}
+        />
+        <Route
+         path="/privacy-policy" 
+         element={<PrivacyPolicy />} 
+         />
+         <Route
+          path="/terms" 
+          element={<TermsOfService />} 
         />
       </Routes>
     </BrowserRouter>
