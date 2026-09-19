@@ -7,11 +7,8 @@ export default function StudentAssessments() {
   );
 
   return (
-    <StudentLayout>
+    <StudentLayout title="Assessments">
       <div className="content">
-        <div className="welcome">
-          <h1>Assessments</h1>
-        </div>
         <p className="course-preview-note">
           Assessment actions are coming soon.
         </p>

@@ -50,14 +50,24 @@
   background: #fff;
   border-bottom: 1px solid #e8ebef;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 12px 40px;
+}
+.home-page .page-title {
+  margin: 0;
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+  min-width: 0;
 }
 .home-page .profile {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 .home-page .profile-name {
   font-size: 13px;
@@ -229,6 +239,157 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: var(--section-space) 40px;
+}
+/* Home overview: progress first, followed by the nearest deadlines. */
+.home-page .overview-progress {
+  padding: var(--card-padding);
+  border: 1px solid #dce5f4;
+  border-radius: 12px;
+  background: #eef3fb;
+}
+.home-page .overview-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.home-page .overview-progress h2 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -.5px;
+}
+.home-page .overview-progress p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+.home-page .overview-progress-heading strong {
+  color: #274e9f;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.home-page .overview-progress-heading strong span {
+  font-size: 22px;
+}
+.home-page .overview-progress progress {
+  height: 12px;
+  margin: 24px 0 12px;
+}
+.home-page .overview-progress-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.home-page .overview-progress-footer a {
+  color: #274e9f;
+  font-weight: 600;
+}
+.home-page .deadline-section {
+  margin: 28px 0 32px;
+}
+.home-page .deadline-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.home-page .deadline-heading h2 {
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: -.3px;
+}
+.home-page .deadline-heading > span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.home-page .deadline-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+}
+.home-page .deadline-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+}
+.home-page .deadline-list li + li {
+  border-top: 1px solid #e8ebef;
+}
+.home-page .deadline-task {
+  flex: 1;
+  min-width: 0;
+}
+.home-page .deadline-task h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+.home-page .deadline-task .activity-status {
+  margin-top: 8px;
+}
+.home-page .deadline-task p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.home-page .deadline-date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.home-page .deadline-date time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #202939;
+}
+.home-page .deadline-date .deadline-overdue {
+  color: #a13922;
+  font-weight: 650;
+}
+.home-page .deadline-action {
+  color: #315db6;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+.home-page .deadline-action:hover {
+  text-decoration: underline;
+}
+.home-page .home-resume {
+  margin-bottom: 32px;
+}
+.home-page .home-resume button:disabled {
+  cursor: not-allowed;
+  opacity: .7;
+}
+.home-page .deadline-empty {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+}
+.home-page .deadline-empty h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.home-page .deadline-empty p {
+  margin: 0;
+  color: var(--text-secondary);
 }
 .home-page .welcome {
   display: flex;
@@ -966,74 +1127,38 @@
   display: inline-block;
   margin-top: 8px;
 }
-.home-page footer.site {
-  border-top: 1px solid #e8ebef;
-  background: #fff;
-  margin-top: 48px;
+.home-page .stats.home-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 0;
 }
-.home-page .foot-inner {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 44px 40px 28px;
-}
-.home-page .foot-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr;
-  gap: 32px;
-}
-.home-page .foot-brand .brand {
-  padding: 0 0 10px;
-}
-.home-page .foot-brand p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 260px;
-  margin: 0 0 16px;
-}
-.home-page .foot-social {
-  display: flex;
-  gap: 8px;
-}
-.home-page .foot-social a {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #dbe1e8;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  color: #5d6878;
-}
-.home-page .foot-col h5 {
-  font-size: 12px;
-  color: var(--text-secondary);
-  letter-spacing: 0.08em;
-  font-weight: 800;
-  margin: 0 0 14px;
-}
-.home-page .foot-col a {
-  display: block;
-  font-size: 13px;
-  color: #5d6878;
-  margin: 0 0 11px;
-}
-.home-page .foot-col a:hover {
-  color: #315db6;
-}
-.home-page .foot-bottom {
+.home-page .home-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 40px;
   border-top: 1px solid #e8ebef;
-  margin-top: 32px;
-  padding-top: 20px;
-  font-size: 12px;
   color: var(--text-secondary);
+  font-size: 12px;
 }
-.home-page .foot-bottom .legal {
+.home-page .home-footer nav {
   display: flex;
-  gap: 18px;
+  gap: 20px;
+}
+.home-page .home-footer button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.home-page .home-footer button:hover {
+  color: #315db6;
+  text-decoration: underline;
 }
 @media (max-width: 1000px) {
   .home-page .explore-grid {
@@ -1047,14 +1172,11 @@
   }
 }
 @media (max-width: 700px) {
-  .home-page .foot-grid {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 26px;
+  .home-page .stats.home-summary {
+    grid-template-columns: 1fr;
   }
-  .home-page .foot-bottom {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+  .home-page .home-footer {
+    padding: 20px;
   }
   .home-page {
     --section-space: 32px;
@@ -1183,5 +1305,34 @@
   }
   .home-page .notifications-footer {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-page .overview-progress-heading {
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .home-page .overview-progress h2 {
+    font-size: 22px;
+  }
+  .home-page .overview-progress-heading strong {
+    font-size: 32px;
+  }
+  .home-page .deadline-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+  .home-page .deadline-task,
+  .home-page .deadline-date {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+  .home-page .deadline-action {
+    grid-column: 1 / -1;
+    justify-self: start;
+    padding: 4px 0;
   }
 }

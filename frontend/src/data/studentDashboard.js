@@ -128,6 +128,7 @@ export const attentionItems = [
   {
     id: "api-assessment",
     type: "assessment",
+    dueAt: "2026-09-22T17:00:00+02:00",
     status: "Unfinished assessment",
     tone: "info",
     title: "HTTP & REST fundamentals",
@@ -141,6 +142,7 @@ export const attentionItems = [
 export const practicalWork = [
   {
     id: "git-practical",
+    dueAt: "2026-09-21T17:00:00+02:00",
     title: "Your first pull request",
     course: "Git & Version Control",
     status: "Changes requested",
@@ -168,6 +170,7 @@ export const practicalWork = [
   },
   {
     id: "cloud-practical",
+    dueAt: "2026-09-25T17:00:00+02:00",
     title: "Deploy your first application",
     course: "Cloud Basics",
     status: "Not submitted",
@@ -212,7 +215,7 @@ export const initialNotifications = [
     id: "assessment",
     title: "You have an unfinished assessment",
     message:
-      "Pick up HTTP & REST fundamentals from Needs attention when you’re ready.",
+      "Pick up HTTP & REST fundamentals from Upcoming & needs attention when you’re ready.",
     unread: true,
   },
   {
@@ -223,4 +226,3 @@ export const initialNotifications = [
     unread: false,
   },
 ];
-

@@ -6,7 +6,7 @@ import { student } from "../data/studentDashboard";
 import "../pages/Home.css";
 import "./AppLayout.css";
 
-export default function StudentLayout({ children }) {
+export default function StudentLayout({ title, children }) {
   const [defaultOpen] = useState(
     () =>
       typeof document === "undefined" ||
@@ -29,6 +29,7 @@ export default function StudentLayout({ children }) {
           </div>
           <div className="home-page">
             <header className="top">
+              <h1 className="page-title" id="student-page-title">{title}</h1>
               <div className="profile">
                 <Notifications />
                 <div className="avatar">{student.initials}</div>

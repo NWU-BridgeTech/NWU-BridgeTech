@@ -48,11 +48,8 @@ function CourseCard({ course }) {
 
 export default function StudentCourses() {
   return (
-    <StudentLayout>
+    <StudentLayout title="My courses">
       <div className="content">
-        <div className="welcome">
-          <h1>My courses</h1>
-        </div>
         <p className="course-preview-note">
           Lesson and task actions are coming soon.
         </p>

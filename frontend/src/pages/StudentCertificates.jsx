@@ -3,11 +3,8 @@ import { student } from "../data/studentDashboard";
 
 export default function StudentCertificates() {
   return (
-    <StudentLayout>
+    <StudentLayout title="Certificates">
       <div className="content">
-        <div className="welcome">
-          <h1>Certificates</h1>
-        </div>
         <dl className="stats" aria-label="Certificates summary">
           <div className="stat">
             <dt>Certificates earned</dt>

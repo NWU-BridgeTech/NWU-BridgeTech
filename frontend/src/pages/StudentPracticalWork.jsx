@@ -20,11 +20,10 @@ export default function StudentPracticalWork() {
     : practicalWork.slice(0, 3);
 
   return (
-    <StudentLayout>
+    <StudentLayout title="Practical work">
       <div className="content">
-        <section className="practical-section" aria-labelledby="practical-work">
+        <section className="practical-section" aria-labelledby="student-page-title">
           <div className="welcome">
-            <h1 id="practical-work">Practical work</h1>
             <Link className="github-indicator" to="/student/github">
               <span className="connection-dot" aria-hidden="true" />
               GitHub · {githubConnection.username ? "Connected" : "Not connected"}

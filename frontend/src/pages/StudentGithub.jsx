@@ -3,11 +3,8 @@ import { githubConnection } from "../data/studentDashboard";
 
 export default function StudentGithub() {
   return (
-    <StudentLayout>
+    <StudentLayout title="GitHub activity">
       <div className="content">
-        <div className="welcome">
-          <h1>GitHub activity</h1>
-        </div>
         <section className="attention-card">
           <div className="action-heading">
             <h3>GitHub connection</h3>
