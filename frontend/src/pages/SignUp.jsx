@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./SignUp.css";
 
 function BridgeMark() {
@@ -121,12 +122,30 @@ const initialForm = {
   agree: false,
 };
 
+const signupDraftKey = "bridgetech-signup-draft";
+
 export default function SignUpPage() {
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => {
+    try {
+      const savedForm = sessionStorage.getItem(signupDraftKey);
+
+      return savedForm
+        ? { ...initialForm, ...JSON.parse(savedForm) }
+        : initialForm;
+    } catch {
+      return initialForm;
+    }
+  });
+
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.setItem(signupDraftKey, JSON.stringify(form));
+  }, [form]);
 
   const confirmMismatch =
     form.confirmPassword.length > 0 &&
@@ -134,6 +153,17 @@ export default function SignUpPage() {
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+
+    if (errors[field] || errors.submit) {
+      setErrors((currentErrors) => {
+        const nextErrors = { ...currentErrors };
+
+        delete nextErrors[field];
+        delete nextErrors.submit;
+
+        return nextErrors;
+      });
+    }
   }
 
   function validate() {
@@ -165,7 +195,12 @@ export default function SignUpPage() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (isLoading) {
+      return;
+    }
+
     const next = validate();
+
     setErrors(next);
 
     if (Object.keys(next).length !== 0) {
@@ -182,7 +217,6 @@ export default function SignUpPage() {
       .replace(/[^a-zA-Z0-9._-]/g, "")
       .slice(0, 50);
 
-    // The backend requires usernames to be between 3 and 50 characters.
     if (username.length < 3) {
       setErrors({
         email:
@@ -190,6 +224,9 @@ export default function SignUpPage() {
       });
       return;
     }
+
+    setIsLoading(true);
+    setErrors({});
 
     try {
       const response = await fetch(
@@ -231,6 +268,7 @@ export default function SignUpPage() {
         })
       );
 
+      sessionStorage.removeItem(signupDraftKey);
       setSubmitted(true);
     } catch (error) {
       console.error("Signup error:", error);
@@ -239,6 +277,8 @@ export default function SignUpPage() {
         submit:
           "Unable to connect to the server. Please make sure the backend is running.",
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -252,12 +292,9 @@ export default function SignUpPage() {
         <a className="logo" href="/" aria-label="BridgeTech home">
           Bridge<i>Tech</i>
         </a>
-
       </header>
 
       <main id="main" className="su-grid">
-
-        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
@@ -266,7 +303,7 @@ export default function SignUpPage() {
               <p>
                 Your BridgeTech account has been created successfully with{" "}
                 <strong>{form.email}</strong>. You can now start working
-                through your learning tracks.
+                towards your learning goals and building your skills.
               </p>
 
               <button
@@ -286,8 +323,7 @@ export default function SignUpPage() {
               <h1>Create your account.</h1>
 
               <p className="lede">
-                Set up your BridgeTech account to start working through tracks
-                and keep a record of what you've practised.
+                Set up your BridgeTech account to start working towards your learning goals and building your skills.
               </p>
 
               <div className="field">
@@ -429,8 +465,8 @@ export default function SignUpPage() {
 
                 <label htmlFor="su-agree">
                   I agree to the{" "}
-                  <a href="/terms">Terms of Service</a> and{" "}
-                  <a href="/privacy">Privacy Policy</a>.
+                  <Link to="/terms">Terms of Service</Link> and{" "}
+                  <Link to="/privacy-policy">Privacy Policy</Link>.
                 </label>
               </div>
 
@@ -447,8 +483,20 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 className="button dark button-full"
+                disabled={isLoading}
+                aria-busy={isLoading}
               >
-                Create account
+                {isLoading ? (
+                  <>
+                    <span
+                      className="signup-spinner"
+                      aria-hidden="true"
+                    />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
               </button>
 
               <p className="su-switch">
@@ -459,7 +507,6 @@ export default function SignUpPage() {
           )}
         </div>
 
-        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
@@ -486,7 +533,6 @@ export default function SignUpPage() {
             <h2>Build Skills for the work ahead</h2>
           </div>
         </figure>
-
       </main>
     </div>
   );
