@@ -1,274 +1,217 @@
-import "./Home.css";
-
-const myCourses = [
-  {
-    number: "01",
-    title: "Git & Version Control",
-    description:
-      "Learn branches, pull requests, code reviews and collaborative development.",
-    progress: 62,
-    lessonsDone: 5,
-    lessonsTotal: 8,
-  },
-  {
-    number: "02",
-    title: "APIs & Web Services",
-    description: "Understand REST, HTTP, JSON and the basics of authentication.",
-    progress: 34,
-    lessonsDone: 3,
-    lessonsTotal: 9,
-  },
-  {
-    number: "03",
-    title: "Cloud Basics",
-    description:
-      "Explore hosting, cloud platforms, deployment and serverless concepts.",
-    progress: 18,
-    lessonsDone: 2,
-    lessonsTotal: 10,
-  },
-];
-
-const exploreCourses = [
-  {
-    number: "01",
-    title: "CI/CD Pipelines",
-    description:
-      "Learn automated builds, testing and delivery workflows used by modern development teams.",
-    lessons: 8,
-    level: "Intermediate",
-  },
-  {
-    number: "02",
-    title: "Advanced Git Workflows",
-    description:
-      "Go deeper into branching strategies, collaboration and professional repository workflows.",
-    lessons: 7,
-    level: "Intermediate",
-  },
-  {
-    number: "03",
-    title: "Web Development Essentials",
-    description:
-      "Build a stronger understanding of web applications, clients, servers and common workflows.",
-    lessons: 10,
-    level: "Beginner",
-  },
-  {
-    number: "04",
-    title: "Software Team Practices",
-    description:
-      "Explore collaboration, code reviews, task management and working effectively in teams.",
-    lessons: 6,
-    level: "Beginner",
-  },
-];
-
-const filters = ["All courses", "Development", "Cloud", "DevOps"];
+import { Link } from "react-router-dom";
+import StudentLayout from "../layouts/StudentLayout";
+import {
+  student,
+  myCourses,
+  lastActivity,
+  attentionItems,
+} from "../data/studentDashboard";
 
 export default function Home() {
+  const resumeCourse = myCourses.find(
+    (course) => course.number === lastActivity.courseNumber,
+  );
+  const hour = new Date().getHours();
+  let greeting = "Good evening";
+  if (hour < 12) {
+    greeting = "Good morning";
+  } else if (hour < 18) {
+    greeting = "Good afternoon";
+  }
+  const lessonsDone = myCourses.reduce(
+    (total, course) => total + course.lessonsDone,
+    0,
+  );
+  const lessonsTotal = myCourses.reduce(
+    (total, course) => total + course.lessonsTotal,
+    0,
+  );
+  const activeCourses = myCourses.filter(
+    (course) => course.lessonsDone < course.lessonsTotal,
+  );
+
   return (
-    <div className="home-page">
-      <div className="app">
-        <aside className="side">
-          <div className="brand">
-            Bridge<b>Tech</b>
+    <StudentLayout>
+      <div className="content">
+        <div className="welcome">
+          <div>
+            <h1>{greeting}, {student.firstName}</h1>
+            <p>Keep building your skills. Pick up where you left off.</p>
           </div>
+        </div>
 
-          <div className="label">LEARNING</div>
-          <a className="nav active" href="/home">
-            Home
-          </a>
-          <a className="nav" href="/client">
-            My courses
-          </a>
-          <a className="nav" href="#">
-            Assessments
-          </a>
-          <a className="nav" href="#">
-            Practical work
-          </a>
+        <dl className="stats" aria-label="Learning progress summary">
+          <div className="stat">
+            <dt>Active courses</dt>
+            <dd>{activeCourses.length}</dd>
+            <span>Currently in progress</span>
+          </div>
+          <div className="stat">
+            <dt>Lessons completed</dt>
+            <dd>
+              {lessonsDone}
+              <small> / {lessonsTotal}</small>
+            </dd>
+            <span>Across your registered courses</span>
+          </div>
+          <div className="stat">
+            <dt id="certificates-summary">Certificates earned</dt>
+            <dd>{student.certificatesEarned}</dd>
+            <span>Recognising your completed work</span>
+          </div>
+        </dl>
 
-          <div className="label">YOUR PROGRESS</div>
-          <a className="nav" href="#">
-            Certificates
-          </a>
-          <a className="nav" href="#">
-            GitHub activity
-          </a>
-
-          <div className="label">OTHER</div>
-          <a className="nav" href="/">
-            Public website
-          </a>
-        </aside>
-
-        <main className="main">
-          <header className="top">
-            <div>
-              <h1>Student Home</h1>
-              <p>Find your next course and keep learning.</p>
+        <div className="activity-heading">
+          <p>Lesson and task actions are coming soon.</p>
+        </div>
+        <div className="next-actions">
+          <section className="resume-card" aria-labelledby="continue-heading">
+            <div className="action-heading">
+              <h3 id="continue-heading">Continue learning</h3>
+              <span className="tag">LAST ACTIVE COURSE</span>
             </div>
-            <div className="profile">
-              <button className="btn">Notifications</button>
-              <div className="avatar">AM</div>
-              <span style={{ fontSize: 13, fontWeight: 650 }}>Alex M.</span>
-            </div>
-          </header>
-
-          <div className="content">
-            <div className="welcome">
-              <div>
-                <h2>Good morning, Alex 👋</h2>
-                <p>Choose a course to continue learning or explore something new.</p>
-              </div>
-              <div className="search">
-                <input type="text" placeholder="Search courses..." />
-                <button className="btn blue">Search</button>
-              </div>
-            </div>
-
-            <div className="section-title">
-              <h3>My Courses</h3>
-              <a href="/client">View all courses →</a>
-            </div>
-
-            <div className="my-grid">
-              {myCourses.map((course) => (
-                <div className="course" key={course.number}>
-                  <div className="course-top">
-                    <span className="tag">IN PROGRESS</span>
-                    <small style={{ color: "#89929e" }}>{course.number}</small>
-                  </div>
-                  <h4>{course.title}</h4>
-                  <p>{course.description}</p>
+            {resumeCourse ? (
+              <>
+                <p className="resume-course">{resumeCourse.title}</p>
+                <h4>{lastActivity.lesson}</h4>
+                <p className="lesson-meta">
+                  Lesson {resumeCourse.lessonsDone + 1} of{" "}
+                  {resumeCourse.lessonsTotal}
+                  <span aria-hidden="true"> · </span>
+                  About {lastActivity.minutes} minutes
+                </p>
+                <div className="resume-progress">
                   <div className="progress-label">
-                    <span>Progress</span>
-                    <b>{course.progress}%</b>
+                    <span>
+                      {resumeCourse.lessonsDone} of {resumeCourse.lessonsTotal}{" "}
+                      lessons completed
+                    </span>
+                    <b>
+                      {Math.round(
+                        (resumeCourse.lessonsDone / resumeCourse.lessonsTotal) *
+                          100,
+                      )}
+                      %
+                    </b>
                   </div>
-                  <div className="bar">
-                    <i style={{ width: `${course.progress}%` }} />
-                  </div>
-                  <div className="course-footer">
-                    <small>
-                      {course.lessonsDone} of {course.lessonsTotal} lessons
-                    </small>
-                    <button className="btn blue">Continue</button>
-                  </div>
+                  <progress
+                    aria-label={`${resumeCourse.title} lesson completion`}
+                    value={resumeCourse.lessonsDone}
+                    max={resumeCourse.lessonsTotal}
+                  />
                 </div>
-              ))}
-            </div>
-
-            <div className="section-title">
-              <h3>Explore Courses</h3>
-            </div>
-
-            <div className="filters">
-              {filters.map((filter, i) => (
-                <button
-                  className={`filter${i === 0 ? " active" : ""}`}
-                  key={filter}
-                >
-                  {filter}
+                <button className="btn blue resume-button" disabled>
+                  Resume lesson <span aria-hidden="true">→</span>
                 </button>
-              ))}
-            </div>
-
-            <div className="explore-grid">
-              {exploreCourses.map((course) => (
-                <div className="explore-card" key={course.number}>
-                  <span className="number">{course.number}</span>
-                  <h4>{course.title}</h4>
-                  <p>{course.description}</p>
-                  <div className="meta">
-                    <span>{course.lessons} lessons</span>
-                    <span>{course.level}</span>
-                  </div>
-                  <button className="btn blue" style={{ width: "100%" }}>
-                    Register for course
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="recommend">
-              <div>
-                <h3>Recommended for you</h3>
+              </>
+            ) : (
+              <div className="activity-empty">
+                <h4>Your next step starts here</h4>
                 <p>
-                  Based on your progress in Git & Version Control, CI/CD Pipelines
-                  is a good next step.
+                  Explore the course catalogue to find something you’d like to
+                  learn.
+                </p>
+                <a className="btn blue" href="/student/courses#explore-courses">
+                  Explore courses
+                </a>
+              </div>
+            )}
+          </section>
+
+          <section
+            className="attention-card"
+            aria-labelledby="attention-heading"
+          >
+            <div className="action-heading">
+              <h3 id="attention-heading">Needs attention</h3>
+              <span
+                className="attention-count"
+                aria-label={`${attentionItems.length} pending items`}
+              >
+                {attentionItems.length}
+              </span>
+            </div>
+            {attentionItems.length > 0 ? (
+              <ul className="attention-list">
+                {attentionItems.map((item) => {
+                  const page =
+                    item.type === "practical"
+                      ? "/student/practical-work"
+                      : "/student/assessments";
+                  return (
+                    <li key={item.id}>
+                      <span className={`activity-status ${item.tone}`}>
+                        {item.status}
+                      </span>
+                      <h4>{item.title}</h4>
+                      <p className="attention-course">{item.course}</p>
+                      <p>{item.detail}</p>
+                      <Link className="attention-action" to={page}>
+                        {item.action} <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="activity-empty">
+                <h4>You’re all caught up</h4>
+                <p>
+                  No assessments or practical work need your attention right
+                  now.
                 </p>
               </div>
-              <button className="btn blue">View course</button>
-            </div>
+            )}
+          </section>
+        </div>
+      </div>
 
-            <div className="stats">
-              <div className="stat">
-                <small>Courses registered</small>
-                <b>3</b>
-                <span>Keep going</span>
+      <footer className="site">
+        <div className="foot-inner">
+          <div className="foot-grid">
+            <div className="foot-brand">
+              <div className="brand">
+                Bridge<b>Tech</b>
               </div>
-              <div className="stat">
-                <small>Overall progress</small>
-                <b>47%</b>
-                <span>▲ 8% this month</span>
+              <p>
+                Bridging the university-industry gap — hands-on modules in Git,
+                APIs, CI/CD and cloud, verified by GitHub, not a quiz.
+              </p>
+              <div className="foot-social">
+                <a href="#">in</a>
+                <a href="#">gh</a>
+                <a href="#">x</a>
               </div>
-              <div className="stat">
-                <small>Certificates earned</small>
-                <b>1</b>
-                <span>1 course completed</span>
-              </div>
+            </div>
+            <div className="foot-col">
+              <h5>LEARNING</h5>
+              <a href="/home">Home</a>
+              <Link to="/student/courses">My courses</Link>
+              <Link to="/student/assessments">Assessments</Link>
+              <Link to="/student/practical-work">Practical work</Link>
+            </div>
+            <div className="foot-col">
+              <h5>PROGRESS</h5>
+              <Link to="/student/certificates">Certificates</Link>
+              <Link to="/student/github">GitHub activity</Link>
+              <a href="#">Transcripts</a>
+            </div>
+            <div className="foot-col">
+              <h5>SUPPORT</h5>
+              <a href="#">Help centre</a>
+              <a href="#">Contact us</a>
+              <a href="/">Public website</a>
             </div>
           </div>
-
-          <footer className="site">
-            <div className="foot-inner">
-              <div className="foot-grid">
-                <div className="foot-brand">
-                  <div className="brand">
-                    Bridge<b>Tech</b>
-                  </div>
-                  <p>
-                    Bridging the university-industry gap — hands-on modules in
-                    Git, APIs, CI/CD and cloud, verified by GitHub, not a quiz.
-                  </p>
-                  <div className="foot-social">
-                    <a href="#">in</a>
-                    <a href="#">gh</a>
-                    <a href="#">x</a>
-                  </div>
-                </div>
-                <div className="foot-col">
-                  <h5>LEARNING</h5>
-                  <a href="/home">Home</a>
-                  <a href="/client">My courses</a>
-                  <a href="#">Assessments</a>
-                  <a href="#">Practical work</a>
-                </div>
-                <div className="foot-col">
-                  <h5>PROGRESS</h5>
-                  <a href="#">Certificates</a>
-                  <a href="#">GitHub activity</a>
-                  <a href="#">Transcripts</a>
-                </div>
-                <div className="foot-col">
-                  <h5>SUPPORT</h5>
-                  <a href="#">Help centre</a>
-                  <a href="#">Contact us</a>
-                  <a href="/">Public website</a>
-                </div>
-              </div>
-              <div className="foot-bottom">
-                <span>© 2026 BridgeTech. All rights reserved.</span>
-                <div className="legal">
-                  <a href="#">Privacy</a>
-                  <a href="#">Terms</a>
-                </div>
-              </div>
+          <div className="foot-bottom">
+            <span>© 2026 BridgeTech. All rights reserved.</span>
+            <div className="legal">
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
             </div>
-          </footer>
-        </main>
-      </div>
-    </div>
+          </div>
+        </div>
+      </footer>
+    </StudentLayout>
   );
 }
