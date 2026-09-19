@@ -18,4 +18,12 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    files: ['src/components/ui/{button,sidebar}.jsx'],
+    rules: {
+      'react-refresh/only-export-components': ['error', {
+        allowExportNames: ['buttonVariants', 'useSidebar'],
+      }],
+    },
+  },
 ])
