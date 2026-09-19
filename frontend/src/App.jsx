@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
 import AppLayout from "./layouts/AppLayout";
 import "./pages/Admin.css";
 
@@ -37,48 +39,42 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/system-status" element={<SystemStatus />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/signup" element={<SignUp />} />
 
         <Route
           path="/admin/modules"
           element={<AdminSection title="Modules" />}
         />
-
         <Route
           path="/admin/lessons"
           element={<AdminSection title="Lessons" />}
         />
-
         <Route
           path="/admin/assessments"
           element={<AdminSection title="Assessments" />}
         />
-
         <Route
           path="/admin/practical-exercises"
           element={<AdminSection title="Practical Exercises" />}
         />
-
         <Route
           path="/admin/students"
           element={<AdminSection title="Students" />}
         />
-
         <Route
           path="/admin/administrators"
           element={<AdminSection title="Administrators" />}
         />
-
         <Route
           path="/admin/settings"
           element={<AdminSection title="Settings" />}
         />
-
       </Routes>
     </BrowserRouter>
   );
