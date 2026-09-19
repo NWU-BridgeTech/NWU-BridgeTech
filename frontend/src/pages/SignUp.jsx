@@ -144,15 +144,24 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    sessionStorage.setItem(signupDraftKey, JSON.stringify(form));
-  }, [form]);
+    const safeDraft = {
+      name: form.name,
+      email: form.email,
+      agree: form.agree,
+    };
+
+    sessionStorage.setItem(signupDraftKey, JSON.stringify(safeDraft));
+  }, [form.name, form.email, form.agree]);
 
   const confirmMismatch =
     form.confirmPassword.length > 0 &&
     form.confirmPassword !== form.password;
 
   function update(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }));
 
     if (errors[field] || errors.submit) {
       setErrors((currentErrors) => {
@@ -222,6 +231,7 @@ export default function SignUpPage() {
         email:
           "Your email address must contain at least 3 characters before the @ symbol.",
       });
+
       return;
     }
 
@@ -246,12 +256,26 @@ export default function SignUpPage() {
         }
       );
 
-      const data = await response.json();
+      let data = {};
+
+      try {
+        const contentType = response.headers.get("content-type");
+
+        if (
+          contentType &&
+          contentType.toLowerCase().includes("application/json")
+        ) {
+          data = await response.json();
+        }
+      } catch (error) {
+        console.error("Failed to parse server response:", error);
+      }
 
       if (!response.ok) {
         setErrors({
           submit: data.message || "Unable to create your account.",
         });
+
         return;
       }
 
@@ -269,6 +293,7 @@ export default function SignUpPage() {
       );
 
       sessionStorage.removeItem(signupDraftKey);
+
       setSubmitted(true);
     } catch (error) {
       console.error("Signup error:", error);
@@ -303,7 +328,7 @@ export default function SignUpPage() {
               <p>
                 Your BridgeTech account has been created successfully with{" "}
                 <strong>{form.email}</strong>. You can now start working
-                towards your learning goals and building your skills.
+                through your learning tracks.
               </p>
 
               <button
@@ -323,7 +348,8 @@ export default function SignUpPage() {
               <h1>Create your account.</h1>
 
               <p className="lede">
-                Set up your BridgeTech account to start working towards your learning goals and building your skills.
+                Set up your BridgeTech account to start working through tracks
+                and keep a record of what you've practised.
               </p>
 
               <div className="field">
@@ -398,7 +424,7 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     className="pw-toggle"
-                    onClick={() => setShowPw((v) => !v)}
+                    onClick={() => setShowPw((value) => !value)}
                     aria-pressed={showPw}
                   >
                     {showPw ? "Hide" : "Show"}
@@ -517,10 +543,7 @@ export default function SignUpPage() {
               onError={() => setPhotoFailed(true)}
             />
           ) : (
-            <div
-              className="su-photo-fallback"
-              aria-hidden="true"
-            />
+            <div className="su-photo-fallback" aria-hidden="true" />
           )}
 
           <div className="su-mark" aria-hidden="true">
@@ -529,7 +552,6 @@ export default function SignUpPage() {
 
           <div className="su-photo-copy">
             <p className="eyebrow">BridgeTech</p>
-
             <h2>Build Skills for the work ahead</h2>
           </div>
         </figure>
