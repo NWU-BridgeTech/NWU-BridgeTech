@@ -58,7 +58,7 @@ export default function ExploreCourses() {
     <>
       <section className="explore-section" aria-labelledby="explore-courses">
         <div className="section-title">
-          <h3 id="explore-courses">Explore Courses</h3>
+          <h2 id="explore-courses">Explore courses</h2>
         </div>
         <p className="explore-intro">
           Build your next skill. Find a course that fits your interests and
@@ -109,7 +109,7 @@ export default function ExploreCourses() {
                 <span className="tag">{course.category}</span>
                 <span className="course-level">{course.level}</span>
               </div>
-              <h4>{course.title}</h4>
+              <h3>{course.title}</h3>
               <p>{course.description}</p>
               <div className="meta">
                 <span>{course.lessons} lessons</span>
