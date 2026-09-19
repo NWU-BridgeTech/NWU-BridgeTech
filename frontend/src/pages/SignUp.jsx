@@ -153,10 +153,14 @@ export default function SignUpPage() {
       agree: form.agree,
     };
 
-    sessionStorage.setItem(
+    try {
+      sessionStorage.setItem(
       signupDraftKey,
       JSON.stringify(safeDraft)
     );
+    } catch (error) {
+      console.error("Failed to save signup draft:", error);
+    }
   }, [form.name, form.email, form.agree]);
 
   const confirmMismatch =
@@ -568,17 +572,14 @@ export default function SignUpPage() {
                   }
                 />
 
-                <label htmlFor="su-agree">
-                  I agree to the{" "}
-                  <Link to="/terms">
-                    Terms of Service
-                  </Link>{" "}
+                <span>
+                  <label htmlFor="su-agree">
+                    I agree to the
+                  </label>{" "}
+                  <Link to="/terms">Terms of Service</Link>{" "}
                   and{" "}
-                  <Link to="/privacy-policy">
-                    Privacy Policy
-                  </Link>
-                  .
-                </label>
+                  <Link to="/privacy-policy">Privacy Policy</Link>.
+                </span>
               </div>
 
               {errors.agree && (
