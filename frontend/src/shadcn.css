@@ -21,7 +21,7 @@
   --color-border: var(--border);
   --color-input: var(--border);
   --color-ring: var(--ring);
-  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive: #b42318;
   --color-destructive-foreground: white;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -38,23 +38,23 @@
 
 :root {
   --background: #fff;
-  --foreground: hsl(240 10% 3.9%);
-  --primary: hsl(240 5.9% 10%);
+  --foreground: #24272d;
+  --primary: #3159ad;
   --primary-foreground: #fff;
-  --secondary: hsl(240 4.8% 95.9%);
-  --secondary-foreground: hsl(240 10% 3.9%);
-  --muted: hsl(240 4.8% 95.9%);
-  --muted-foreground: hsl(240 3.8% 46.1%);
-  --accent: hsl(240 4.8% 95.9%);
-  --accent-foreground: hsl(240 10% 3.9%);
-  --popover: #fff;
-  --popover-foreground: hsl(240 10% 3.9%);
-  --border: hsl(240 5.9% 90%);
-  --ring: hsl(240 5.9% 10%);
+  --secondary: #f3f4f6;
+  --secondary-foreground: #24272d;
+  --muted: #f3f4f6;
+  --muted-foreground: #737780;
+  --accent: #eeeef0;
+  --accent-foreground: #24272d;
+  --popover: #24272d;
+  --popover-foreground: #fff;
+  --border: #e3e4e8;
+  --ring: #3159ad;
   --sidebar: #fafafa;
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-foreground: #424650;
+  --sidebar-accent: #eaf0fb;
+  --sidebar-accent-foreground: #244884;
   --sidebar-primary: hsl(240 5.9% 10%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
   --sidebar-border: hsl(220 13% 91%);

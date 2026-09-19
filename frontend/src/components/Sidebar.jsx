@@ -1,169 +1,110 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+  PanelsTopLeft, BookOpen, ClipboardCheck, Code2, GraduationCap,
+  LayoutDashboard, Layers, PanelLeftClose, PanelLeftOpen,
+  Settings2, ShieldCheck, Activity, X,
+} from "lucide-react";
+import {
+  Sidebar as SidebarRoot, SidebarContent, SidebarFooter, SidebarGroup,
+  SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu,
+  SidebarMenuButton, SidebarMenuItem, useSidebar,
+} from "@/components/ui/sidebar";
+import "./Sidebar.css";
 
-const sideNav = [
-  {
-    icon: "▣",
-    label: "Modules",
-    path: "/admin/modules",
-  },
-  {
-    icon: "☰",
-    label: "Lessons",
-    path: "/admin/lessons",
-  },
-  {
-    icon: "✓",
-    label: "Assessments",
-    path: "/admin/assessments",
-  },
-  {
-    icon: "↗",
-    label: "Practical exercises",
-    path: "/admin/practical-exercises",
-  },
+const groups = [
+  { label: "Workspace", items: [
+    { label: "Overview", path: "/admin", icon: LayoutDashboard, end: true },
+  ] },
+  { label: "Learning", items: [
+    { label: "Modules", path: "/admin/modules", icon: Layers },
+    { label: "Lessons", path: "/admin/lessons", icon: BookOpen },
+    { label: "Assessments", path: "/admin/assessments", icon: ClipboardCheck },
+    { label: "Practical exercises", path: "/admin/practical-exercises", icon: Code2 },
+  ] },
+  { label: "People", items: [
+    { label: "Students", path: "/admin/students", icon: GraduationCap },
+    { label: "Administrators", path: "/admin/administrators", icon: ShieldCheck },
+  ] },
+  { label: "Manage", items: [
+    { label: "System status", path: "/system-status", icon: Activity },
+    { label: "Settings", path: "/admin/settings", icon: Settings2 },
+  ] },
 ];
 
-const peopleNav = [
-  {
-    icon: "◉",
-    label: "Students",
-    path: "/admin/students",
-  },
-  {
-    icon: "◌",
-    label: "Administrators",
-    path: "/admin/administrators",
-  },
-];
+export default function Sidebar() {
+  const { pathname } = useLocation();
+  const { state, isMobile, toggleSidebar, setOpenMobile } = useSidebar();
+  const collapsed = state === "collapsed";
+  const closeMobile = () => { if (isMobile) setOpenMobile(false); };
 
-export default function Sidebar({ sidebarCollapsed, onToggle }) {
   return (
-<aside className="side">
-
-          <div className="brand">
-            Bridge<b>Tech</b>
-          </div>
-
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-            end
-            title="Dashboard"
+    <SidebarRoot collapsible="icon" className="bt-sidebar">
+      <SidebarHeader className="bt-sidebar-header">
+        <Link to="/admin" className="bt-brand" aria-label="BridgeTech admin home" onClick={closeMobile}>
+          <span className="bt-brand-mark" aria-hidden="true">bt</span>
+          <span className="bt-brand-copy"><strong>BridgeTech</strong><span>Administration</span></span>
+        </Link>
+        {!isMobile && (
+          <SidebarMenuButton
+            onClick={toggleSidebar}
+            tooltip={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            className="bt-nav-link bt-collapse-control"
           >
-            <span className="nav-icon">
-              ▦
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Dashboard</span>
-            )}
-          </NavLink>
-
-          <div className="label">
-            {!sidebarCollapsed && "LEARNING CONTENT"}
-          </div>
-
-          {sideNav.map((item) => (
-            <NavLink
-              to={item.path}
-              className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-              key={item.label}
-              title={item.label}
-            >
-              <span className="nav-icon">
-                {item.icon}
-              </span>
-
-              {!sidebarCollapsed && (
-                <span>{item.label}</span>
-              )}
-            </NavLink>
-          ))}
-
-          <div className="label">
-            {!sidebarCollapsed && "PEOPLE"}
-          </div>
-
-          {peopleNav.map((item) => (
-            <NavLink
-              to={item.path}
-              className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-              key={item.label}
-              title={item.label}
-            >
-              <span className="nav-icon">
-                {item.icon}
-              </span>
-
-              {!sidebarCollapsed && (
-                <span>{item.label}</span>
-              )}
-            </NavLink>
-          ))}
-
-          <div className="label">
-            {!sidebarCollapsed && "SYSTEM"}
-          </div>
-
-          <NavLink
-            to="/system-status"
-            className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-            title="System status"
-          >
-            <span className="nav-icon">
-              ◆
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>System status</span>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/admin/settings"
-            className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-            title="Settings"
-          >
-            <span className="nav-icon">
-              ⚙
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Settings</span>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/"
-            className={({ isActive }) => `nav${isActive ? " active" : ""}`}
-            title="Public website"
-          >
-            <span className="nav-icon">
-              ⌂
-            </span>
-
-            {!sidebarCollapsed && (
-              <span>Public website</span>
-            )}
-          </NavLink>
-
-          {/* SIDEBAR TOGGLE */}
-          <button
-            className="sidebar-toggle"
-            onClick={onToggle}
-            title={
-              sidebarCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-          >
-            {sidebarCollapsed ? "→" : "←"}
-
-            {!sidebarCollapsed && (
-              <span>Collapse</span>
-            )}
+            {collapsed ? <PanelLeftOpen aria-hidden="true" strokeWidth={1.7} /> : <PanelLeftClose aria-hidden="true" strokeWidth={1.7} />}
+            {!collapsed && <span>Collapse</span>}
+          </SidebarMenuButton>
+        )}
+        {isMobile && (
+          <button className="bt-close-navigation" onClick={closeMobile} aria-label="Close navigation">
+            <X size={18} aria-hidden="true" />
           </button>
+        )}
+      </SidebarHeader>
 
-        </aside>
+      <SidebarContent className="bt-sidebar-content">
+        <nav aria-label="Administration">
+          {groups.map(({ label, items }) => (
+            <SidebarGroup key={label} className="bt-nav-group">
+              <SidebarGroupLabel>{label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map(({ label: name, path, icon: Icon, end }) => (
+                    <SidebarMenuItem key={path}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === path || (!end && pathname.startsWith(`${path}/`))}
+                        tooltip={name}
+                        className="bt-nav-link"
+                      >
+                        <NavLink to={path} end={end} onClick={closeMobile} aria-label={name}>
+                          <Icon aria-hidden="true" strokeWidth={1.7} />
+                          <span>{name}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </nav>
+      </SidebarContent>
+
+      <SidebarFooter className="bt-sidebar-footer">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Public website" className="bt-nav-link">
+              <Link to="/" onClick={closeMobile} aria-label="Public website">
+                <PanelsTopLeft aria-hidden="true" strokeWidth={1.7} />
+                <span>Public website</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+        </SidebarMenu>
+      </SidebarFooter>
+    </SidebarRoot>
   );
 }
