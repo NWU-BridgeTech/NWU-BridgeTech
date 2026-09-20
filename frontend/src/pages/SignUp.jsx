@@ -124,8 +124,7 @@ const initialForm = {
 
 const signupDraftKey = "bridgetech-signup-draft";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 export default function SignUpPage() {
   const [form, setForm] = useState(() => {
@@ -154,18 +153,14 @@ export default function SignUpPage() {
     };
 
     try {
-      sessionStorage.setItem(
-      signupDraftKey,
-      JSON.stringify(safeDraft)
-    );
+      sessionStorage.setItem(signupDraftKey, JSON.stringify(safeDraft));
     } catch (error) {
       console.error("Failed to save signup draft:", error);
     }
   }, [form.name, form.email, form.agree]);
 
   const confirmMismatch =
-    form.confirmPassword.length > 0 &&
-    form.confirmPassword !== form.password;
+    form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
 
   function update(field, value) {
     setForm((currentForm) => ({
@@ -229,8 +224,7 @@ export default function SignUpPage() {
     const nameParts = form.name.trim().split(/\s+/);
 
     const firstName = nameParts[0];
-    const lastName =
-      nameParts.slice(1).join(" ") || firstName;
+    const lastName = nameParts.slice(1).join(" ") || firstName;
 
     const username = form.email
       .split("@")[0]
@@ -250,22 +244,19 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            firstName,
-            lastName,
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
       let data = {};
 
@@ -279,17 +270,12 @@ export default function SignUpPage() {
           data = await response.json();
         }
       } catch (error) {
-        console.error(
-          "Failed to parse server response:",
-          error
-        );
+        console.error("Failed to parse server response:", error);
       }
 
       if (!response.ok) {
         setErrors({
-          submit:
-            data.message ||
-            "Unable to create your account.",
+          submit: data.message || "Unable to create your account.",
         });
 
         return;
@@ -313,10 +299,7 @@ export default function SignUpPage() {
       }
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "refreshToken",
-        data.refreshToken
-      );
+      localStorage.setItem("refreshToken", data.refreshToken);
 
       localStorage.setItem(
         "user",
@@ -325,7 +308,7 @@ export default function SignUpPage() {
           username: data.username,
           email: data.email,
           role: data.role,
-        })
+        }),
       );
 
       sessionStorage.removeItem(signupDraftKey);
@@ -350,26 +333,23 @@ export default function SignUpPage() {
       </a>
 
       <header className="su-top">
-        <a
-          className="logo"
-          href="/"
-          aria-label="BridgeTech home"
-        >
+        <a className="logo" href="/" aria-label="BridgeTech home">
           Bridge<i>Tech</i>
         </a>
       </header>
 
       <main id="main" className="su-grid">
+        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
               <h2>Account created</h2>
+              <h2>Account created</h2>
 
               <p>
-                Your BridgeTech account has been created
-                successfully with{" "}
-                <strong>{form.email}</strong>. You can now
-                start working through your learning tracks.
+                Your BridgeTech account has been created successfully with{" "}
+                <strong>{form.email}</strong>. You can now start working through
+                your learning tracks.
               </p>
 
               <button
@@ -383,19 +363,14 @@ export default function SignUpPage() {
               </button>
             </div>
           ) : (
-            <form
-              className="su-form"
-              onSubmit={handleSubmit}
-              noValidate
-            >
+            <form className="su-form" onSubmit={handleSubmit} noValidate>
               <p className="eyebrow">Get started</p>
 
               <h1>Create your account.</h1>
 
               <p className="lede">
-                Set up your BridgeTech account to start
-                working through tracks and keep a record of
-                what you've practised.
+                Set up your BridgeTech account to start working through tracks
+                and keep a record of what you've practised.
               </p>
 
               <div className="field">
@@ -408,22 +383,13 @@ export default function SignUpPage() {
                   autoComplete="name"
                   placeholder="Jordan Ellis"
                   value={form.name}
-                  onChange={(e) =>
-                    update("name", e.target.value)
-                  }
+                  onChange={(e) => update("name", e.target.value)}
                   aria-invalid={Boolean(errors.name)}
-                  aria-describedby={
-                    errors.name
-                      ? "su-name-error"
-                      : undefined
-                  }
+                  aria-describedby={errors.name ? "su-name-error" : undefined}
                 />
 
                 {errors.name && (
-                  <p
-                    className="field-error"
-                    id="su-name-error"
-                  >
+                  <p className="field-error" id="su-name-error">
                     {errors.name}
                   </p>
                 )}
@@ -439,31 +405,20 @@ export default function SignUpPage() {
                   autoComplete="email"
                   placeholder="you@university.edu"
                   value={form.email}
-                  onChange={(e) =>
-                    update("email", e.target.value)
-                  }
+                  onChange={(e) => update("email", e.target.value)}
                   aria-invalid={Boolean(errors.email)}
-                  aria-describedby={
-                    errors.email
-                      ? "su-email-error"
-                      : undefined
-                  }
+                  aria-describedby={errors.email ? "su-email-error" : undefined}
                 />
 
                 {errors.email && (
-                  <p
-                    className="field-error"
-                    id="su-email-error"
-                  >
+                  <p className="field-error" id="su-email-error">
                     {errors.email}
                   </p>
                 )}
               </div>
 
               <div className="field">
-                <label htmlFor="su-password">
-                  Password
-                </label>
+                <label htmlFor="su-password">Password</label>
 
                 <div className="pw-row">
                   <input
@@ -473,14 +428,10 @@ export default function SignUpPage() {
                     autoComplete="new-password"
                     placeholder="At least 8 characters"
                     value={form.password}
-                    onChange={(e) =>
-                      update("password", e.target.value)
-                    }
+                    onChange={(e) => update("password", e.target.value)}
                     aria-invalid={Boolean(errors.password)}
                     aria-describedby={
-                      errors.password
-                        ? "su-password-error"
-                        : "su-password-hint"
+                      errors.password ? "su-password-error" : "su-password-hint"
                     }
                     style={{ paddingRight: "64px" }}
                   />
@@ -488,9 +439,7 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     className="pw-toggle"
-                    onClick={() =>
-                      setShowPw((value) => !value)
-                    }
+                    onClick={() => setShowPw((value) => !value)}
                     aria-pressed={showPw}
                   >
                     {showPw ? "Hide" : "Show"}
@@ -498,26 +447,18 @@ export default function SignUpPage() {
                 </div>
 
                 {errors.password ? (
-                  <p
-                    className="field-error"
-                    id="su-password-error"
-                  >
+                  <p className="field-error" id="su-password-error">
                     {errors.password}
                   </p>
                 ) : (
-                  <p
-                    className="field-hint"
-                    id="su-password-hint"
-                  >
+                  <p className="field-hint" id="su-password-hint">
                     At least 8 characters.
                   </p>
                 )}
               </div>
 
               <div className="field">
-                <label htmlFor="su-confirm-password">
-                  Confirm password
-                </label>
+                <label htmlFor="su-confirm-password">Confirm password</label>
 
                 <input
                   id="su-confirm-password"
@@ -526,32 +467,20 @@ export default function SignUpPage() {
                   autoComplete="new-password"
                   placeholder="Re-enter your password"
                   value={form.confirmPassword}
-                  onChange={(e) =>
-                    update(
-                      "confirmPassword",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => update("confirmPassword", e.target.value)}
                   aria-invalid={Boolean(
-                    errors.confirmPassword ||
-                      confirmMismatch
+                    errors.confirmPassword || confirmMismatch,
                   )}
                   aria-describedby={
-                    errors.confirmPassword ||
-                    confirmMismatch
+                    errors.confirmPassword || confirmMismatch
                       ? "su-confirm-password-error"
                       : undefined
                   }
                 />
 
-                {(errors.confirmPassword ||
-                  confirmMismatch) && (
-                  <p
-                    className="field-error"
-                    id="su-confirm-password-error"
-                  >
-                    {errors.confirmPassword ||
-                      "Passwords don't match."}
+                {(errors.confirmPassword || confirmMismatch) && (
+                  <p className="field-error" id="su-confirm-password-error">
+                    {errors.confirmPassword || "Passwords don't match."}
                   </p>
                 )}
               </div>
@@ -561,41 +490,25 @@ export default function SignUpPage() {
                   id="su-agree"
                   type="checkbox"
                   checked={form.agree}
-                  onChange={(e) =>
-                    update("agree", e.target.checked)
-                  }
+                  onChange={(e) => update("agree", e.target.checked)}
                   aria-invalid={Boolean(errors.agree)}
-                  aria-describedby={
-                    errors.agree
-                      ? "su-agree-error"
-                      : undefined
-                  }
+                  aria-describedby={errors.agree ? "su-agree-error" : undefined}
                 />
 
                 <span>
-                  <label htmlFor="su-agree">
-                    I agree to the
-                  </label>{" "}
-                  <Link to="/terms">Terms of Service</Link>{" "}
-                  and{" "}
+                  <label htmlFor="su-agree">I agree to the</label>{" "}
+                  <Link to="/terms">Terms of Service</Link> and{" "}
                   <Link to="/privacy-policy">Privacy Policy</Link>.
                 </span>
               </div>
 
               {errors.agree && (
-                <p
-                  className="field-error"
-                  id="su-agree-error"
-                >
+                <p className="field-error" id="su-agree-error">
                   {errors.agree}
                 </p>
               )}
 
-              {errors.submit && (
-                <p className="field-error">
-                  {errors.submit}
-                </p>
-              )}
+              {errors.submit && <p className="field-error">{errors.submit}</p>}
 
               <button
                 type="submit"
@@ -605,10 +518,7 @@ export default function SignUpPage() {
               >
                 {isLoading ? (
                   <>
-                    <span
-                      className="signup-spinner"
-                      aria-hidden="true"
-                    />
+                    <span className="signup-spinner" aria-hidden="true" />
                     Creating account...
                   </>
                 ) : (
@@ -617,13 +527,13 @@ export default function SignUpPage() {
               </button>
 
               <p className="su-switch">
-                Already have an account?{" "}
-                <a href="/login">Sign in</a>
+                Already have an account? <a href="/login">Sign in</a>
               </p>
             </form>
           )}
         </div>
 
+        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
@@ -634,10 +544,7 @@ export default function SignUpPage() {
               onError={() => setPhotoFailed(true)}
             />
           ) : (
-            <div
-              className="su-photo-fallback"
-              aria-hidden="true"
-            />
+            <div className="su-photo-fallback" aria-hidden="true" />
           )}
 
           <div className="su-mark" aria-hidden="true">

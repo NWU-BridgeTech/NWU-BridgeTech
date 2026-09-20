@@ -359,6 +359,7 @@
   width: 100%;
   align-self: stretch;
   display: block;
+  order: -1;
 }
 
 .su-photo img {
