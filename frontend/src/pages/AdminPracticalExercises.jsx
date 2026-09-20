@@ -12,6 +12,11 @@ export default function AdminPracticalExercises() {
   const [editingExercise, setEditingExercise] = useState(null);
   const [message, setMessage] = useState("");
 
+  const publishedCount = exercises.filter(
+    (exercise) => exercise.status === "Published",
+  ).length;
+  const draftCount = exercises.length - publishedCount;
+
   const visibleExercises = exercises.filter((exercise) => {
     const matchesSearch = `${exercise.title} ${exercise.description}`
       .toLowerCase()
@@ -240,14 +245,8 @@ export default function AdminPracticalExercises() {
         >
           <h2 id="exercise-list-heading">All exercises</h2>
           <p className="sub">
-            {exercises.length} exercises ·{" "}
-            {
-              exercises.filter((exercise) => exercise.status === "Published")
-                .length
-            }{" "}
-            published ·{" "}
-            {exercises.filter((exercise) => exercise.status === "Draft").length}{" "}
-            drafts
+            {exercises.length} exercises · {publishedCount} published ·{" "}
+            {draftCount} drafts
           </p>
           <div className="module-toolbar">
             <div className="module-search">

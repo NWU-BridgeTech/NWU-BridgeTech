@@ -13,6 +13,11 @@ export default function AdminAdministrators() {
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [message, setMessage] = useState("");
 
+  const activeCount = administrators.filter(
+    (admin) => admin.status === "Active",
+  ).length;
+  const inactiveCount = administrators.length - activeCount;
+
   const visibleAdmins = administrators.filter((admin) => {
     const matchesSearch = `${admin.name} ${admin.email}`
       .toLowerCase()
@@ -184,14 +189,8 @@ export default function AdminAdministrators() {
         <section className="card" aria-labelledby="administrator-list-heading">
           <h2 id="administrator-list-heading">All administrators</h2>
           <p className="sub">
-            {administrators.length} administrators ·{" "}
-            {administrators.filter((admin) => admin.status === "Active").length}{" "}
-            active ·{" "}
-            {
-              administrators.filter((admin) => admin.status === "Inactive")
-                .length
-            }{" "}
-            inactive
+            {administrators.length} administrators · {activeCount} active ·{" "}
+            {inactiveCount} inactive
           </p>
           <div className="module-toolbar">
             <div className="module-search">

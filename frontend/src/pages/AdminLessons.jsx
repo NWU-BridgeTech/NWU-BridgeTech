@@ -12,6 +12,11 @@ export default function AdminLessons() {
   const [editingLesson, setEditingLesson] = useState(null);
   const [message, setMessage] = useState("");
 
+  const publishedCount = lessons.filter(
+    (lesson) => lesson.status === "Published",
+  ).length;
+  const draftCount = lessons.length - publishedCount;
+
   const visibleLessons = lessons.filter((lesson) => {
     const matchesSearch = `${lesson.title} ${lesson.description}`
       .toLowerCase()
@@ -112,7 +117,7 @@ export default function AdminLessons() {
       </header>
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {message}
+          {!editingLesson && message}
         </p>
         {editingLesson && (
           <section
@@ -193,6 +198,9 @@ export default function AdminLessons() {
               <p className="sub">
                 Publishing requires lesson content and a published module.
               </p>
+              <p className="modules-message" role="status">
+                {message}
+              </p>
               <div className="module-form-actions">
                 <button className="btn blue" type="submit">
                   Save lesson
@@ -217,10 +225,7 @@ export default function AdminLessons() {
         >
           <h2 id="lesson-list-heading">All lessons</h2>
           <p className="sub">
-            {lessons.length} lessons ·{" "}
-            {lessons.filter((lesson) => lesson.status === "Published").length}{" "}
-            published ·{" "}
-            {lessons.filter((lesson) => lesson.status === "Draft").length}{" "}
+            {lessons.length} lessons · {publishedCount} published · {draftCount}{" "}
             drafts
           </p>
           <div className="module-toolbar">

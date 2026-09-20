@@ -11,9 +11,18 @@
   border-radius: 16px;
 }
 
-.admin-page .top-actions{display:flex;gap:10px;align-items:center}
-.admin-page .select,.admin-page .btn{border:1px solid #d8dee8;background:#fff;padding:11px 14px;border-radius:7px;font-size:13px}
-.admin-page .btn.blue{background:#3159ad;color:#fff;border-color:#3159ad}
+.admin-page .btn {
+  border: 1px solid #d8dee8;
+  background: #fff;
+  padding: 11px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.admin-page .btn.blue {
+  background: #3159ad;
+  color: #fff;
+  border-color: #3159ad;
+}
 .admin-page .top h1 {
   margin: 0;
   color: #202733;
@@ -65,12 +74,11 @@
   outline: 2px solid #3159ad;
   outline-offset: 3px;
 }
-.admin-page .content{padding:22px 42px}
-.admin-page .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-bottom:30px}
-.admin-page .metric{padding:6px 0}
-.admin-page .metric small{color:#7a8491}
-.admin-page .metric b{font-size:29px;display:block;margin:8px 0}
+.admin-page .content {
+  padding: 22px 42px;
+}
 .admin-page .dashboard-metrics {
+  display: grid;
   gap: 20px;
   grid-template-columns: repeat(3, 1fr);
   align-items: stretch;
@@ -97,6 +105,7 @@
 }
 
 .admin-page .dashboard-metrics b {
+  display: block;
   margin: 12px 0 0;
   font-size: 30px;
   font-weight: 600;
@@ -121,29 +130,31 @@
   color: #8a5a12;
 }
 
-.admin-page .metric-neutral .metric-note {
-  color: #687384;
+.admin-page .card {
+  background: #fff;
+  border: 1px solid #e6e9ed;
+  border-radius: 17px;
+  padding: 25px;
 }
-.admin-page .change{font-size:12px;color:#16835d}
-.admin-page .change.red{color:#ca5865}
-.admin-page .grid{display:grid;grid-template-columns:1.7fr .85fr;gap:28px}
-.admin-page .card{background:#fff;border:1px solid #e6e9ed;border-radius:17px;padding:25px}
-.admin-page .card h3{margin:0;font-size:18px}
-.admin-page .sub{color:#7b8490;margin:9px 0;font-size:13px}
-.admin-page .lower{margin-top:28px}
-.admin-page .table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
-.admin-page .table th,.admin-page .table td{text-align:left;padding:13px 8px;border-bottom:1px solid #edf0f3}
-.admin-page .table th{color:#8a929e;font-weight:600}
-.admin-page .pill{font-size:10px;background:#eaf8f1;color:#19815c;padding:5px 8px;border-radius:10px;font-weight:800}
-@media(max-width:950px){
-.admin-page .top{margin-left:22px;margin-right:22px}
-.admin-page .top,.admin-page .content{padding-left:22px;padding-right:22px}
-.admin-page .metrics{grid-template-columns:repeat(2,1fr)}
-.admin-page .grid{grid-template-columns:1fr}
+.admin-page .card h3 {
+  margin: 0;
+  font-size: 18px;
 }
-@media(max-width:550px){
-.admin-page .metrics{grid-template-columns:1fr}
-.admin-page .top-actions{display:none}
+.admin-page .sub {
+  color: #7b8490;
+  margin: 9px 0;
+  font-size: 13px;
+}
+@media (max-width: 950px) {
+  .admin-page .top {
+    margin-left: 22px;
+    margin-right: 22px;
+  }
+  .admin-page .top,
+  .admin-page .content {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
 }
 .admin-page .platform-status {
   display: flex;

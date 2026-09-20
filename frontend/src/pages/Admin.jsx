@@ -1,87 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
-import { systemStatus } from "../data/adminData";
+import { attentionItems, learningStats, systemStatus } from "../data/adminData";
 import { getSystemStatus } from "../utils/systemStatus";
 import "./Admin.css";
-
-const attentionItems = [
-  {
-    label: "Submissions to review",
-    value: "12",
-    note: "Practical work awaiting feedback",
-    description: "Pending submissions by exercise",
-    items: [
-      { title: "Git basics", detail: "5 submissions awaiting feedback" },
-      {
-        title: "Branching and merging",
-        detail: "4 submissions awaiting feedback",
-      },
-      {
-        title: "Pull request workflow",
-        detail: "3 submissions awaiting feedback",
-      },
-    ],
-  },
-  {
-    label: "Students needing support",
-    value: "8",
-    note: "Learners who need a check-in",
-    description: "Recent follow-ups · 3 of 8 students",
-    items: [
-      { title: "Sam Wilson", detail: "CI/CD Pipelines · 41% complete" },
-      {
-        title: "Taylor Adams",
-        detail: "Git & Version Control · Practical task overdue",
-      },
-      {
-        title: "Jordan Smith",
-        detail: "APIs & Web Services · Quiz retry needed",
-      },
-    ],
-  },
-  {
-    label: "Content to publish",
-    value: "3",
-    note: "Draft lessons awaiting review",
-    description: "Lessons to review before publishing",
-    items: [
-      { title: "Introduction to APIs", detail: "API module update · Draft" },
-      {
-        title: "Working with API responses",
-        detail: "Examples updated · Draft",
-      },
-      { title: "API authentication", detail: "Resources added · Draft" },
-    ],
-  },
-];
-
-const learningStats = [
-  {
-    label: "Active students",
-    value: "1,248",
-    description: "Learners active this month",
-  },
-  {
-    label: "Course completions",
-    value: "7,682",
-    description: "Courses completed this month",
-  },
-  {
-    label: "Average quiz score",
-    value: "81.6%",
-    description: "Across completed quizzes",
-  },
-  {
-    label: "Practical completion rate",
-    value: "68.8%",
-    description: "Of assigned practical work",
-  },
-];
 
 export default function Admin() {
   const statusSummary = getSystemStatus(systemStatus.services);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedButtonRef = useRef(null);
   const currentHour = new Date().getHours();
 
   let greeting;
@@ -134,7 +61,10 @@ export default function Admin() {
                 key={item.label}
                 aria-expanded={selectedItem === item}
                 aria-controls="attention-details"
-                onClick={() => setSelectedItem(item)}
+                onClick={(event) => {
+                  selectedButtonRef.current = event.currentTarget;
+                  setSelectedItem(item);
+                }}
               >
                 <small>{item.label}</small>
                 <b>{item.value}</b>
@@ -158,11 +88,8 @@ export default function Admin() {
                     className="attention-close"
                     aria-label="Close details"
                     onClick={() => {
-                      const selectedButton = document.querySelector(
-                        ".dashboard-metrics .selected",
-                      );
                       setSelectedItem(null);
-                      selectedButton?.focus();
+                      selectedButtonRef.current?.focus();
                     }}
                   >
                     <span aria-hidden="true">×</span>

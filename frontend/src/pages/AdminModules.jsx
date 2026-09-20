@@ -11,6 +11,11 @@ export default function AdminModules() {
   const [editingModule, setEditingModule] = useState(null);
   const [message, setMessage] = useState("");
 
+  const publishedCount = modules.filter(
+    (module) => module.status === "Published",
+  ).length;
+  const draftCount = modules.length - publishedCount;
+
   const visibleModules = modules.filter((module) => {
     const matchesSearch = `${module.title} ${module.description}`
       .toLowerCase()
@@ -48,7 +53,7 @@ export default function AdminModules() {
     setStatus("All");
     setEditingModule(null);
     setMessage(
-      `${title} saved for this session. Changes reset when you reload.`,
+      `${title} saved locally. Changes reset when you leave this page or reload.`,
     );
   }
 
@@ -81,7 +86,7 @@ export default function AdminModules() {
 
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {message}
+          {!editingModule && message}
         </p>
         {editingModule && (
           <section
@@ -91,7 +96,7 @@ export default function AdminModules() {
             <h2 id="module-editor-heading">
               {editingModule.id ? "Edit module" : "Create module"}
             </h2>
-            <p className="sub">Changes are kept for this session only.</p>
+            <p className="sub">Changes are kept while this page is open.</p>
             <form key={editingModule.id ?? "new"} onSubmit={saveModule}>
               <label htmlFor="module-title">Module title</label>
               <input
@@ -139,6 +144,9 @@ export default function AdminModules() {
                   )}
                 </div>
               </div>
+              <p className="modules-message" role="status">
+                {message}
+              </p>
               <div className="module-form-actions">
                 <button className="btn blue" type="submit">
                   Save module
@@ -162,21 +170,11 @@ export default function AdminModules() {
           className="card module-list"
           aria-labelledby="module-list-heading"
         >
-          <div className="module-list-heading">
-            <div>
-              <h2 id="module-list-heading">All modules</h2>
-              <p className="sub">
-                {modules.length} modules ·{" "}
-                {
-                  modules.filter((module) => module.status === "Published")
-                    .length
-                }{" "}
-                published ·{" "}
-                {modules.filter((module) => module.status === "Draft").length}{" "}
-                drafts
-              </p>
-            </div>
-          </div>
+          <h2 id="module-list-heading">All modules</h2>
+          <p className="sub">
+            {modules.length} modules · {publishedCount} published · {draftCount}{" "}
+            drafts
+          </p>
           <div className="module-toolbar">
             <div className="module-search">
               <label htmlFor="module-search">Search modules</label>

@@ -13,6 +13,11 @@ export default function AdminAssessments() {
   const [editingAssessment, setEditingAssessment] = useState(null);
   const [message, setMessage] = useState("");
 
+  const publishedCount = assessments.filter(
+    (assessment) => assessment.status === "Published",
+  ).length;
+  const draftCount = assessments.length - publishedCount;
+
   const visibleAssessments = assessments.filter((assessment) => {
     const matchesSearch = `${assessment.title} ${assessment.description}`
       .toLowerCase()
@@ -337,18 +342,8 @@ export default function AdminAssessments() {
         >
           <h2 id="assessment-list-heading">All assessments</h2>
           <p className="sub">
-            {assessments.length} assessments ·{" "}
-            {
-              assessments.filter(
-                (assessment) => assessment.status === "Published",
-              ).length
-            }{" "}
-            published ·{" "}
-            {
-              assessments.filter((assessment) => assessment.status === "Draft")
-                .length
-            }{" "}
-            drafts
+            {assessments.length} assessments · {publishedCount} published ·{" "}
+            {draftCount} drafts
           </p>
           <div className="module-toolbar">
             <div className="module-search">

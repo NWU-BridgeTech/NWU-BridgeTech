@@ -493,3 +493,110 @@ export const systemStatus = {
     },
   ],
 };
+
+export const initialAdminSettings = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  role: "Administrator",
+  submissionAlerts: true,
+  studentSupportAlerts: true,
+  systemAlerts: true,
+  weeklySummary: false,
+};
+
+export const adminNotificationOptions = [
+  {
+    key: "submissionAlerts",
+    title: "New submissions",
+    description: "When practical work is ready for review.",
+  },
+  {
+    key: "studentSupportAlerts",
+    title: "Students needing support",
+    description: "When a learner is flagged for follow-up.",
+  },
+  {
+    key: "systemAlerts",
+    title: "Service issues",
+    description: "When a platform service is degraded or unavailable.",
+  },
+  {
+    key: "weeklySummary",
+    title: "Weekly summary",
+    description: "A summary of learning activity and outstanding work.",
+  },
+];
+
+export const attentionItems = [
+  {
+    label: "Submissions to review",
+    value: "12",
+    note: "Practical work awaiting feedback",
+    description: "Pending submissions by exercise",
+    items: [
+      { title: "Git basics", detail: "5 submissions awaiting feedback" },
+      {
+        title: "Branching and merging",
+        detail: "4 submissions awaiting feedback",
+      },
+      {
+        title: "Pull request workflow",
+        detail: "3 submissions awaiting feedback",
+      },
+    ],
+  },
+  {
+    label: "Students needing support",
+    value: "8",
+    note: "Learners who need a check-in",
+    description: "Recent follow-ups · 3 of 8 students",
+    items: [
+      { title: "Sam Wilson", detail: "CI/CD Pipelines · 41% complete" },
+      {
+        title: "Taylor Adams",
+        detail: "Git & Version Control · Practical task overdue",
+      },
+      {
+        title: "Jordan Smith",
+        detail: "APIs & Web Services · Quiz retry needed",
+      },
+    ],
+  },
+  {
+    label: "Content to publish",
+    value: "3",
+    note: "Draft lessons awaiting review",
+    description: "Lessons to review before publishing",
+    items: [
+      { title: "Introduction to APIs", detail: "API module update · Draft" },
+      {
+        title: "Working with API responses",
+        detail: "Examples updated · Draft",
+      },
+      { title: "API authentication", detail: "Resources added · Draft" },
+    ],
+  },
+];
+
+export const learningStats = [
+  {
+    label: "Active students",
+    value: "1,248",
+    description: "Learners active this month",
+  },
+  {
+    label: "Course completions",
+    value: "7,682",
+    description: "Courses completed this month",
+  },
+  {
+    label: "Average quiz score",
+    value: "81.6%",
+    description: "Across completed quizzes",
+  },
+  {
+    label: "Practical completion rate",
+    value: "68.8%",
+    description: "Of assigned practical work",
+  },
+];

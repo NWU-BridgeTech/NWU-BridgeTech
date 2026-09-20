@@ -15,32 +15,12 @@ import AdminAssessments from "./pages/AdminAssessments";
 import AdminPracticalExercises from "./pages/AdminPracticalExercises";
 import AdminStudents from "./pages/AdminStudents";
 import AdminAdministrators from "./pages/AdminAdministrators";
+import AdminSettings from "./pages/AdminSettings";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
-import AppLayout from "./layouts/AppLayout";
 import "./pages/Admin.css";
-
-function AdminSection({ title }) {
-  return (
-    <AppLayout>
-      <header className="top">
-        <div>
-          <h1>{title}</h1>
-
-          <p>BridgeTech Admin</p>
-        </div>
-      </header>
-
-      <div className="content">
-        <section className="card">
-          <p className="sub">This section will be built here.</p>
-        </section>
-      </div>
-    </AppLayout>
-  );
-}
 
 function App() {
   return (
@@ -78,10 +58,7 @@ function App() {
 
         <Route path="/admin/administrators" element={<AdminAdministrators />} />
 
-        <Route
-          path="/admin/settings"
-          element={<AdminSection title="Settings" />}
-        />
+        <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
       </Routes>
