@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
+import { systemStatus } from "../data/adminData";
+import { getSystemStatus } from "../utils/systemStatus";
 import "./Admin.css";
 
 const attentionItems = [
@@ -78,6 +80,7 @@ const learningStats = [
 ];
 
 export default function Admin() {
+  const statusSummary = getSystemStatus(systemStatus.services);
   const [selectedItem, setSelectedItem] = useState(null);
   const currentHour = new Date().getHours();
 
@@ -178,14 +181,17 @@ export default function Admin() {
           </div>
         </section>
 
-        <section className="platform-status" aria-label="Platform status">
+        <section
+          className={`platform-status status-${statusSummary.status}`}
+          aria-label="Platform status"
+        >
           <div>
             <p className="platform-status-heading">
               <span className="status-dot" aria-hidden="true" />
-              All systems operational
+              {statusSummary.title}
             </p>
             <p className="platform-status-details">
-              Auto-grading, content delivery and repository checks
+              Service availability and reported issues
             </p>
           </div>
           <Link to="/system-status">

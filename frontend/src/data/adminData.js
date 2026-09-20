@@ -444,3 +444,52 @@ export const initialAdministrators = [
     lastActive: "2 weeks ago",
   },
 ];
+
+export const systemStatus = {
+  checkedAt: "2026-09-20T08:30:00Z",
+  services: [
+    {
+      id: "web",
+      name: "Web app",
+      status: "operational",
+      message: "Student and administrator pages are available.",
+    },
+    {
+      id: "api",
+      name: "API",
+      status: "operational",
+      message: "Application requests are being handled normally.",
+    },
+    {
+      id: "database",
+      name: "Database",
+      status: "operational",
+      message: "Learning records can be read and saved.",
+    },
+    {
+      id: "grading",
+      name: "Auto-grading",
+      status: "operational",
+      message: "Submitted work is being processed normally.",
+    },
+    {
+      id: "github",
+      name: "GitHub verification",
+      status: "degraded",
+      message:
+        "Repository checks are taking longer than usual. Results may be delayed.",
+    },
+    {
+      id: "summaries",
+      name: "AI video summaries",
+      status: "operational",
+      message: "Video summaries are available.",
+    },
+    {
+      id: "certificates",
+      name: "Certificates",
+      status: "operational",
+      message: "Certificates can be generated and viewed.",
+    },
+  ],
+};

@@ -354,3 +354,35 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+.admin-page .status-operational {
+  background: #f3faf6;
+  border-color: #cce5d7;
+  color: #23734e;
+}
+
+.admin-page .status-degraded {
+  background: #fffbf2;
+  border-color: #ecd7aa;
+  color: #8a5a12;
+}
+
+.admin-page .status-unavailable {
+  background: #fff4f3;
+  border-color: #edc9c5;
+  color: #9a3c35;
+}
+
+.admin-page .status-unknown {
+  background: #f3f5f8;
+  border-color: #d8dee8;
+  color: #536176;
+}
+
+.admin-page .platform-status .status-dot {
+  background: currentColor;
+}
+
+.admin-page .platform-status .platform-status-heading {
+  color: inherit;
+}

@@ -1,159 +1,76 @@
-.system-status-page .change.amber {
-  color: #a56a13;
-}
-
-.system-status-page .pill.watch {
-  background: #fdf1de;
-  color: #a56a13;
-}
-
-.admin-page .system-status-page .chart {
-  height: 220px;
-  margin-top: 20px;
-  background: none;
-}
-
-.system-status-page .status-line {
+.admin-page .system-summary {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 24px;
   margin-bottom: 24px;
-  font-size: 13.5px;
-  color: #5d6878;
+  padding: 24px;
+  border: 1px solid;
+  border-radius: 12px;
 }
 
-.system-status-page .status-line .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #19815c;
-  flex-shrink: 0;
+.admin-page .system-status-page h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
 }
 
-.system-status-page .status-line .dot.watch {
-  background: #d99a1f;
+.admin-page .system-summary p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.system-status-page .status-line b {
-  color: #202733;
-}
-
-.system-status-page .status-line .updated {
-  margin-left: auto;
-  color: #9aa3af;
+.admin-page .system-last-check {
+  display: grid;
+  gap: 6px;
+  text-align: right;
   font-size: 12px;
+  line-height: 1.5;
 }
 
-.system-status-page .svc-name {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+.admin-page .service-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.system-status-page .svc-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.system-status-page .svc-dot.ok {
-  background: #19815c;
-}
-
-.system-status-page .svc-dot.watch {
-  background: #d99a1f;
-}
-
-.system-status-page .uptime-strip {
-  display: flex;
-  gap: 2px;
-  margin-top: 14px;
-}
-
-.system-status-page .uptime-strip i {
-  flex: 1;
-  height: 22px;
-  border-radius: 2px;
-  background: #e3f3ea;
-}
-
-.system-status-page .uptime-strip i.watch {
-  background: #f6dfae;
-}
-
-.system-status-page .uptime-caption {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #9aa3af;
-  margin-top: 6px;
-}
-
-.system-status-page .note {
-  padding: 14px 0;
+.admin-page .service-table th,
+.admin-page .service-table td {
+  padding: 18px 12px;
   border-bottom: 1px solid #edf0f3;
+  text-align: left;
 }
 
-.system-status-page .note:last-child {
-  border-bottom: none;
+.admin-page .service-table thead th {
+  background: #f8f9fb;
+  color: #687384;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.system-status-page .note .t {
-  font-size: 13.5px;
-  font-weight: 700;
+.admin-page .service-table tbody th {
+  width: 24%;
+  font-weight: 500;
 }
 
-.system-status-page .note .d {
-  font-size: 12.5px;
-  color: #7b8490;
-  margin: 3px 0;
+.admin-page .service-table td {
+  color: #536176;
 }
 
-.system-status-page .note .time {
-  font-size: 11.5px;
-  color: #9aa3af;
+.admin-page .service-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.system-status-page footer.admin-foot {
-  border-top: 1px solid #e6e9ee;
-  background: #fff;
-  padding: 20px 42px;
-  margin-top: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12.5px;
-  color: #8a929e;
-}
-
-.system-status-page footer.admin-foot .fbrand {
-  font-weight: 800;
-  color: #202733;
-}
-
-.system-status-page footer.admin-foot .fbrand b {
-  color: #315db6;
-}
-
-.system-status-page footer.admin-foot .flinks {
-  display: flex;
-  gap: 20px;
-}
-
-.system-status-page footer.admin-foot .flinks a {
-  color: #8a929e;
-}
-
-.system-status-page footer.admin-foot .flinks a:hover {
-  color: #315db6;
-}
-
-@media(max-width:550px) {
-  .system-status-page footer.admin-foot {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 20px 22px;
-  }
+.admin-page .system-empty {
+  padding: 24px 0;
+  color: #687384;
+  font-size: 14px;
 }
