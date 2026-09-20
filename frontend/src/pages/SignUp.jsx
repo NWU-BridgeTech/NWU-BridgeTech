@@ -240,49 +240,6 @@ export default function SignUpPage() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        "http://localhost:5174/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            firstName,
-            lastName,
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({
-          submit: data.message || "Unable to create your account.",
-        });
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          role: data.role,
-        })
-      );
-
-      return;
-    }
-
     setIsLoading(true);
     setErrors({});
 
