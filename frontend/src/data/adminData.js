@@ -59,3 +59,177 @@ export const initialModules = [
     students: 0,
   },
 ];
+
+export const initialLessons = [
+  {
+    id: 1,
+    moduleId: 1,
+    title: "Getting started with Git",
+    description: "Create a repository and record your first commit.",
+    duration: 20,
+    status: "Published",
+    content:
+      "Initialise a repository with git init. Use git status to inspect your changes, git add to stage files and git commit to save a snapshot of your work.",
+  },
+  {
+    id: 2,
+    moduleId: 1,
+    title: "Branching and merging",
+    description: "Work on changes independently and combine them safely.",
+    duration: 30,
+    status: "Published",
+    content:
+      "Create a branch for a small change. Commit your work, switch back to the main branch and merge your changes. Review the resulting history.",
+  },
+  {
+    id: 3,
+    moduleId: 2,
+    title: "Introduction to APIs",
+    description: "Understand how applications communicate over HTTP.",
+    duration: 25,
+    status: "Draft",
+    content:
+      "An API exposes operations that another application can call. Explore a GET request and identify its URL, headers, status code and response body.",
+  },
+  {
+    id: 4,
+    moduleId: 2,
+    title: "Working with API responses",
+    description: "Read JSON responses and handle errors.",
+    duration: 20,
+    status: "Draft",
+    content:
+      "Inspect a JSON response and identify its fields. Compare successful and unsuccessful HTTP responses, then explain how your application could handle each.",
+  },
+  {
+    id: 5,
+    moduleId: 2,
+    title: "API authentication",
+    description: "Learn how APIs control access to protected resources.",
+    duration: 30,
+    status: "Draft",
+    content:
+      "Compare public and protected endpoints. Discuss how authentication credentials are included in a request and why secrets must not be committed to a repository.",
+  },
+  {
+    id: 6,
+    moduleId: 3,
+    title: "Cloud hosting basics",
+    description: "Explore where applications run and how they are hosted.",
+    duration: 25,
+    status: "Published",
+    content:
+      "Compare local hosting with cloud hosting. Identify the compute, storage and network resources a small web application needs.",
+  },
+  {
+    id: 7,
+    moduleId: 4,
+    title: "Your first build pipeline",
+    description: "Automate the build and test steps for a project.",
+    duration: 35,
+    status: "Published",
+    content:
+      "Break a build pipeline into checkout, dependency installation, testing and build steps. Explain why a failed test should stop deployment.",
+  },
+  {
+    id: 8,
+    moduleId: 5,
+    title: "Choosing a branching strategy",
+    description: "Compare approaches to organising team changes.",
+    duration: 20,
+    status: "Draft",
+    content:
+      "Compare short-lived feature branches with longer release branches. Choose a strategy for a small team and explain the trade-offs.",
+  },
+];
+
+export const initialAssessments = [
+  {
+    id: 1,
+    moduleId: 1,
+    title: "Git fundamentals quiz",
+    description: "Check understanding of repositories, commits and branches.",
+    duration: 15,
+    passMark: 70,
+    status: "Published",
+    questions: [
+      {
+        id: 1,
+        text: "Which command records staged changes?",
+        options: ["git status", "git commit", "git branch", "git fetch"],
+        answer: 1,
+      },
+      {
+        id: 2,
+        text: "What is a branch used for?",
+        options: [
+          "Deleting repository history",
+          "Storing passwords",
+          "Developing changes independently",
+          "Installing Git",
+        ],
+        answer: 2,
+      },
+    ],
+  },
+  {
+    id: 2,
+    moduleId: 2,
+    title: "HTTP and APIs quiz",
+    description: "Review requests, responses and common HTTP methods.",
+    duration: 20,
+    passMark: 70,
+    status: "Draft",
+    questions: [
+      {
+        id: 1,
+        text: "Which HTTP method normally retrieves a resource?",
+        options: ["GET", "POST", "DELETE", "PATCH"],
+        answer: 0,
+      },
+      {
+        id: 2,
+        text: "What does an HTTP 404 response indicate?",
+        options: [
+          "Request succeeded",
+          "Resource not found",
+          "Server is restarting",
+          "Authentication succeeded",
+        ],
+        answer: 1,
+      },
+    ],
+  },
+  {
+    id: 3,
+    moduleId: 3,
+    title: "Cloud essentials quiz",
+    description: "Check the basics of cloud hosting and infrastructure.",
+    duration: 15,
+    passMark: 70,
+    status: "Published",
+    questions: [
+      {
+        id: 1,
+        text: "What is a benefit of cloud computing?",
+        options: [
+          "No need for security",
+          "Unlimited free storage",
+          "Resources can scale with demand",
+          "Applications never fail",
+        ],
+        answer: 2,
+      },
+    ],
+  },
+  {
+    id: 4,
+    moduleId: 4,
+    title: "Pipeline readiness quiz",
+    description: "Review automated builds, tests and deployment steps.",
+    duration: 20,
+    passMark: 80,
+    status: "Draft",
+    questions: [],
+  },
+];

@@ -4,6 +4,8 @@ import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
+import AdminLessons from "./pages/AdminLessons";
+import AdminAssessments from "./pages/AdminAssessments";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -53,12 +55,12 @@ function App() {
 
         <Route
           path="/admin/lessons"
-          element={<AdminSection title="Lessons" />}
+          element={<AdminLessons />}
         />
 
         <Route
           path="/admin/assessments"
-          element={<AdminSection title="Assessments" />}
+          element={<AdminAssessments />}
         />
 
         <Route
