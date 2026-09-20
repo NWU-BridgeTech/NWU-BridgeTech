@@ -99,18 +99,24 @@
   color: #242a33;
 }
 
-.bt-nav-link[aria-current="page"] {
+.bt-nav-link[aria-current="page"],
+.bt-nav-link[aria-current="location"] {
   background: #eaf0fb;
   color: #244884;
   font-weight: 550;
 }
 
-.bt-nav-link[aria-current="page"] > svg {
+.bt-nav-link[aria-current="page"] > svg,
+.bt-nav-link[aria-current="location"] > svg {
   color: #3159ad;
 }
 
 .bt-nav-link:focus-visible,
 .bt-brand:focus-visible,
+.bt-close-navigation:focus-visible {
+  outline: 2px solid #3159ad;
+  outline-offset: 2px;
+}
 
 .bt-sidebar-footer {
   padding: 12px 12px 16px;
@@ -136,13 +142,18 @@
   display: none;
 }
 
-[data-slot="sidebar"][data-state="collapsed"] .bt-sidebar [data-sidebar="group-label"] {
+[data-slot="sidebar"][data-state="collapsed"]
+  .bt-sidebar
+  [data-sidebar="group-label"] {
   /* Keep the heading's space so navigation icons do not move vertically. */
   margin-top: 0;
   visibility: hidden;
 }
 
-[data-slot="sidebar"][data-state="collapsed"] .bt-sidebar .bt-nav-group + .bt-nav-group::before {
+[data-slot="sidebar"][data-state="collapsed"]
+  .bt-sidebar
+  .bt-nav-group
+  + .bt-nav-group::before {
   content: "";
   position: absolute;
   top: 6px;
@@ -165,11 +176,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bt-sidebar, .bt-sidebar * {
+  .bt-sidebar,
+  .bt-sidebar * {
     transition: none !important;
   }
 }
-
 
 .bt-close-navigation {
   position: absolute;
@@ -187,4 +198,3 @@
 .bt-close-navigation:hover {
   background: #eff0f2;
 }
-

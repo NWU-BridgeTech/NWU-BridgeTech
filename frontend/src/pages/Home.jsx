@@ -1,274 +1,248 @@
-import "./Home.css";
-
-const myCourses = [
-  {
-    number: "01",
-    title: "Git & Version Control",
-    description:
-      "Learn branches, pull requests, code reviews and collaborative development.",
-    progress: 62,
-    lessonsDone: 5,
-    lessonsTotal: 8,
-  },
-  {
-    number: "02",
-    title: "APIs & Web Services",
-    description: "Understand REST, HTTP, JSON and the basics of authentication.",
-    progress: 34,
-    lessonsDone: 3,
-    lessonsTotal: 9,
-  },
-  {
-    number: "03",
-    title: "Cloud Basics",
-    description:
-      "Explore hosting, cloud platforms, deployment and serverless concepts.",
-    progress: 18,
-    lessonsDone: 2,
-    lessonsTotal: 10,
-  },
-];
-
-const exploreCourses = [
-  {
-    number: "01",
-    title: "CI/CD Pipelines",
-    description:
-      "Learn automated builds, testing and delivery workflows used by modern development teams.",
-    lessons: 8,
-    level: "Intermediate",
-  },
-  {
-    number: "02",
-    title: "Advanced Git Workflows",
-    description:
-      "Go deeper into branching strategies, collaboration and professional repository workflows.",
-    lessons: 7,
-    level: "Intermediate",
-  },
-  {
-    number: "03",
-    title: "Web Development Essentials",
-    description:
-      "Build a stronger understanding of web applications, clients, servers and common workflows.",
-    lessons: 10,
-    level: "Beginner",
-  },
-  {
-    number: "04",
-    title: "Software Team Practices",
-    description:
-      "Explore collaboration, code reviews, task management and working effectively in teams.",
-    lessons: 6,
-    level: "Beginner",
-  },
-];
-
-const filters = ["All courses", "Development", "Cloud", "DevOps"];
+import formatDeadline from "../utils/formatDeadline";
+import { Link } from "react-router-dom";
+import StudentLayout from "../layouts/StudentLayout";
+import {
+  student,
+  certificates,
+  myCourses,
+  lastActivity,
+  assessments,
+  practicalWork,
+} from "../data/studentDashboard";
 
 export default function Home() {
+  const resumeCourse = myCourses.find(
+    (course) => course.number === lastActivity.courseNumber,
+  );
+  const hour = new Date().getHours();
+  let greeting = "Good evening";
+  if (hour < 12) {
+    greeting = "Good morning";
+  } else if (hour < 18) {
+    greeting = "Good afternoon";
+  }
+  const lessonsDone = myCourses.reduce(
+    (total, course) => total + course.lessonsDone,
+    0,
+  );
+  const lessonsTotal = myCourses.reduce(
+    (total, course) => total + course.lessonsTotal,
+    0,
+  );
+  const activeCourses = myCourses.filter(
+    (course) => course.lessonsDone < course.lessonsTotal,
+  );
+  const overallProgress =
+    lessonsTotal > 0 ? Math.round((lessonsDone / lessonsTotal) * 100) : 0;
+  const now = new Date();
+
+  const upcomingTasks = [...practicalWork, ...assessments].filter(
+    (item) =>
+      item.status !== "Passed" &&
+      item.status !== "Completed" &&
+      item.status !== "Awaiting review",
+  );
+
+  function taskPriority(item) {
+    if (item.dueAt && new Date(item.dueAt) < now) return 0;
+    if (item.status === "Changes requested") return 1;
+    if (item.dueAt) return 2;
+    return 3;
+  }
+
+  upcomingTasks.sort((first, second) => {
+    const priorityDifference = taskPriority(first) - taskPriority(second);
+    if (priorityDifference !== 0) return priorityDifference;
+    if (first.dueAt && second.dueAt) {
+      return new Date(first.dueAt) - new Date(second.dueAt);
+    }
+    if (first.dueAt) return -1;
+    if (second.dueAt) return 1;
+    return 0;
+  });
+
   return (
-    <div className="home-page">
-      <div className="app">
-        <aside className="side">
-          <div className="brand">
-            Bridge<b>Tech</b>
-          </div>
-
-          <div className="label">LEARNING</div>
-          <a className="nav active" href="/home">
-            Home
-          </a>
-          <a className="nav" href="/client">
-            My courses
-          </a>
-          <a className="nav" href="#">
-            Assessments
-          </a>
-          <a className="nav" href="#">
-            Practical work
-          </a>
-
-          <div className="label">YOUR PROGRESS</div>
-          <a className="nav" href="#">
-            Certificates
-          </a>
-          <a className="nav" href="#">
-            GitHub activity
-          </a>
-
-          <div className="label">OTHER</div>
-          <a className="nav" href="/">
-            Public website
-          </a>
-        </aside>
-
-        <main className="main">
-          <header className="top">
+    <StudentLayout title="Home">
+      <div className="content">
+        <section
+          className="overview-progress"
+          aria-labelledby="overall-progress-heading"
+        >
+          <div className="overview-progress-heading">
             <div>
-              <h1>Student Home</h1>
-              <p>Find your next course and keep learning.</p>
+              <h2 id="overall-progress-heading">Your progress</h2>
+              <p>
+                {greeting}, {student.firstName}. Here’s how your learning is
+                going.
+              </p>
             </div>
-            <div className="profile">
-              <button className="btn">Notifications</button>
-              <div className="avatar">AM</div>
-              <span style={{ fontSize: 13, fontWeight: 650 }}>Alex M.</span>
-            </div>
-          </header>
-
-          <div className="content">
-            <div className="welcome">
-              <div>
-                <h2>Good morning, Alex 👋</h2>
-                <p>Choose a course to continue learning or explore something new.</p>
-              </div>
-              <div className="search">
-                <input type="text" placeholder="Search courses..." />
-                <button className="btn blue">Search</button>
-              </div>
-            </div>
-
-            <div className="section-title">
-              <h3>My Courses</h3>
-              <a href="/client">View all courses →</a>
-            </div>
-
-            <div className="my-grid">
-              {myCourses.map((course) => (
-                <div className="course" key={course.number}>
-                  <div className="course-top">
-                    <span className="tag">IN PROGRESS</span>
-                    <small style={{ color: "#89929e" }}>{course.number}</small>
-                  </div>
-                  <h4>{course.title}</h4>
-                  <p>{course.description}</p>
-                  <div className="progress-label">
-                    <span>Progress</span>
-                    <b>{course.progress}%</b>
-                  </div>
-                  <div className="bar">
-                    <i style={{ width: `${course.progress}%` }} />
-                  </div>
-                  <div className="course-footer">
-                    <small>
-                      {course.lessonsDone} of {course.lessonsTotal} lessons
-                    </small>
-                    <button className="btn blue">Continue</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="section-title">
-              <h3>Explore Courses</h3>
-            </div>
-
-            <div className="filters">
-              {filters.map((filter, i) => (
-                <button
-                  className={`filter${i === 0 ? " active" : ""}`}
-                  key={filter}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-
-            <div className="explore-grid">
-              {exploreCourses.map((course) => (
-                <div className="explore-card" key={course.number}>
-                  <span className="number">{course.number}</span>
-                  <h4>{course.title}</h4>
-                  <p>{course.description}</p>
-                  <div className="meta">
-                    <span>{course.lessons} lessons</span>
-                    <span>{course.level}</span>
-                  </div>
-                  <button className="btn blue" style={{ width: "100%" }}>
-                    Register for course
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="recommend">
-              <div>
-                <h3>Recommended for you</h3>
-                <p>
-                  Based on your progress in Git & Version Control, CI/CD Pipelines
-                  is a good next step.
-                </p>
-              </div>
-              <button className="btn blue">View course</button>
-            </div>
-
-            <div className="stats">
-              <div className="stat">
-                <small>Courses registered</small>
-                <b>3</b>
-                <span>Keep going</span>
-              </div>
-              <div className="stat">
-                <small>Overall progress</small>
-                <b>47%</b>
-                <span>▲ 8% this month</span>
-              </div>
-              <div className="stat">
-                <small>Certificates earned</small>
-                <b>1</b>
-                <span>1 course completed</span>
-              </div>
-            </div>
+            <strong>
+              {overallProgress}
+              <span>%</span>
+            </strong>
           </div>
+          <progress
+            aria-label="Overall lesson completion"
+            value={lessonsDone}
+            max={lessonsTotal || 1}
+          />
+          <div className="overview-progress-footer">
+            <span>
+              {lessonsDone} of {lessonsTotal} lessons completed
+            </span>
+            <Link to="/student/courses">View my courses →</Link>
+          </div>
+        </section>
 
-          <footer className="site">
-            <div className="foot-inner">
-              <div className="foot-grid">
-                <div className="foot-brand">
-                  <div className="brand">
-                    Bridge<b>Tech</b>
-                  </div>
-                  <p>
-                    Bridging the university-industry gap — hands-on modules in
-                    Git, APIs, CI/CD and cloud, verified by GitHub, not a quiz.
-                  </p>
-                  <div className="foot-social">
-                    <a href="#">in</a>
-                    <a href="#">gh</a>
-                    <a href="#">x</a>
-                  </div>
-                </div>
-                <div className="foot-col">
-                  <h5>LEARNING</h5>
-                  <a href="/home">Home</a>
-                  <a href="/client">My courses</a>
-                  <a href="#">Assessments</a>
-                  <a href="#">Practical work</a>
-                </div>
-                <div className="foot-col">
-                  <h5>PROGRESS</h5>
-                  <a href="#">Certificates</a>
-                  <a href="#">GitHub activity</a>
-                  <a href="#">Transcripts</a>
-                </div>
-                <div className="foot-col">
-                  <h5>SUPPORT</h5>
-                  <a href="#">Help centre</a>
-                  <a href="#">Contact us</a>
-                  <a href="/">Public website</a>
-                </div>
-              </div>
-              <div className="foot-bottom">
-                <span>© 2026 BridgeTech. All rights reserved.</span>
-                <div className="legal">
-                  <a href="#">Privacy</a>
-                  <a href="#">Terms</a>
-                </div>
-              </div>
+        <section
+          className="deadline-section"
+          aria-labelledby="deadlines-heading"
+        >
+          <div className="deadline-heading">
+            <h2 id="deadlines-heading">Upcoming &amp; needs attention</h2>
+            <span>All times SAST</span>
+          </div>
+          {upcomingTasks.length > 0 ? (
+            <ul className="deadline-list">
+              {upcomingTasks.map((item) => {
+                const overdue = item.dueAt && new Date(item.dueAt) < now;
+                const page =
+                  item.type === "assessment"
+                    ? "/student/assessments"
+                    : "/student/practical-work";
+
+                return (
+                  <li key={item.id}>
+                    <div className="deadline-task">
+                      <h3>{item.title}</h3>
+                      <p>
+                        {item.course} ·{" "}
+                        {item.type === "assessment"
+                          ? "Assessment"
+                          : "Practical work"}
+                      </p>
+                      <span className={`activity-status ${item.tone}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="deadline-date">
+                      {item.dueAt ? (
+                        <>
+                          <span className={overdue ? "deadline-overdue" : ""}>
+                            {overdue ? "Overdue" : "Due"}
+                          </span>
+                          <time dateTime={item.dueAt}>
+                            {formatDeadline(item.dueAt)}
+                          </time>
+                        </>
+                      ) : (
+                        <span>No deadline</span>
+                      )}
+                    </div>
+                    <Link
+                      className="deadline-action"
+                      to={page}
+                      aria-label={`${item.action}: ${item.title}`}
+                    >
+                      {item.action} <span aria-hidden="true">→</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="deadline-empty">
+              <h3>You’re all caught up</h3>
+              <p>
+                No upcoming deadlines or tasks need your attention. Keep
+                learning at your own pace.
+              </p>
             </div>
-          </footer>
-        </main>
+          )}
+        </section>
+
+        <div className="activity-heading">
+          <p>Lesson and task actions are coming soon.</p>
+        </div>
+        <div className="home-resume">
+          <section className="resume-card" aria-labelledby="continue-heading">
+            <div className="action-heading">
+              <h3 id="continue-heading">Continue learning</h3>
+              <span className="tag">LAST ACTIVE COURSE</span>
+            </div>
+            {resumeCourse ? (
+              <>
+                <p className="resume-course">{resumeCourse.title}</p>
+                <h4>{lastActivity.lesson}</h4>
+                <p className="lesson-meta">
+                  Lesson {resumeCourse.lessonsDone + 1} of{" "}
+                  {resumeCourse.lessonsTotal}
+                  <span aria-hidden="true"> · </span>
+                  About {lastActivity.minutes} minutes
+                </p>
+                <div className="resume-progress">
+                  <div className="progress-label">
+                    <span>
+                      {resumeCourse.lessonsDone} of {resumeCourse.lessonsTotal}{" "}
+                      lessons completed
+                    </span>
+                    <b>
+                      {Math.round(
+                        (resumeCourse.lessonsDone / resumeCourse.lessonsTotal) *
+                          100,
+                      )}
+                      %
+                    </b>
+                  </div>
+                  <progress
+                    aria-label={`${resumeCourse.title} lesson completion`}
+                    value={resumeCourse.lessonsDone}
+                    max={resumeCourse.lessonsTotal}
+                  />
+                </div>
+                <button className="btn blue resume-button" disabled>
+                  Resume lesson <span aria-hidden="true">→</span>
+                </button>
+              </>
+            ) : (
+              <div className="activity-empty">
+                <h4>Your next step starts here</h4>
+                <p>
+                  Explore the course catalogue to find something you’d like to
+                  learn.
+                </p>
+                <a className="btn blue" href="/student/courses#explore-courses">
+                  Explore courses
+                </a>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <dl
+          className="stats home-summary"
+          aria-label="Learning progress summary"
+        >
+          <div className="stat">
+            <dt>Active courses</dt>
+            <dd>{activeCourses.length}</dd>
+            <span>Currently in progress</span>
+          </div>
+          <div className="stat">
+            <dt id="certificates-summary">Certificates earned</dt>
+            <dd>{certificates.length}</dd>
+            <span>Recognising your completed work</span>
+          </div>
+        </dl>
       </div>
-    </div>
+
+      <footer className="home-footer">
+        <span>© {new Date().getFullYear()} BridgeTech</span>
+        <nav aria-label="Help and legal information">
+          <button type="button">Help</button>
+          <button type="button">Terms &amp; Privacy</button>
+        </nav>
+      </footer>
+    </StudentLayout>
   );
 }

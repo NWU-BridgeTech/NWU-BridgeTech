@@ -1,0 +1,94 @@
+.student-practical .practical-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.student-practical .practical-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-practical .practical-heading p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.student-practical .practical-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.student-practical .practical-summary p {
+  margin: 0;
+}
+
+.student-practical .exercise-course {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.student-practical .exercise-deadline time {
+  display: block;
+  font-size: 12px;
+  color: #202939;
+}
+
+.student-practical .exercise-overdue {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a13922;
+}
+
+.student-practical .practical-empty {
+  padding: var(--card-padding);
+  border: 1px dashed #cbd4e0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.student-practical .practical-empty h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.student-practical .practical-empty p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.student-practical .practical-note {
+  margin: 16px 0 0;
+}
+
+@media (max-width: 700px) {
+  .student-practical .practical-table tbody tr {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .student-practical .practical-table td:last-child {
+    text-align: left;
+  }
+
+  .student-practical .exercise-deadline::before {
+    content: "Deadline";
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+}
