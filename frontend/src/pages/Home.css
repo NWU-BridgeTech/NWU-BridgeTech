@@ -256,7 +256,7 @@
 .home-page .overview-progress h2 {
   margin: 0;
   font-size: 26px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 .home-page .overview-progress p {
   margin: 8px 0 0;
@@ -302,7 +302,7 @@
 .home-page .deadline-heading h2 {
   font-size: 20px;
   margin: 0;
-  letter-spacing: -.3px;
+  letter-spacing: -0.3px;
 }
 .home-page .deadline-heading > span {
   font-size: 12px;
@@ -375,7 +375,7 @@
 }
 .home-page .home-resume button:disabled {
   cursor: not-allowed;
-  opacity: .7;
+  opacity: 0.7;
 }
 .home-page .deadline-empty {
   padding: 24px;
@@ -390,25 +390,6 @@
 .home-page .deadline-empty p {
   margin: 0;
   color: var(--text-secondary);
-}
-.home-page .welcome {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-.home-page .welcome h1 {
-  font-size: clamp(26px, 2.5vw, 32px);
-  letter-spacing: -0.6px;
-  line-height: 1.2;
-  margin: 0;
-}
-.home-page .welcome p {
-  color: var(--text-secondary);
-  margin: 8px 0 0;
-  font-size: 15px;
-  line-height: 1.6;
 }
 .home-page .search {
   display: flex;
@@ -486,10 +467,6 @@
   font-size: 12px;
   color: var(--text-secondary);
 }
-.home-page .course-top small {
-  font-size: 11px;
-  color: #687385;
-}
 .home-page .course-next {
   margin: 12px 0 24px;
   padding: 16px;
@@ -562,16 +539,6 @@
 }
 .home-page .courses-dialog .course-preview-note {
   margin-top: 12px;
-}
-.home-page .footer-course-link {
-  display: block;
-  border: 0;
-  background: none;
-  padding: 0;
-  font-size: 13px;
-  color: #5d6878;
-  margin-bottom: 11px;
-  text-align: left;
 }
 .home-page button:focus-visible,
 .home-page a:focus-visible {
@@ -822,25 +789,10 @@
   margin-bottom: 12px;
   flex-wrap: wrap;
 }
-.home-page .preview-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #5d6878;
-  background: #e9edf2;
-  border-radius: 4px;
-  padding: 5px 7px;
-}
 .home-page .activity-heading p {
   font-size: 12px;
   color: #687385;
   margin: 0;
-}
-.home-page .next-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: 20px;
 }
 .home-page .resume-card,
 .home-page .attention-card {
@@ -927,21 +879,6 @@
   justify-content: space-between;
   gap: 32px;
   min-height: 44px;
-}
-.home-page .next-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-.home-page .attention-count {
-  display: grid;
-  place-items: center;
-  background: #edf3ff;
-  color: #274e9f;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
-  font-weight: 750;
 }
 .home-page .attention-list {
   list-style: none;
@@ -1102,15 +1039,6 @@
   font-weight: 600;
   color: #5d6878;
 }
-.home-page .attention-action {
-  border: 0;
-  background: transparent;
-  padding: 8px 0 0;
-  color: #274e9f;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-}
 .home-page .activity-empty {
   padding: 30px 0;
 }
@@ -1167,9 +1095,6 @@
   .home-page .my-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .home-page .welcome {
-    flex-wrap: wrap;
-  }
 }
 @media (max-width: 700px) {
   .home-page .stats.home-summary {
@@ -1191,9 +1116,6 @@
     padding-left: 20px;
     padding-right: 20px;
   }
-  .home-page .welcome {
-    display: block;
-  }
   .home-page .search {
     margin-top: 18px;
   }
@@ -1203,9 +1125,6 @@
   .home-page .my-grid,
   .home-page .explore-grid,
   .home-page .stats {
-    grid-template-columns: 1fr;
-  }
-  .home-page .next-actions {
     grid-template-columns: 1fr;
   }
   .home-page .practical-section .section-title {

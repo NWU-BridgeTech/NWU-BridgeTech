@@ -1,4 +1,4 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { PanelsTopLeft, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   Sidebar as SidebarRoot,
@@ -16,11 +16,6 @@ import {
 import "./Sidebar.css";
 
 export default function NavigationSidebar({ groups, homePath, title }) {
-  const location = useLocation();
-  const currentUrl = location.pathname + location.hash;
-  const selectedSection = groups.some((group) =>
-    group.items.some((item) => item.href === currentUrl),
-  );
   const { state, isMobile, toggleSidebar, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const toggleLabel = collapsed ? "Expand sidebar" : "Collapse sidebar";
@@ -77,37 +72,22 @@ export default function NavigationSidebar({ groups, homePath, title }) {
               <SidebarGroupLabel>{label}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {items.map(({ label: name, path, href, icon: Icon, end }) => (
-                    <SidebarMenuItem key={path || href}>
+                  {items.map(({ label: name, path, icon: Icon, end }) => (
+                    <SidebarMenuItem key={path}>
                       <SidebarMenuButton
                         asChild
                         tooltip={name}
                         className="bt-nav-link"
                       >
-                        {href ? (
-                          <a
-                            href={href}
-                            onClick={closeMobile}
-                            aria-label={name}
-                            aria-current={
-                              href === currentUrl ? "location" : undefined
-                            }
-                          >
-                            <Icon aria-hidden="true" strokeWidth={1.7} />
-                            <span>{name}</span>
-                          </a>
-                        ) : (
-                          <NavLink
-                            to={path}
-                            end={end}
-                            onClick={closeMobile}
-                            aria-label={name}
-                            aria-current={selectedSection ? false : "page"}
-                          >
-                            <Icon aria-hidden="true" strokeWidth={1.7} />
-                            <span>{name}</span>
-                          </NavLink>
-                        )}
+                        <NavLink
+                          to={path}
+                          end={end}
+                          onClick={closeMobile}
+                          aria-label={name}
+                        >
+                          <Icon aria-hidden="true" strokeWidth={1.7} />
+                          <span>{name}</span>
+                        </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}

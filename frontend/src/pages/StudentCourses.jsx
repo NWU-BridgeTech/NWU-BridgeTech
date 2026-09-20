@@ -54,14 +54,18 @@ export default function StudentCourses() {
   return (
     <StudentLayout title="My courses">
       <div className="content student-courses">
-        <section className="enrolled-courses" aria-labelledby="enrolled-heading">
+        <section
+          className="enrolled-courses"
+          aria-labelledby="enrolled-heading"
+        >
           <div className="enrolled-heading">
             <div>
               <h2 id="enrolled-heading">Your learning</h2>
               <p>Pick up a course and take the next step.</p>
             </div>
             <span className="enrolled-count">
-              {activeCourses.length} {activeCourses.length === 1 ? "active course" : "active courses"}
+              {activeCourses.length}{" "}
+              {activeCourses.length === 1 ? "active course" : "active courses"}
             </span>
           </div>
           <div className="my-grid">
@@ -73,7 +77,9 @@ export default function StudentCourses() {
             <div className="explore-empty">
               <h3>No courses yet</h3>
               <p>Explore the catalogue below to find your first course.</p>
-              <a className="text-action" href="#explore-courses">Explore courses →</a>
+              <a className="text-action" href="#explore-courses">
+                Explore courses →
+              </a>
             </div>
           ) : (
             <p className="course-preview-note enrolled-note">

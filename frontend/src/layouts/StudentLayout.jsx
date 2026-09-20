@@ -29,7 +29,9 @@ export default function StudentLayout({ title, children }) {
           </div>
           <div className="home-page">
             <header className="top">
-              <h1 className="page-title" id="student-page-title">{title}</h1>
+              <h1 className="page-title" id="student-page-title">
+                {title}
+              </h1>
               <div className="profile">
                 <Notifications />
                 <div className="avatar">{student.initials}</div>

@@ -4,15 +4,29 @@ export const student = {
   firstName: "Alex",
   displayName: "Alex M.",
   initials: "AM",
-  certificatesEarned: 1,
 };
+
+export const certificates = [
+  {
+    id: "development-foundations",
+    course: "Development Foundations",
+    issuedAt: "2026-09-12",
+  },
+];
 
 export const githubConnection = {
   username: null,
   repository: null,
+  repositoryUrl: null,
+  lastSyncedAt: null,
 };
 
-export const courseCategories = ["All courses", "Development", "Cloud", "DevOps"];
+export const courseCategories = [
+  "All courses",
+  "Development",
+  "Cloud",
+  "DevOps",
+];
 
 export const myCourses = [
   {
@@ -114,17 +128,7 @@ export const lastActivity = {
   minutes: 15,
 };
 
-export const attentionItems = [
-  {
-    id: "git-practical",
-    type: "practical",
-    status: "Changes requested",
-    tone: "warning",
-    title: "Your first pull request",
-    course: "Git & Version Control",
-    detail: "Review the feedback and update your submission.",
-    action: "View feedback",
-  },
+export const assessments = [
   {
     id: "api-assessment",
     type: "assessment",
@@ -200,7 +204,8 @@ export const practicalWork = [
 
 export const courseRecommendation = {
   courseNumber: "01",
-  description: "Interested in automation? Explore CI/CD Pipelines after you’re comfortable with Git and the command line.",
+  description:
+    "Interested in automation? Explore CI/CD Pipelines after you’re comfortable with Git and the command line.",
 };
 
 export const initialNotifications = [

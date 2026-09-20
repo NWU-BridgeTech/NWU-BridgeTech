@@ -1,10 +1,12 @@
+import formatDeadline from "../utils/formatDeadline";
 import { Link } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import {
   student,
+  certificates,
   myCourses,
   lastActivity,
-  attentionItems,
+  assessments,
   practicalWork,
 } from "../data/studentDashboard";
 
@@ -30,17 +32,15 @@ export default function Home() {
   const activeCourses = myCourses.filter(
     (course) => course.lessonsDone < course.lessonsTotal,
   );
-  const overallProgress = lessonsTotal > 0
-    ? Math.round((lessonsDone / lessonsTotal) * 100)
-    : 0;
+  const overallProgress =
+    lessonsTotal > 0 ? Math.round((lessonsDone / lessonsTotal) * 100) : 0;
   const now = new Date();
 
-  // Practical work is the source of truth when a task appears in both lists.
-  const otherTasks = attentionItems.filter(
-    (item) => !practicalWork.some((work) => work.id === item.id),
-  );
-  const upcomingTasks = [...practicalWork, ...otherTasks].filter(
-    (item) => item.status !== "Passed" && item.status !== "Awaiting review",
+  const upcomingTasks = [...practicalWork, ...assessments].filter(
+    (item) =>
+      item.status !== "Passed" &&
+      item.status !== "Completed" &&
+      item.status !== "Awaiting review",
   );
 
   function taskPriority(item) {
@@ -61,28 +61,25 @@ export default function Home() {
     return 0;
   });
 
-  function formatDeadline(dueAt) {
-    return new Date(dueAt).toLocaleString("en-ZA", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "Africa/Johannesburg",
-    });
-  }
-
   return (
     <StudentLayout title="Home">
       <div className="content">
-        <section className="overview-progress" aria-labelledby="overall-progress-heading">
+        <section
+          className="overview-progress"
+          aria-labelledby="overall-progress-heading"
+        >
           <div className="overview-progress-heading">
             <div>
               <h2 id="overall-progress-heading">Your progress</h2>
-              <p>{greeting}, {student.firstName}. Here’s how your learning is going.</p>
+              <p>
+                {greeting}, {student.firstName}. Here’s how your learning is
+                going.
+              </p>
             </div>
-            <strong>{overallProgress}<span>%</span></strong>
+            <strong>
+              {overallProgress}
+              <span>%</span>
+            </strong>
           </div>
           <progress
             aria-label="Overall lesson completion"
@@ -90,12 +87,17 @@ export default function Home() {
             max={lessonsTotal || 1}
           />
           <div className="overview-progress-footer">
-            <span>{lessonsDone} of {lessonsTotal} lessons completed</span>
+            <span>
+              {lessonsDone} of {lessonsTotal} lessons completed
+            </span>
             <Link to="/student/courses">View my courses →</Link>
           </div>
         </section>
 
-        <section className="deadline-section" aria-labelledby="deadlines-heading">
+        <section
+          className="deadline-section"
+          aria-labelledby="deadlines-heading"
+        >
           <div className="deadline-heading">
             <h2 id="deadlines-heading">Upcoming &amp; needs attention</h2>
             <span>All times SAST</span>
@@ -104,16 +106,24 @@ export default function Home() {
             <ul className="deadline-list">
               {upcomingTasks.map((item) => {
                 const overdue = item.dueAt && new Date(item.dueAt) < now;
-                const page = item.type === "assessment"
-                  ? "/student/assessments"
-                  : "/student/practical-work";
+                const page =
+                  item.type === "assessment"
+                    ? "/student/assessments"
+                    : "/student/practical-work";
 
                 return (
                   <li key={item.id}>
                     <div className="deadline-task">
                       <h3>{item.title}</h3>
-                      <p>{item.course} · {item.type === "assessment" ? "Assessment" : "Practical work"}</p>
-                      <span className={`activity-status ${item.tone}`}>{item.status}</span>
+                      <p>
+                        {item.course} ·{" "}
+                        {item.type === "assessment"
+                          ? "Assessment"
+                          : "Practical work"}
+                      </p>
+                      <span className={`activity-status ${item.tone}`}>
+                        {item.status}
+                      </span>
                     </div>
                     <div className="deadline-date">
                       {item.dueAt ? (
@@ -121,11 +131,19 @@ export default function Home() {
                           <span className={overdue ? "deadline-overdue" : ""}>
                             {overdue ? "Overdue" : "Due"}
                           </span>
-                          <time dateTime={item.dueAt}>{formatDeadline(item.dueAt)}</time>
+                          <time dateTime={item.dueAt}>
+                            {formatDeadline(item.dueAt)}
+                          </time>
                         </>
-                      ) : <span>No deadline</span>}
+                      ) : (
+                        <span>No deadline</span>
+                      )}
                     </div>
-                    <Link className="deadline-action" to={page} aria-label={`${item.action}: ${item.title}`}>
+                    <Link
+                      className="deadline-action"
+                      to={page}
+                      aria-label={`${item.action}: ${item.title}`}
+                    >
                       {item.action} <span aria-hidden="true">→</span>
                     </Link>
                   </li>
@@ -135,7 +153,10 @@ export default function Home() {
           ) : (
             <div className="deadline-empty">
               <h3>You’re all caught up</h3>
-              <p>No upcoming deadlines or tasks need your attention. Keep learning at your own pace.</p>
+              <p>
+                No upcoming deadlines or tasks need your attention. Keep
+                learning at your own pace.
+              </p>
             </div>
           )}
         </section>
@@ -198,7 +219,10 @@ export default function Home() {
           </section>
         </div>
 
-        <dl className="stats home-summary" aria-label="Learning progress summary">
+        <dl
+          className="stats home-summary"
+          aria-label="Learning progress summary"
+        >
           <div className="stat">
             <dt>Active courses</dt>
             <dd>{activeCourses.length}</dd>
@@ -206,7 +230,7 @@ export default function Home() {
           </div>
           <div className="stat">
             <dt id="certificates-summary">Certificates earned</dt>
-            <dd>{student.certificatesEarned}</dd>
+            <dd>{certificates.length}</dd>
             <span>Recognising your completed work</span>
           </div>
         </dl>
