@@ -3,6 +3,11 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
+import StudentCourses from "./pages/StudentCourses";
+import StudentAssessments from "./pages/StudentAssessments";
+import StudentPracticalWork from "./pages/StudentPracticalWork";
+import StudentCertificates from "./pages/StudentCertificates";
+import StudentGithub from "./pages/StudentGithub";
 import Admin from "./pages/Admin";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
@@ -27,9 +32,7 @@ function AdminSection({ title }) {
       <div className="content">
         <section className="card">
           <h3>{title}</h3>
-          <p className="sub">
-            This section will be built here.
-          </p>
+          <p className="sub">This section will be built here.</p>
         </section>
       </div>
     </AppLayout>
@@ -42,6 +45,14 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/student/courses" element={<StudentCourses />} />
+        <Route path="/student/assessments" element={<StudentAssessments />} />
+        <Route
+          path="/student/practical-work"
+          element={<StudentPracticalWork />}
+        />
+        <Route path="/student/certificates" element={<StudentCertificates />} />
+        <Route path="/student/github" element={<StudentGithub />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/system-status" element={<SystemStatus />} />
         <Route path="/login" element={<Login />} />
