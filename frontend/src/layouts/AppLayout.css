@@ -1,0 +1,42 @@
+.app-layout * {
+  box-sizing: border-box;
+}
+
+.app-layout {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #202733;
+  background: #f5f6f8;
+}
+
+.app-layout-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-mobile-navigation {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-mobile-navigation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 54px;
+    padding: 0 18px;
+    background: #fafafa;
+    border-bottom: 1px solid #e3e4e8;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .app-mobile-navigation > span > span {
+    color: #858891;
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .app-mobile-navigation button {
+    cursor: pointer;
+    border: 0;
+  }
+}
