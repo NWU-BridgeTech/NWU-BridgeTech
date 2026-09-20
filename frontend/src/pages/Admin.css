@@ -1,19 +1,20 @@
-.admin-page .top{height:112px;background:#fff;border-bottom:1px solid #e6e9ee;padding:0 42px;display:flex;align-items:center;justify-content:space-between}
-.admin-page .greeting{font-size:29px;font-weight:400;color:#7d838c}
-.admin-page .greeting b{color:#202733}
-.admin-page .top p{color:#818995;margin:8px 0 0}
+.admin-page .top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 24px 42px 0;
+  padding: 24px 28px;
+  background: #fff;
+  border: 1px solid #e6e9ed;
+  border-radius: 16px;
+}
+
 .admin-page .top-actions{display:flex;gap:10px;align-items:center}
 .admin-page .select,.admin-page .btn{border:1px solid #d8dee8;background:#fff;padding:11px 14px;border-radius:7px;font-size:13px}
 .admin-page .btn.blue{background:#3159ad;color:#fff;border-color:#3159ad}
-.admin-page .dashboard-header {
-  height: auto;
-  min-height: 120px;
-  padding: 28px 42px;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.admin-page .dashboard-header h1 {
+.admin-page .top h1 {
   margin: 0;
   color: #202733;
   font-size: 28px;
@@ -22,7 +23,7 @@
   letter-spacing: -0.5px;
 }
 
-.admin-page .dashboard-header p {
+.admin-page .top p {
   margin: 8px 0 0;
   color: #687384;
   font-size: 14px;
@@ -43,7 +44,7 @@
   white-space: nowrap;
 }
 
-.admin-page .dashboard-header .btn {
+.admin-page .top .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -56,11 +57,11 @@
   white-space: nowrap;
 }
 
-.admin-page .dashboard-header .btn:hover {
+.admin-page .top .btn.blue:hover {
   background: #27498f;
 }
 
-.admin-page .dashboard-header .btn:focus-visible {
+.admin-page .top .btn:focus-visible {
   outline: 2px solid #3159ad;
   outline-offset: 3px;
 }
@@ -135,13 +136,13 @@
 .admin-page .table th{color:#8a929e;font-weight:600}
 .admin-page .pill{font-size:10px;background:#eaf8f1;color:#19815c;padding:5px 8px;border-radius:10px;font-weight:800}
 @media(max-width:950px){
+.admin-page .top{margin-left:22px;margin-right:22px}
 .admin-page .top,.admin-page .content{padding-left:22px;padding-right:22px}
 .admin-page .metrics{grid-template-columns:repeat(2,1fr)}
 .admin-page .grid{grid-template-columns:1fr}
 }
 @media(max-width:550px){
 .admin-page .metrics{grid-template-columns:1fr}
-.admin-page .greeting{font-size:23px}
 .admin-page .top-actions{display:none}
 }
 .admin-page .platform-status {

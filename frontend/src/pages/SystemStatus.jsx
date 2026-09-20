@@ -48,9 +48,7 @@ export default function SystemStatus() {
       <div className="system-status-page">
         <header className="top">
           <div>
-            <div className="greeting">
-              System <b>status</b>
-            </div>
+            <h1>System status</h1>
             <p>Latency and uptime, checked every 5 minutes.</p>
           </div>
           <div className="top-actions">

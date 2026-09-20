@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import AdminModules from "./pages/AdminModules";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -15,9 +16,7 @@ function AdminSection({ title }) {
     <AppLayout>
       <header className="top">
         <div>
-          <div className="greeting">
-            <b>{title}</b>
-          </div>
+          <h1>{title}</h1>
 
           <p>BridgeTech Admin</p>
         </div>
@@ -25,7 +24,6 @@ function AdminSection({ title }) {
 
       <div className="content">
         <section className="card">
-          <h3>{title}</h3>
           <p className="sub">
             This section will be built here.
           </p>
@@ -50,7 +48,7 @@ function App() {
 
         <Route
           path="/admin/modules"
-          element={<AdminSection title="Modules" />}
+          element={<AdminModules />}
         />
 
         <Route
