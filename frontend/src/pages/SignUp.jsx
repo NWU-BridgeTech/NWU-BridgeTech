@@ -311,6 +311,80 @@ export default function SignUpPage() {
         }),
       );
 
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      let data = {};
+
+      try {
+        const contentType = response.headers.get("content-type");
+
+        if (
+          contentType &&
+          contentType.toLowerCase().includes("application/json")
+        ) {
+          data = await response.json();
+        }
+      } catch (error) {
+        console.error("Failed to parse server response:", error);
+      }
+
+      if (!response.ok) {
+        setErrors({
+          submit: data.message || "Unable to create your account.",
+        });
+
+        return;
+      }
+
+      if (
+        !data.token ||
+        !data.refreshToken ||
+        !data.userId ||
+        !data.username ||
+        !data.email ||
+        data.role === undefined ||
+        data.role === null
+      ) {
+        setErrors({
+          submit:
+            "The server returned an incomplete registration response. Please try again.",
+        });
+
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          userId: data.userId,
+          username: data.username,
+          email: data.email,
+          role: data.role,
+        }),
+      );
+
       sessionStorage.removeItem(signupDraftKey);
 
       setSubmitted(true);
