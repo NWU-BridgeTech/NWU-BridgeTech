@@ -1,7 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
+import StudentCourses from "./pages/StudentCourses";
+import StudentAssessments from "./pages/StudentAssessments";
+import StudentPracticalWork from "./pages/StudentPracticalWork";
+import StudentCertificates from "./pages/StudentCertificates";
+import StudentGithub from "./pages/StudentGithub";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -29,9 +35,7 @@ function AdminSection({ title }) {
 
       <div className="content">
         <section className="card">
-          <p className="sub">
-            This section will be built here.
-          </p>
+          <p className="sub">This section will be built here.</p>
         </section>
       </div>
     </AppLayout>
@@ -44,6 +48,14 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/student/courses" element={<StudentCourses />} />
+        <Route path="/student/assessments" element={<StudentAssessments />} />
+        <Route
+          path="/student/practical-work"
+          element={<StudentPracticalWork />}
+        />
+        <Route path="/student/certificates" element={<StudentCertificates />} />
+        <Route path="/student/github" element={<StudentGithub />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/system-status" element={<SystemStatus />} />
         <Route path="/login" element={<Login />} />
@@ -51,40 +63,27 @@ function App() {
 
         <Route path="/signup" element={<SignUp />} />
 
-        <Route
-          path="/admin/modules"
-          element={<AdminModules />}
-        />
+        <Route path="/admin/modules" element={<AdminModules />} />
 
-        <Route
-          path="/admin/lessons"
-          element={<AdminLessons />}
-        />
+        <Route path="/admin/lessons" element={<AdminLessons />} />
 
-        <Route
-          path="/admin/assessments"
-          element={<AdminAssessments />}
-        />
+        <Route path="/admin/assessments" element={<AdminAssessments />} />
 
         <Route
           path="/admin/practical-exercises"
           element={<AdminPracticalExercises />}
         />
 
-        <Route
-          path="/admin/students"
-          element={<AdminStudents />}
-        />
+        <Route path="/admin/students" element={<AdminStudents />} />
 
-        <Route
-          path="/admin/administrators"
-          element={<AdminAdministrators />}
-        />
+        <Route path="/admin/administrators" element={<AdminAdministrators />} />
 
         <Route
           path="/admin/settings"
           element={<AdminSection title="Settings" />}
         />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </BrowserRouter>
   );

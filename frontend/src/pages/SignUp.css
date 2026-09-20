@@ -1,7 +1,5 @@
 /* SignUp.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
-/* SignUp.css */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 .bt {
   --blue: #315db6;
@@ -109,9 +107,7 @@
 .su-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
   min-height: calc(100vh - 79px);
-  align-items: stretch;
   align-items: stretch;
 }
 
@@ -119,8 +115,6 @@
 
 .su-form-wrap {
   display: flex;
-  align-items: left;
-  justify-content: left;
   align-items: left;
   justify-content: left;
   padding: 56px 40px;
@@ -186,9 +180,6 @@
   font-size: 15px;
   color: var(--ink);
   background: #fff;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
@@ -368,6 +359,8 @@
   width: 100%;
   align-self: stretch;
   display: block;
+
+  min-height: 240px;
   order: -1;
 }
 
@@ -490,5 +483,29 @@
   .bt * {
     transition: none !important;
     animation: none !important;
+  }
+}
+/* Create account loading state */
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.signup-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 8px;
+  animation: signup-spin 0.7s linear infinite;
+}
+
+@keyframes signup-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

@@ -1,0 +1,70 @@
+.student-courses .enrolled-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.student-courses .enrolled-heading h2,
+.student-courses .section-title h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-courses .enrolled-heading p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.student-courses .enrolled-count {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #edf3ff;
+  color: #315db6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.student-courses .course h3 {
+  margin: 16px 0 24px;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-courses .course-progress {
+  margin-top: 0;
+}
+
+.student-courses .progress-label {
+  align-items: center;
+}
+
+.student-courses .progress-label b {
+  color: #274e9f;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.student-courses .course-next {
+  margin: 0 0 20px;
+  flex: 1;
+}
+
+.student-courses .enrolled-note {
+  margin: 16px 0 0;
+}
+
+.student-courses .explore-section {
+  margin-top: 40px;
+  padding-top: 8px;
+  border-top: 1px solid #e0e5ed;
+}
+
+.student-courses .explore-card h3 {
+  margin: 16px 0 12px;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
