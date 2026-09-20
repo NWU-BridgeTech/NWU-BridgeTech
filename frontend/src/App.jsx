@@ -7,6 +7,8 @@ import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
 import AdminAssessments from "./pages/AdminAssessments";
 import AdminPracticalExercises from "./pages/AdminPracticalExercises";
+import AdminStudents from "./pages/AdminStudents";
+import AdminAdministrators from "./pages/AdminAdministrators";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -71,12 +73,12 @@ function App() {
 
         <Route
           path="/admin/students"
-          element={<AdminSection title="Students" />}
+          element={<AdminStudents />}
         />
 
         <Route
           path="/admin/administrators"
-          element={<AdminSection title="Administrators" />}
+          element={<AdminAdministrators />}
         />
 
         <Route
