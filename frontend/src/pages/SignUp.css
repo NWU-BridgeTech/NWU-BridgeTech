@@ -357,6 +357,8 @@
   width: 100%;
   align-self: stretch;
   display: block;
+
+  min-height: 240px;
   order: -1;
 }
 
