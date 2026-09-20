@@ -344,7 +344,6 @@ export default function SignUpPage() {
           {submitted ? (
             <div className="su-success" role="status">
               <h2>Account created</h2>
-              <h2>Account created</h2>
 
               <p>
                 Your BridgeTech account has been created successfully with{" "}
