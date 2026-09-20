@@ -339,7 +339,6 @@ export default function SignUpPage() {
       </header>
 
       <main id="main" className="su-grid">
-        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
@@ -532,7 +531,6 @@ export default function SignUpPage() {
           )}
         </div>
 
-        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
