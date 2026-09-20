@@ -26,10 +26,6 @@ public class AuthService : IAuthService
     {
         bool usernameExists = await _context.Users
             .AnyAsync(u => u.Username == request.Username, cancellationToken);
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
-    {
-        bool usernameExists = await _context.Users
-            .AnyAsync(u => u.Username == request.Username);
 
         if (usernameExists)
         {
@@ -38,7 +34,6 @@ public class AuthService : IAuthService
 
         bool emailExists = await _context.Users
             .AnyAsync(u => u.Email == request.Email, cancellationToken);
-            .AnyAsync(u => u.Email == request.Email);
 
         if (emailExists)
         {
@@ -61,7 +56,6 @@ public class AuthService : IAuthService
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);
-        await _context.SaveChangesAsync();
 
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
@@ -79,13 +73,11 @@ public class AuthService : IAuthService
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.Username == request.Identifier ||
                 u.Email == request.Identifier, cancellationToken);
-                u.Email == request.Identifier);
 
         if (user == null)
         {
@@ -113,10 +105,8 @@ public class AuthService : IAuthService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
         };
     }
-
     public async Task<AuthResponse> RefreshTokenAsync(
         RefreshTokenRequest request, CancellationToken cancellationToken = default)
-        RefreshTokenRequest request)
     {
         var principal = ValidateRefreshToken(request.RefreshToken);
 
