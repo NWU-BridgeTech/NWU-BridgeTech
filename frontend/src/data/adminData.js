@@ -233,3 +233,72 @@ export const initialAssessments = [
     questions: [],
   },
 ];
+
+export const initialExercises = [
+  {
+    id: 1,
+    moduleId: 1,
+    title: "Git basics",
+    description: "Create a repository and demonstrate a clear commit history.",
+    duration: 45,
+    status: "Published",
+    pendingReviews: 5,
+    instructions:
+      "Create a GitHub repository for a small project. Add a README, make at least three meaningful commits and submit your repository link.",
+    requirements:
+      "Repository includes a README explaining the project.\nAt least three commits with descriptive messages.\nNo passwords or secrets are committed.",
+  },
+  {
+    id: 2,
+    moduleId: 1,
+    title: "Branching and merging",
+    description:
+      "Develop a change on a branch and merge it into the main branch.",
+    duration: 60,
+    status: "Published",
+    pendingReviews: 4,
+    instructions:
+      "Create a feature branch, make a small change and merge it into the main branch. Explain your approach in the README and submit the repository link.",
+    requirements:
+      "Feature branch contains a meaningful change.\nChanges are merged into the main branch.\nREADME explains the workflow used.",
+  },
+  {
+    id: 3,
+    moduleId: 1,
+    title: "Pull request workflow",
+    description: "Open and document a pull request for review.",
+    duration: 60,
+    status: "Published",
+    pendingReviews: 3,
+    instructions:
+      "Open a pull request from a feature branch. Write a description of the change and how you checked it. Submit the pull request link.",
+    requirements:
+      "Pull request has a clear title and description.\nChanges are limited to the stated task.\nDescription includes verification steps.",
+  },
+  {
+    id: 4,
+    moduleId: 2,
+    title: "Build an API client",
+    description: "Fetch and display data from a public API.",
+    duration: 90,
+    status: "Draft",
+    pendingReviews: 0,
+    instructions:
+      "Build a small application that requests data from a public API. Display the response and handle loading and error states. Submit the repository link.",
+    requirements:
+      "Application displays data from the API.\nLoading and error states are visible.\nREADME includes setup instructions.",
+  },
+  {
+    id: 5,
+    moduleId: 4,
+    title: "Set up a build pipeline",
+    description: "Automate the build and test steps for a repository.",
+    duration: 90,
+    status: "Draft",
+    pendingReviews: 0,
+    instructions:
+      "Add a workflow that installs dependencies, runs tests and builds your application when changes are pushed. Submit the repository link.",
+    requirements:
+      "Workflow runs on a push.\nTests must pass before the build proceeds.\nREADME explains the pipeline stages.",
+  },
+];
