@@ -1,74 +1,84 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
 
-const metrics = [
+const attentionItems = [
   {
-    label: "Active Students",
+    label: "Submissions to review",
+    value: "12",
+    note: "Practical work awaiting feedback",
+    description: "Pending submissions by exercise",
+    items: [
+      { title: "Git basics", detail: "5 submissions awaiting feedback" },
+      {
+        title: "Branching and merging",
+        detail: "4 submissions awaiting feedback",
+      },
+      {
+        title: "Pull request workflow",
+        detail: "3 submissions awaiting feedback",
+      },
+    ],
+  },
+  {
+    label: "Students needing support",
+    value: "8",
+    note: "Learners who need a check-in",
+    description: "Recent follow-ups · 3 of 8 students",
+    items: [
+      { title: "Sam Wilson", detail: "CI/CD Pipelines · 41% complete" },
+      {
+        title: "Taylor Adams",
+        detail: "Git & Version Control · Practical task overdue",
+      },
+      {
+        title: "Jordan Smith",
+        detail: "APIs & Web Services · Quiz retry needed",
+      },
+    ],
+  },
+  {
+    label: "Content to publish",
+    value: "3",
+    note: "Draft lessons awaiting review",
+    description: "Lessons to review before publishing",
+    items: [
+      { title: "Introduction to APIs", detail: "API module update · Draft" },
+      {
+        title: "Working with API responses",
+        detail: "Examples updated · Draft",
+      },
+      { title: "API authentication", detail: "Resources added · Draft" },
+    ],
+  },
+];
+
+const learningStats = [
+  {
+    label: "Active students",
     value: "1,248",
-    change: "▲ 12.4%",
-    down: false,
+    description: "Learners active this month",
   },
   {
-    label: "Course Completions",
+    label: "Course completions",
     value: "7,682",
-    change: "▲ 4.1%",
-    down: false,
+    description: "Courses completed this month",
   },
   {
-    label: "Average Quiz Score",
+    label: "Average quiz score",
     value: "81.6%",
-    change: "▼ 0.8%",
-    down: true,
+    description: "Across completed quizzes",
   },
   {
-    label: "Practical Tasks",
+    label: "Practical completion rate",
     value: "68.8%",
-    change: "▲ 2.6%",
-    down: false,
-  },
-];
-
-const recentStudents = [
-  {
-    name: "Alex Morgan",
-    module: "Git & Version Control",
-    progress: "62%",
-    status: "Active",
-  },
-  {
-    name: "Jamie Patel",
-    module: "APIs & Web Services",
-    progress: "88%",
-    status: "Active",
-  },
-  {
-    name: "Sam Wilson",
-    module: "CI/CD Pipelines",
-    progress: "41%",
-    status: "Follow up",
-  },
-];
-
-const todos = [
-  {
-    title: "Review 12 practical submissions",
-    sub: "Git & Version Control",
-  },
-  {
-    title: "Publish API module update",
-    sub: "Content team draft",
-  },
-  {
-    title: "Check weekly learner report",
-    sub: "Due Friday",
+    description: "Of assigned practical work",
   },
 ];
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("Overview");
-  const [completedTodos, setCompletedTodos] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const currentHour = new Date().getHours();
 
   let greeting;
@@ -81,443 +91,127 @@ export default function Admin() {
     greeting = "Good evening";
   }
 
-  const tabs = [
-    "Overview",
-    "Students",
-    "Learning content",
-    "More",
-  ];
-
   return (
     <AppLayout>
+      {/* HEADER */}
+      <header className="top dashboard-header">
+        <div>
+          <h1>Overview</h1>
+          <p>{greeting}, John Doe. Here’s your platform summary.</p>
+        </div>
 
-          {/* HEADER */}
-          <header className="top">
+        <div className="dashboard-header-actions">
+          <span className="current-date">
+            {new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
 
-            <div>
-              <div className="greeting">
-                {greeting}, <b>John Doe</b>
-              </div>
+          <Link className="btn blue" to="/home">
+            Student view
+          </Link>
+        </div>
+      </header>
 
-              <p>
-                Your platform summary for this week.
-              </p>
-            </div>
-
-            <div className="top-actions">
-
-              <span className="current-date">
-  {new Date().toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })}
-</span>
-
-              <button className="btn">
-                Share
-              </button>
-
-              <button className="btn">
-                Print
-              </button>
-
-              <Link
-                className="btn blue"
-                to="/home"
+      <div className="content">
+        <section aria-labelledby="attention-heading">
+          <h2 className="attention-heading" id="attention-heading">
+            Needs attention
+          </h2>
+          <p className="attention-intro">
+            Select a card to show more information.
+          </p>
+          <div className="metrics dashboard-metrics">
+            {attentionItems.map((item) => (
+              <button
+                type="button"
+                className={`metric metric-attention ${selectedItem === item ? "selected" : ""}`}
+                key={item.label}
+                aria-expanded={selectedItem === item}
+                aria-controls="attention-details"
+                onClick={() => setSelectedItem(item)}
               >
-                Student view
-              </Link>
-
-            </div>
-
-          </header>
-
-          <div className="content">
-
-            {/* TABS */}
-            <nav className="tabs">
-
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={`tab ${
-                    activeTab === tab
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    setActiveTab(tab)
-                  }
-                >
-                  {tab}
-                </button>
-              ))}
-
-            </nav>
-
-            {/* OVERVIEW */}
-            {activeTab === "Overview" && (
-              <>
-
-                <section className="metrics">
-
-                  {metrics.map((m) => (
-                    <div
-                      className="metric"
-                      key={m.label}
-                    >
-                      <small>
-                        {m.label}
-                      </small>
-
-                      <b>
-                        {m.value}
-                      </b>
-
-                      <span
-                        className={`change${
-                          m.down
-                            ? " red"
-                            : ""
-                        }`}
-                      >
-                        {m.change}
-                      </span>
-                    </div>
-                  ))}
-
-                </section>
-
-                <div className="grid">
-
-                  <section className="card">
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent:
-                          "space-between",
-                      }}
-                    >
-                      <div>
-
-                        <h3>
-                          Learning activity
-                        </h3>
-
-                        <p className="sub">
-                          Completed lessons and active
-                          learners over the last seven
-                          days.
-                        </p>
-
-                      </div>
-
-                      <span className="sub">
-                        This week · Last week
-                      </span>
-
-                    </div>
-
-                    <div className="chart">
-
-                      <svg
-                        viewBox="0 0 900 250"
-                        preserveAspectRatio="none"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                        }}
-                      >
-
-                        <path
-                          d="M0 195 C60 135,100 180,150 125 S230 80,280 145 S370 155,420 105 S500 165,560 135 S640 70,700 95 S790 65,900 120"
-                          fill="none"
-                          stroke="#3159ad"
-                          strokeWidth="3"
-                        />
-
-                        <path
-                          d="M0 220 C90 155,130 170,190 145 S280 205,340 150 S450 205,520 180 S620 220,680 185 S790 150,900 80"
-                          fill="none"
-                          stroke="#58a6c4"
-                          strokeWidth="2.5"
-                        />
-
-                      </svg>
-
-                    </div>
-
-                  </section>
-
-                  <aside className="card status">
-
-                    <h3>
-                      Status summary
-                    </h3>
-
-                    <p className="sub">
-                      Platform activity is operating
-                      normally.
-                    </p>
-
-                    <b className="big">
-                      96.8%
-                    </b>
-
-                    <p>
-                      successful learning sessions
-                    </p>
-
-                    <div
-                      style={{
-                        marginTop: 25,
-                      }}
-                    >
-
-                      <div className="status-row">
-                        <span>
-                          Auto-grading
-                        </span>
-
-                        <b>
-                          Healthy
-                        </b>
-                      </div>
-
-                      <div className="status-row">
-                        <span>
-                          Content delivery
-                        </span>
-
-                        <b>
-                          Healthy
-                        </b>
-                      </div>
-
-                      <div className="status-row">
-                        <span>
-                          Repository checks
-                        </span>
-
-                        <b>
-                          Healthy
-                        </b>
-                      </div>
-
-                    </div>
-
-                  </aside>
-
-                </div>
-
-                <div className="lower">
-
-                  <section className="card">
-
-                    <h3>
-                      Recent students
-                    </h3>
-
-                    <p className="sub">
-                      Latest activity across the
-                      platform.
-                    </p>
-
-                    <table className="table">
-
-                      <thead>
-
-                        <tr>
-                          <th>Student</th>
-                          <th>Current module</th>
-                          <th>Progress</th>
-                          <th>Status</th>
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {recentStudents.map((s) => (
-                          <tr key={s.name}>
-
-                            <td>
-                              <b>
-                                {s.name}
-                              </b>
-                            </td>
-
-                            <td>
-                              {s.module}
-                            </td>
-
-                            <td>
-                              {s.progress}
-                            </td>
-
-                            <td>
-
-                              {s.status === "Active" ? (
-                                <span className="pill">
-                                  Active
-                                </span>
-                              ) : (
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    color:
-                                      "#9a6b1c",
-                                  }}
-                                >
-                                  {s.status}
-                                </span>
-                              )}
-
-                            </td>
-
-                          </tr>
-                        ))}
-
-                      </tbody>
-
-                    </table>
-
-                  </section>
-
-                  <aside className="card">
-
-                    <h3>
-                      To do
-                    </h3>
-
-                    <p className="sub">
-                      Items requiring admin attention.
-                    </p>
-
-                    {todos.map((t) => {
-  const isCompleted = completedTodos.includes(t.title);
-
-  return (
-    <div
-      className={`todo ${
-        isCompleted ? "completed" : ""
-      }`}
-      key={t.title}
-      onClick={() => {
-        if (isCompleted) {
-          setCompletedTodos(
-            completedTodos.filter(
-              (item) => item !== t.title
-            )
-          );
-        } else {
-          setCompletedTodos([
-            ...completedTodos,
-            t.title,
-          ]);
-        }
-      }}
-    >
-
-      <button
-        className={`check ${
-          isCompleted ? "checked" : ""
-        }`}
-        onClick={(event) => {
-          event.stopPropagation();
-
-          if (isCompleted) {
-            setCompletedTodos(
-              completedTodos.filter(
-                (item) => item !== t.title
-              )
-            );
-          } else {
-            setCompletedTodos([
-              ...completedTodos,
-              t.title,
-            ]);
-          }
-        }}
-      >
-        {isCompleted ? "✓" : ""}
-      </button>
-
-      <div>
-
-        <b>
-          {t.title}
-        </b>
-
-        <p className="sub">
-          {t.sub}
-        </p>
-
-      </div>
-
-    </div>
-  );
-})}
-
-                  </aside>
-
-                </div>
-
-              </>
-            )}
-
-            {/* STUDENTS */}
-            {activeTab === "Students" && (
-              <section className="card">
-
-                <h3>
-                  Students
-                </h3>
-
-                <p className="sub">
-                  Student activity and performance
-                  will be displayed here.
-                </p>
-
-              </section>
-            )}
-
-            {/* LEARNING CONTENT */}
-            {activeTab === "Learning content" && (
-              <section className="card">
-
-                <h3>
-                  Learning content
-                </h3>
-
-                <p className="sub">
-                  Modules, lessons and learning
-                  materials will be displayed here.
-                </p>
-
-              </section>
-            )}
-
-            {/* MORE */}
-            {activeTab === "More" && (
-              <section className="card">
-
-                <h3>
-                  More
-                </h3>
-
-                <p className="sub">
-                  Additional dashboard options will
-                  be displayed here.
-                </p>
-
-              </section>
-            )}
-
+                <small>{item.label}</small>
+                <b>{item.value}</b>
+                <span className="metric-note">{item.note}</span>
+              </button>
+            ))}
           </div>
+          <div id="attention-details" hidden={!selectedItem}>
+            {selectedItem && (
+              <section
+                className="attention-details"
+                aria-labelledby="attention-details-title"
+              >
+                <div className="attention-details-header">
+                  <div>
+                    <h3 id="attention-details-title">{selectedItem.label}</h3>
+                    <p>{selectedItem.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="attention-close"
+                    aria-label="Close details"
+                    onClick={() => {
+                      const selectedButton = document.querySelector(
+                        ".dashboard-metrics .selected",
+                      );
+                      setSelectedItem(null);
+                      selectedButton?.focus();
+                    }}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+                <ul className="attention-detail-list">
+                  {selectedItem.items.map((item) => (
+                    <li key={item.title}>
+                      <strong>{item.title}</strong>
+                      <span>{item.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+        </section>
 
+        <section className="platform-status" aria-label="Platform status">
+          <div>
+            <p className="platform-status-heading">
+              <span className="status-dot" aria-hidden="true" />
+              All systems operational
+            </p>
+            <p className="platform-status-details">
+              Auto-grading, content delivery and repository checks
+            </p>
+          </div>
+          <Link to="/system-status">
+            View system status <span aria-hidden="true">→</span>
+          </Link>
+        </section>
+
+        <section
+          className="learning-overview"
+          aria-labelledby="learning-heading"
+        >
+          <h2 id="learning-heading">Learning overview</h2>
+          <p className="learning-intro">
+            A snapshot of student activity and performance.
+          </p>
+          <div className="learning-stats">
+            {learningStats.map((stat) => (
+              <div className="learning-stat" key={stat.label}>
+                <h3>{stat.label}</h3>
+                <p className="learning-stat-value">{stat.value}</p>
+                <p className="learning-stat-description">{stat.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </AppLayout>
   );
 }
