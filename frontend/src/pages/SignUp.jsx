@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./SignUp.css";
 
 function BridgeMark() {
@@ -159,8 +160,7 @@ export default function SignUpPage() {
   }, [form.name, form.email, form.agree]);
 
   const confirmMismatch =
-    form.confirmPassword.length > 0 &&
-    form.confirmPassword !== form.password;
+    form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
 
   function update(field, value) {
     setForm((currentForm) => ({
@@ -231,54 +231,11 @@ export default function SignUpPage() {
       .replace(/[^a-zA-Z0-9._-]/g, "")
       .slice(0, 50);
 
-    // The backend requires usernames to be between 3 and 50 characters.
     if (username.length < 3) {
       setErrors({
         email:
           "Your email address must contain at least 3 characters before the @ symbol.",
       });
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        "http://localhost:5174/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            firstName,
-            lastName,
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({
-          submit: data.message || "Unable to create your account.",
-        });
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          role: data.role,
-        })
-      );
 
       return;
     }
@@ -364,6 +321,8 @@ export default function SignUpPage() {
         submit:
           "Unable to connect to the server. Please make sure the backend is running.",
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -377,12 +336,9 @@ export default function SignUpPage() {
         <a className="logo" href="/" aria-label="BridgeTech home">
           Bridge<i>Tech</i>
         </a>
-
       </header>
 
       <main id="main" className="su-grid">
-
-        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
@@ -390,8 +346,8 @@ export default function SignUpPage() {
 
               <p>
                 Your BridgeTech account has been created successfully with{" "}
-                <strong>{form.email}</strong>. You can now start working
-                through your learning tracks.
+                <strong>{form.email}</strong>. You can now start working through
+                your learning tracks.
               </p>
 
               <button
@@ -500,9 +456,7 @@ export default function SignUpPage() {
               </div>
 
               <div className="field">
-                <label htmlFor="su-confirm-password">
-                  Confirm password
-                </label>
+                <label htmlFor="su-confirm-password">Confirm password</label>
 
                 <input
                   id="su-confirm-password"
@@ -511,11 +465,9 @@ export default function SignUpPage() {
                   autoComplete="new-password"
                   placeholder="Re-enter your password"
                   value={form.confirmPassword}
-                  onChange={(e) =>
-                    update("confirmPassword", e.target.value)
-                  }
+                  onChange={(e) => update("confirmPassword", e.target.value)}
                   aria-invalid={Boolean(
-                    errors.confirmPassword || confirmMismatch
+                    errors.confirmPassword || confirmMismatch,
                   )}
                   aria-describedby={
                     errors.confirmPassword || confirmMismatch
@@ -525,10 +477,7 @@ export default function SignUpPage() {
                 />
 
                 {(errors.confirmPassword || confirmMismatch) && (
-                  <p
-                    className="field-error"
-                    id="su-confirm-password-error"
-                  >
+                  <p className="field-error" id="su-confirm-password-error">
                     {errors.confirmPassword || "Passwords don't match."}
                   </p>
                 )}
@@ -544,11 +493,11 @@ export default function SignUpPage() {
                   aria-describedby={errors.agree ? "su-agree-error" : undefined}
                 />
 
-                <label htmlFor="su-agree">
-                  I agree to the{" "}
-                  <a href="/terms">Terms of Service</a> and{" "}
-                  <a href="/privacy">Privacy Policy</a>.
-                </label>
+                <span>
+                  <label htmlFor="su-agree">I agree to the</label>{" "}
+                  <Link to="/terms">Terms of Service</Link> and{" "}
+                  <Link to="/privacy-policy">Privacy Policy</Link>.
+                </span>
               </div>
 
               {errors.agree && (
@@ -557,15 +506,22 @@ export default function SignUpPage() {
                 </p>
               )}
 
-              {errors.submit && (
-                <p className="field-error">{errors.submit}</p>
-              )}
+              {errors.submit && <p className="field-error">{errors.submit}</p>}
 
               <button
                 type="submit"
                 className="button dark button-full"
+                disabled={isLoading}
+                aria-busy={isLoading}
               >
-                Create account
+                {isLoading ? (
+                  <>
+                    <span className="signup-spinner" aria-hidden="true" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create account"
+                )}
               </button>
 
               <p className="su-switch">
@@ -575,7 +531,6 @@ export default function SignUpPage() {
           )}
         </div>
 
-        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
@@ -586,10 +541,7 @@ export default function SignUpPage() {
               onError={() => setPhotoFailed(true)}
             />
           ) : (
-            <div
-              className="su-photo-fallback"
-              aria-hidden="true"
-            />
+            <div className="su-photo-fallback" aria-hidden="true" />
           )}
 
           <div className="su-mark" aria-hidden="true">
@@ -602,7 +554,6 @@ export default function SignUpPage() {
             <h2>Build Skills for the work ahead</h2>
           </div>
         </figure>
-
       </main>
     </div>
   );

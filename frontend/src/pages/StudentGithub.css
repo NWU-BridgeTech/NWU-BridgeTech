@@ -1,0 +1,153 @@
+.student-github .github-intro {
+  margin-bottom: 24px;
+}
+
+.student-github .github-intro h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-github .github-intro p {
+  margin: 8px 0 0;
+  max-width: 70ch;
+  color: var(--text-secondary);
+}
+
+.student-github .github-connection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.student-github .github-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--card-padding);
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.student-github .github-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.student-github .github-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.student-github .github-card h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.student-github .github-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.student-github .github-card a {
+  display: inline-block;
+  color: #315db6;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-github .github-card a:hover {
+  text-decoration: underline;
+}
+
+.student-github .github-account-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 28px 0 24px;
+}
+
+.student-github .github-account-summary > div:last-child {
+  min-width: 0;
+}
+
+.student-github .github-account-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #edf3ff;
+  color: #315db6;
+}
+
+.student-github .github-sync {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e8ebef;
+  font-size: 12px;
+}
+
+.student-github .github-sync dt {
+  color: var(--text-secondary);
+}
+
+.student-github .github-sync dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.student-github .github-repository-summary {
+  margin: 28px 0 24px;
+}
+
+.student-github .github-repository-summary a {
+  margin-top: 12px;
+}
+
+.student-github .github-card-footer {
+  margin-top: auto;
+}
+
+.student-github .github-card-footer p {
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.student-github .github-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.student-github .github-practical-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+}
+
+.student-github .github-practical-link p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 700px) {
+  .student-github .github-connection-grid {
+    grid-template-columns: 1fr;
+  }
+}
