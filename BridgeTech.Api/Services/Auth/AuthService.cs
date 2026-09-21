@@ -22,10 +22,10 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
         bool usernameExists = await _context.Users
-            .AnyAsync(u => u.Username == request.Username);
+            .AnyAsync(u => u.Username == request.Username, cancellationToken);
 
         if (usernameExists)
         {
@@ -33,7 +33,7 @@ public class AuthService : IAuthService
         }
 
         bool emailExists = await _context.Users
-            .AnyAsync(u => u.Email == request.Email);
+            .AnyAsync(u => u.Email == request.Email, cancellationToken);
 
         if (emailExists)
         {
@@ -55,7 +55,7 @@ public class AuthService : IAuthService
         };
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
@@ -72,12 +72,12 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.Username == request.Identifier ||
-                u.Email == request.Identifier);
+                u.Email == request.Identifier, cancellationToken);
 
         if (user == null)
         {
@@ -105,9 +105,8 @@ public class AuthService : IAuthService
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
         };
     }
-
     public async Task<AuthResponse> RefreshTokenAsync(
-        RefreshTokenRequest request)
+        RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
         var principal = ValidateRefreshToken(request.RefreshToken);
 
@@ -127,7 +126,7 @@ public class AuthService : IAuthService
         }
 
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.UserId == userId);
+            .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
 
         if (user == null)
         {

@@ -1,6 +1,5 @@
-using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Modules;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -8,7 +7,7 @@ namespace BridgeTech.Api.Controllers;
 [Route("api/modules")]
 // Handles HTTP requests for learning modules. Database access remains in the
 // injected context so the controller does not create connections manually.
-public class ModulesController(AppDbContext dbContext) : ControllerBase
+public class ModulesController(IModuleService service) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetModules(
@@ -16,12 +15,6 @@ public class ModulesController(AppDbContext dbContext) : ControllerBase
     {
         // AsNoTracking is appropriate for a read-only endpoint because EF Core
         // does not need to monitor entities that will not be updated here.
-        var modules = await dbContext.Modules
-            .AsNoTracking()
-            // The order matches the module order_index column in PostgreSQL.
-            .OrderBy(module => module.OrderIndex)
-            .ToListAsync(cancellationToken);
-
-        return Ok(modules);
+        return Ok(await service.GetAllAsync(cancellationToken));
     }
 }
