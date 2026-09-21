@@ -20,7 +20,31 @@ import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import AppLayout from "./layouts/AppLayout";
 import "./pages/Admin.css";
+
+function AdminSection({ title }) {
+  return (
+    <AppLayout>
+      <header className="top">
+        <div>
+          <div className="greeting">
+            <b>{title}</b>
+          </div>
+
+          <p>BridgeTech Admin</p>
+        </div>
+      </header>
+
+      <div className="content">
+        <section className="card">
+          <h3>{title}</h3>
+          <p className="sub">This section will be built here.</p>
+        </section>
+      </div>
+    </AppLayout>
+  );
+}
 
 function App() {
   return (

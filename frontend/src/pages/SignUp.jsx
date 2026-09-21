@@ -237,6 +237,7 @@ export default function SignUpPage() {
           "Your email address must contain at least 3 characters before the @ symbol.",
       });
 
+
       return;
     }
 
