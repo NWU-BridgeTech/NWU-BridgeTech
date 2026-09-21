@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text;
 using BridgeTech.Api.Data;
 using BridgeTech.Api.Services.Auth;
 using BridgeTech.Api.Services.Ai;
@@ -8,6 +9,7 @@ using BridgeTech.Api.Services.Modules;
 using BridgeTech.Api.Services.Quizzes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +57,15 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -66,7 +77,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
+app.UseCors("Frontend");
 
+app.UseAuthentication();
 app.UseAuthentication();
 app.UseAuthorization();
 
