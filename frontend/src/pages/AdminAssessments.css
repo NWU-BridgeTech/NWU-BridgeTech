@@ -1,0 +1,36 @@
+.admin-page .assessment-questions {
+  margin: 8px 0 24px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin-page .assessment-questions > legend {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-page .assessment-question {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e6e9ed;
+  border-radius: 10px;
+  min-width: 0;
+  background: #f8f9fb;
+}
+
+.admin-page .assessment-question legend {
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-page .assessment-remove {
+  margin-top: 16px;
+  color: #9a3c35;
+}
+
+.admin-page .assessments-page .modules-table td:first-child {
+  width: 32%;
+}

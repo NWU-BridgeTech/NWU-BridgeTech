@@ -1,0 +1,138 @@
+.student-assessments .assessment-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.student-assessments h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-assessments .assessment-section-heading p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.student-assessments .assessment-count {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #edf3ff;
+  color: #315db6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.student-assessments .assessment-timezone {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.student-assessments .assessment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.student-assessments .assessment-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: var(--card-padding);
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.student-assessments .assessment-details {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.student-assessments .assessment-details h3 {
+  margin: 12px 0 6px;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+
+.student-assessments .assessment-details p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.student-assessments .assessment-course {
+  font-weight: 600;
+}
+
+.student-assessments .assessment-deadline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.student-assessments .assessment-deadline time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #202939;
+}
+
+.student-assessments .is-overdue {
+  color: #a13922;
+  font-weight: 600;
+}
+
+.student-assessments .assessment-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.student-assessments .completed-assessments {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #e0e5ed;
+}
+
+.student-assessments .assessment-empty {
+  padding: var(--card-padding);
+  border: 1px dashed #cbd4e0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.student-assessments .assessment-empty h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.student-assessments .assessment-empty p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.student-assessments .assessment-note {
+  margin: 20px 0 0;
+}
+
+@media (max-width: 700px) {
+  .student-assessments .assessment-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .student-assessments .assessment-details {
+    flex-basis: auto;
+  }
+}
