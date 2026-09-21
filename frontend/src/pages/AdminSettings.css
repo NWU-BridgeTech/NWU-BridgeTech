@@ -1,0 +1,132 @@
+.admin-page .settings-section {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(340px, 2fr);
+  gap: 40px;
+  margin-bottom: 24px;
+}
+
+.admin-page .settings-section-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.admin-page .settings-section-heading p,
+.admin-page .settings-role p {
+  margin: 8px 0 0;
+  color: #687384;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-page .settings-fields {
+  display: grid;
+  gap: 20px;
+  max-width: 620px;
+}
+
+.admin-page .settings-fields label,
+.admin-page .settings-role > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #536176;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-page .settings-fields input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  background: #fff;
+  color: #202733;
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-page .settings-role strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-page .settings-notification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid #edf0f3;
+  cursor: pointer;
+}
+
+.admin-page .settings-notification:first-child {
+  padding-top: 0;
+}
+.admin-page .settings-notification:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-page .settings-notification strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-page .settings-notification span > span {
+  display: block;
+  margin-top: 6px;
+  color: #687384;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-page .settings-notification input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #3159ad;
+  cursor: pointer;
+}
+
+.admin-page .settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-page .settings-buttons {
+  display: flex;
+  gap: 12px;
+}
+.admin-page .settings-buttons button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.admin-page .settings-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-page .settings-save-note {
+  margin: 0;
+  color: #687384;
+  font-size: 13px;
+}
+.admin-page .settings-message {
+  margin: 6px 0 0;
+  color: #3159ad;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-page .settings-message:empty {
+  display: none;
+}
+
+.admin-page .settings-page input:focus-visible,
+.admin-page .settings-page button:focus-visible {
+  outline: 2px solid #3159ad;
+  outline-offset: 3px;
+}

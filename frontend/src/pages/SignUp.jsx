@@ -237,6 +237,7 @@ export default function SignUpPage() {
           "Your email address must contain at least 3 characters before the @ symbol.",
       });
 
+
       return;
     }
 
@@ -339,11 +340,9 @@ export default function SignUpPage() {
       </header>
 
       <main id="main" className="su-grid">
-        {/* FORM — LEFT */}
         <div className="su-form-wrap">
           {submitted ? (
             <div className="su-success" role="status">
-              <h2>Account created</h2>
               <h2>Account created</h2>
 
               <p>
@@ -533,7 +532,6 @@ export default function SignUpPage() {
           )}
         </div>
 
-        {/* ARTWORK — RIGHT */}
         <figure className="su-photo">
           {!photoFailed ? (
             <img
