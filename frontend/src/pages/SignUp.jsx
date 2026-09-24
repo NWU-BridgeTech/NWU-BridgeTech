@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import VerificationModal from "../components/VerificationModal";
 import "./SignUp.css";
 
 function BridgeMark() {
@@ -142,9 +143,10 @@ export default function SignUpPage() {
 
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verification, setVerification] = useState(null);
 
   useEffect(() => {
     const safeDraft = {
@@ -295,6 +297,7 @@ export default function SignUpPage() {
         return;
       }
 
+<<<<<<< HEAD
       if (
         !data ||
         typeof data.token !== "string" ||
@@ -302,13 +305,17 @@ export default function SignUpPage() {
         !data.token ||
         !data.refreshToken
       ) {
+=======
+      if (!data.verificationExpiresAt) {
+>>>>>>> 243298f (feat(auth): add Brevo email verification and OTP experience)
         setErrors({
           submit:
-            "The server returned an incomplete registration response. Please try again.",
+            "The server did not return a verification expiry. Please try again.",
         });
 
         return;
       }
+<<<<<<< HEAD
 
       localStorage.setItem("token", data.token);
 
@@ -330,6 +337,12 @@ export default function SignUpPage() {
       sessionStorage.removeItem(signupDraftKey);
 
       setSubmitted(true);
+=======
+      setVerification({
+        email: form.email,
+        expiresAt: data.verificationExpiresAt,
+      });
+>>>>>>> 243298f (feat(auth): add Brevo email verification and OTP experience)
     } catch (error) {
       console.error("Signup error:", error);
 
@@ -344,6 +357,17 @@ export default function SignUpPage() {
 
   return (
     <div className="bt">
+      {verification && (
+        <VerificationModal
+          email={verification.email}
+          initialExpiresAt={verification.expiresAt}
+          onClose={() => setVerification(null)}
+          onVerified={() => {
+            sessionStorage.removeItem(signupDraftKey);
+            window.location.href = "/home";
+          }}
+        />
+      )}
       <a className="bt-skip" href="#main">
         Skip to content
       </a>
