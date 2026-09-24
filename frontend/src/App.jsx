@@ -22,6 +22,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import AppLayout from "./layouts/AppLayout";
 import "./pages/Admin.css";
+import Lessons from "./pages/Lessons";
 
 function AdminSection({ title }) {
   return (
@@ -58,6 +59,7 @@ function App() {
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
+        <Route path="/lessons" element={<Lessons />} />
         <Route path="/student/certificates" element={<StudentCertificates />} />
         <Route path="/student/github" element={<StudentGithub />} />
         <Route path="/admin" element={<Admin />} />
