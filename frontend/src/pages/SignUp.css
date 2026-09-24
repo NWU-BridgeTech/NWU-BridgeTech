@@ -482,6 +482,7 @@
     animation: none !important;
   }
 }
+
 /* Create account loading state */
 
 .button:disabled {
@@ -505,8 +506,4 @@
   to {
     transform: rotate(360deg);
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/Development
