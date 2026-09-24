@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import VerificationModal from "../components/VerificationModal";
 import "./SignUp.css";
 
 function BridgeMark() {
@@ -141,9 +142,10 @@ export default function SignUpPage() {
 
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted] = useState(false);
   const [photoFailed, setPhotoFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [verification, setVerification] = useState(null);
 
   useEffect(() => {
     const safeDraft = {
@@ -237,7 +239,6 @@ export default function SignUpPage() {
           "Your email address must contain at least 3 characters before the @ symbol.",
       });
 
-
       return;
     }
 
@@ -282,39 +283,18 @@ export default function SignUpPage() {
         return;
       }
 
-      if (
-        !data.token ||
-        !data.refreshToken ||
-        !data.userId ||
-        !data.username ||
-        !data.email ||
-        data.role === undefined ||
-        data.role === null
-      ) {
+      if (!data.verificationExpiresAt) {
         setErrors({
           submit:
-            "The server returned an incomplete registration response. Please try again.",
+            "The server did not return a verification expiry. Please try again.",
         });
 
         return;
       }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          role: data.role,
-        }),
-      );
-
-      sessionStorage.removeItem(signupDraftKey);
-
-      setSubmitted(true);
+      setVerification({
+        email: form.email,
+        expiresAt: data.verificationExpiresAt,
+      });
     } catch (error) {
       console.error("Signup error:", error);
 
@@ -329,6 +309,17 @@ export default function SignUpPage() {
 
   return (
     <div className="bt">
+      {verification && (
+        <VerificationModal
+          email={verification.email}
+          initialExpiresAt={verification.expiresAt}
+          onClose={() => setVerification(null)}
+          onVerified={() => {
+            sessionStorage.removeItem(signupDraftKey);
+            window.location.href = "/home";
+          }}
+        />
+      )}
       <a className="bt-skip" href="#main">
         Skip to content
       </a>

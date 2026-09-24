@@ -1,0 +1,234 @@
+.verification-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(217 222 226 / 0.92);
+}
+
+.verification-modal {
+  width: min(100%, 31rem);
+  padding: 3.75rem 3rem 3rem;
+  overflow: hidden;
+  background: #fff;
+  color: #111827;
+  border: 1px solid rgb(15 23 42 / 0.03);
+  border-radius: 1.25rem;
+  box-shadow: 0 1.25rem 2.5rem rgb(15 23 42 / 0.12);
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.verification-modal.verification-error {
+  border-color: #ef5368;
+  animation: verification-shake 0.42s ease both;
+  box-shadow:
+    0 0 0 0.25rem rgb(239 83 104 / 0.12),
+    0 1.25rem 2.5rem rgb(15 23 42 / 0.12);
+}
+
+.verification-modal.verification-success {
+  border-color: #20b978;
+  animation: verification-success 0.65s ease both;
+  box-shadow:
+    0 0 0 0.3rem rgb(32 185 120 / 0.14),
+    0 0 1.5rem rgb(32 185 120 / 0.25),
+    0 1.25rem 2.5rem rgb(15 23 42 / 0.12);
+}
+
+.verification-icon {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1f6ff;
+  color: #2f5eea;
+}
+
+.verification-modal h2 {
+  margin: 0;
+  color: #111;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.verification-subtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.65rem 0 2.25rem;
+  color: #a0a5ad;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.verification-subtitle strong {
+  color: #171717;
+  font-size: 0.95rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.verification-digits {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin: 0 auto 1rem;
+}
+
+.verification-digits input {
+  width: 3.25rem;
+  height: 3.75rem;
+  padding: 0;
+  border: 1px solid #c9ced5;
+  border-radius: 0.55rem;
+  outline: none;
+  background: #fff;
+  color: #161616;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 500;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.verification-digits input:focus {
+  border-color: #2f5eea;
+  box-shadow: 0 0 0 0.13rem rgb(47 94 234 / 0.15);
+}
+
+.verification-modal.verification-error .verification-digits input {
+  border-color: #ef5368;
+  color: #b3263c;
+}
+
+.verification-modal.verification-success .verification-digits input {
+  border-color: #20b978;
+  color: #087542;
+  box-shadow: 0 0 0.45rem rgb(32 185 120 / 0.25);
+  transform: translateY(-1px);
+}
+
+.verification-error {
+  margin: 0.75rem 0;
+  color: #b3263c;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.verification-expiry {
+  margin: 0.75rem 0;
+  color: #9aa0a9;
+  font-size: 0.8rem;
+}
+
+.verification-resend {
+  margin: 1.25rem 0 2rem;
+  color: #9299a3;
+  font-size: 0.9rem;
+}
+
+.verification-resend button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2f5eea;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.verification-resend button:disabled {
+  color: #a9afb7;
+  cursor: not-allowed;
+}
+
+.verification-submit {
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 1rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: #2851d9;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.verification-submit:hover:not(:disabled) {
+  background: #1f43bd;
+  box-shadow: 0 0.35rem 0.7rem rgb(40 81 217 / 0.22);
+  transform: translateY(-1px);
+}
+
+.verification-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes verification-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes verification-success {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 32rem) {
+  .verification-modal {
+    width: min(100%, 28rem);
+    padding: 3rem 1.25rem 2.5rem;
+  }
+
+  .verification-digits {
+    gap: 0.5rem;
+  }
+
+  .verification-digits input {
+    width: clamp(2.35rem, 13vw, 3rem);
+    height: clamp(3rem, 15vw, 3.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verification-modal,
+  .verification-digits input,
+  .verification-submit {
+    animation: none;
+    transition: none;
+  }
+}
