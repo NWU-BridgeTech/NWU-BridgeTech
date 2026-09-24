@@ -1,10 +1,12 @@
 using BridgeTech.Api.Services.Quizzes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/quizzes")]
+[Authorize]
 // Serves quiz content without exposing the correct answers to learners.
 public class QuizzesController(IQuizService service) : ControllerBase
 {
