@@ -38,6 +38,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.Username).IsUnique();
         builder.HasIndex(x => x.GithubUsername).HasFilter("github_username IS NOT NULL");
         builder.HasIndex(x => x.Role);
+        builder.Property(x => x.EmailVerified).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.VerificationCode).HasMaxLength(6);
+        builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
     }
 }
 
@@ -217,5 +222,38 @@ internal sealed class CertificateConfiguration : IEntityTypeConfiguration<Certif
         builder.HasIndex(x => new { x.UserId, x.ModuleId }).IsUnique();
         builder.HasIndex(x => x.CertificateHash).IsUnique();
         builder.HasIndex(x => x.UserId);
+    }
+}
+
+internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notification>
+{
+    public void Configure(EntityTypeBuilder<Notification> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "notifications", nameof(Notification.Id));
+        builder.Property(x => x.Type).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.IsRead).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany(x => x.Notifications).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.IsRead }).HasDatabaseName("idx_notifications_user_unread");
+    }
+}
+
+internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguration<PendingRegistration>
+{
+    public void Configure(EntityTypeBuilder<PendingRegistration> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "pending_registrations", nameof(PendingRegistration.PendingRegistrationId));
+        builder.Property(x => x.Username).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.FirstName).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.LastName).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
+        builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.VerificationCode).HasMaxLength(6).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.Username).IsUnique();
+        builder.HasIndex(x => x.VerificationCodeExpiresAt);
     }
 }
