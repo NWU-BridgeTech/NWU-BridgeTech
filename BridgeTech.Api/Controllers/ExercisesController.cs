@@ -1,55 +1,25 @@
-using BridgeTech.Api.Data;
-using BridgeTech.Api.Domain.Entities;
+using BridgeTech.Api.Services.Exercises;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/exercises")]
 // Provides exercise instructions and records learner repository submissions.
-public class ExercisesController(AppDbContext dbContext) : ControllerBase
+public class ExercisesController(IExerciseService service) : ControllerBase
 {
     [HttpGet]
     // Returns all exercise definitions ordered by creation time.
     public async Task<IActionResult> GetExercises(CancellationToken cancellationToken)
     {
-        var exercises = await dbContext.Exercises
-            .AsNoTracking()
-            .OrderBy(exercise => exercise.CreatedAt)
-            .Select(exercise => new
-            {
-                exercise.ExerciseId,
-                exercise.ModuleId,
-                exercise.Title,
-                exercise.Description,
-                exercise.VerificationType,
-                exercise.VerificationCriteria,
-                exercise.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        return Ok(exercises);
+        return Ok(await service.GetAllAsync(cancellationToken));
     }
 
     [HttpGet("{exerciseId:guid}")]
     // Returns one exercise definition needed by the learner.
     public async Task<IActionResult> GetExercise(Guid exerciseId, CancellationToken cancellationToken)
     {
-        var exercise = await dbContext.Exercises
-            .AsNoTracking()
-            .Where(exercise => exercise.ExerciseId == exerciseId)
-            .Select(exercise => new
-            {
-                exercise.ExerciseId,
-                exercise.ModuleId,
-                exercise.Title,
-                exercise.Description,
-                exercise.VerificationType,
-                exercise.VerificationCriteria,
-                exercise.CreatedAt
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+        var exercise = await service.GetByIdAsync(exerciseId, cancellationToken);
 
         return exercise is null ? NotFound() : Ok(exercise);
     }
@@ -61,26 +31,11 @@ public class ExercisesController(AppDbContext dbContext) : ControllerBase
         SubmitExerciseRequest request,
         CancellationToken cancellationToken)
     {
-        var exerciseExists = await dbContext.Exercises
-            .AsNoTracking()
-            .AnyAsync(exercise => exercise.ExerciseId == exerciseId, cancellationToken);
-
-        if (!exerciseExists)
+        var submission = await service.CreateSubmissionAsync(exerciseId, request.UserId, request.GithubRepoUrl, cancellationToken);
+        if (submission is null)
         {
             return NotFound();
         }
-
-        var submission = new ExerciseSubmission
-        {
-            SubmissionId = Guid.NewGuid(),
-            ExerciseId = exerciseId,
-            UserId = request.UserId,
-            GithubRepoUrl = request.GithubRepoUrl,
-            SubmittedAt = DateTimeOffset.UtcNow
-        };
-
-        dbContext.ExerciseSubmissions.Add(submission);
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(
             nameof(GetSubmission),
@@ -92,9 +47,7 @@ public class ExercisesController(AppDbContext dbContext) : ControllerBase
     // Returns the current verification status of a submission.
     public async Task<IActionResult> GetSubmission(Guid submissionId, CancellationToken cancellationToken)
     {
-        var submission = await dbContext.ExerciseSubmissions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.SubmissionId == submissionId, cancellationToken);
+        var submission = await service.GetSubmissionAsync(submissionId, cancellationToken);
 
         return submission is null ? NotFound() : Ok(submission);
     }
