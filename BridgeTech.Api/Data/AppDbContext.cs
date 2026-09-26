@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     // These DbSets expose the tables used by the learning platform.
     public DbSet<User> Users => Set<User>();
+    public DbSet<PendingRegistration> PendingRegistrations => Set<PendingRegistration>();
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<VideoSummary> VideoSummaries => Set<VideoSummary>();
@@ -21,6 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ExerciseSubmission> ExerciseSubmissions => Set<ExerciseSubmission>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

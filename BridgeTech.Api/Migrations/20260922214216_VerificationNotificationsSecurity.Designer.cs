@@ -4,6 +4,7 @@ using System.Text.Json;
 using BridgeTech.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BridgeTech.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922214216_VerificationNotificationsSecurity")]
+    partial class VerificationNotificationsSecurity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -375,90 +378,6 @@ namespace BridgeTech.Api.Migrations
                         .HasDatabaseName("idx_notifications_user_unread");
 
                     b.ToTable("notifications", "public");
-                });
-
-            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.PendingRegistration", b =>
-                {
-                    b.Property<Guid>("PendingRegistrationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("pending_registration_id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)")
-                        .HasColumnName("email");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)")
-                        .HasColumnName("first_name");
-
-                    b.Property<string>("GithubUsername")
-                        .HasMaxLength(39)
-                        .HasColumnType("character varying(39)")
-                        .HasColumnName("github_username");
-
-                    b.Property<DateTimeOffset>("LastCodeSentAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_code_sent_at");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)")
-                        .HasColumnName("last_name");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("password_hash");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("username");
-
-                    b.Property<int>("VerificationAttempts")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("verification_attempts");
-
-                    b.Property<string>("VerificationCode")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
-                        .HasColumnName("verification_code");
-
-                    b.Property<DateTimeOffset>("VerificationCodeExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("verification_code_expires_at");
-
-                    b.HasKey("PendingRegistrationId")
-                        .HasName("pk_pending_registrations");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pending_registrations_email");
-
-                    b.HasIndex("Username")
-                        .IsUnique()
-                        .HasDatabaseName("ix_pending_registrations_username");
-
-                    b.HasIndex("VerificationCodeExpiresAt")
-                        .HasDatabaseName("ix_pending_registrations_verification_code_expires_at");
-
-                    b.ToTable("pending_registrations", "public");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Quiz", b =>
