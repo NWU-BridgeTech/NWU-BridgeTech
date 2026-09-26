@@ -9,7 +9,6 @@ export default function Admin() {
   const statusSummary = getSystemStatus(systemStatus.services);
   const [selectedItem, setSelectedItem] = useState(null);
   const selectedButtonRef = useRef(null);
-
   const currentHour = new Date().getHours();
 
   let greeting;

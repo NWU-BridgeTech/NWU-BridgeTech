@@ -114,39 +114,6 @@
   margin: 8px 0;
 }
 
-.admin-page .dashboard-metrics small {
-  display: block;
-  color: #687384;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.admin-page .dashboard-metrics b {
-  display: block;
-  margin: 12px 0 0;
-  font-size: 30px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
-}
-
-.admin-page .dashboard-metrics .metric-note {
-  display: block;
-  margin: 12px 0 0;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.admin-page .dashboard-metrics .metric-attention {
-  background: #fffbf2;
-  border-color: #ecd7aa;
-}
-
-.admin-page .metric-attention .metric-note {
-  color: #8a5a12;
-}
-
 .admin-page .change {
   font-size: 12px;
   color: #16835d;
@@ -373,6 +340,12 @@
   line-height: 1.5;
 }
 
+.admin-page .dashboard-metrics .metric {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .admin-page .dashboard-metrics .metric:hover {
   border-color: #bd8b36;
 }
@@ -386,6 +359,39 @@
 .admin-page .attention-close:focus-visible {
   outline: 2px solid #3159ad;
   outline-offset: 3px;
+}
+
+.admin-page .dashboard-metrics small {
+  display: block;
+  color: #687384;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-page .dashboard-metrics b {
+  display: block;
+  margin: 12px 0 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.admin-page .dashboard-metrics .metric-note {
+  display: block;
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.admin-page .dashboard-metrics .metric-attention {
+  background: #fffbf2;
+  border-color: #ecd7aa;
+}
+
+.admin-page .metric-attention .metric-note {
+  color: #8a5a12;
 }
 
 .admin-page .attention-details {

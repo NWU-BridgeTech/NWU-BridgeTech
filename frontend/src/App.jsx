@@ -22,6 +22,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import "./pages/Admin.css";
+import Lessons from "./pages/Lessons";
 
 function AdminSection({ children }) {
   return <AppLayout>{children}</AppLayout>;
@@ -38,22 +39,28 @@ function App() {
           path="/student/courses"
           element={<StudentCourses />}
         />
+
         <Route
           path="/student/assessments"
           element={<StudentAssessments />}
         />
+
         <Route
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
+
         <Route
           path="/student/certificates"
           element={<StudentCertificates />}
         />
+
         <Route
           path="/student/github"
           element={<StudentGithub />}
         />
+
+        <Route path="/lessons" element={<Lessons />} />
 
         <Route path="/admin" element={<Admin />} />
 
