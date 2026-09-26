@@ -1,10 +1,12 @@
 using BridgeTech.Api.Services.Certificates;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/certificates")]
+[Authorize]
 // Provides certificate lookup after a learner completes a module.
 public class CertificatesController(ICertificateService service) : ControllerBase
 {
