@@ -23,6 +23,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<LessonProgress> LessonProgress => Set<LessonProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
