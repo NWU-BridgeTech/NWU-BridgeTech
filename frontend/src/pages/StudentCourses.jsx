@@ -4,18 +4,40 @@ import ExploreCourses from "../components/student/ExploreCourses";
 import { apiFetch } from "../utils/apiClient";
 import "./StudentCourses.css";
 
-function CourseCard({ course }) {
+function CourseCard({ course, onChanged }) {
   const completed = course.lessonsDone >= course.lessonsTotal;
   const progress =
     course.lessonsTotal > 0
       ? Math.round((course.lessonsDone / course.lessonsTotal) * 100)
       : 0;
 
+  async function handleDeregister() {
+    const confirmed = window.confirm(
+      `Are you sure you want to de-register from "${course.moduleTitle}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      const success = await apiFetch(`/modules/${course.moduleId}/enroll`, {
+        method: "DELETE",
+      });
+      if (success) {
+        onChanged?.();
+      } else {
+        alert("You are not enrolled in this module.");
+      }
+    } catch (err) {
+      alert("Could not de-register: " + err.message);
+    }
+  }
+
   return (
     <article className="course">
       <div className="course-top">
         <span className="tag">{completed ? "Completed" : "In progress"}</span>
-        <span className="de-register">De-Register</span>
+        <span className="de-register" onClick={handleDeregister}>
+          De-Register
+        </span>
       </div>
       <h3>{course.moduleTitle}</h3>
       <div className="course-progress">
@@ -98,7 +120,7 @@ export default function StudentCourses() {
             <>
               <div className="my-grid">
                 {myCourses.map((course) => (
-                  <CourseCard key={course.enrollmentId} course={course} />
+                  <CourseCard key={course.enrollmentId} course={course} onChanged={fetchMyCourses} />
                 ))}
               </div>
               {myCourses.length === 0 ? (

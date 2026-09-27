@@ -110,4 +110,26 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
             NextLessonTitle = firstLesson?.Title
         };
     }
+
+   public async Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken)
+    {
+        var enrollment = await context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.ModuleId == moduleId, cancellationToken);
+
+        if (enrollment is null)
+        {
+            return false;
+        }
+
+        var progressToRemove = await context.LessonProgress
+            .Include(p => p.Lesson)
+            .Where(p => p.UserId == userId && p.Lesson.ModuleId == moduleId)
+            .ToListAsync(cancellationToken);
+
+        context.LessonProgress.RemoveRange(progressToRemove);
+        context.Enrollments.Remove(enrollment);
+
+        await context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

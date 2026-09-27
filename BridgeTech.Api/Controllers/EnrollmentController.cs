@@ -31,4 +31,11 @@ public class EnrollmentsController(IEnrollmentService service) : ControllerBase
             ? id
             : throw new UnauthorizedAccessException("User id claim missing or invalid.");
     }
+
+    [HttpDelete("modules/{moduleId:guid}/enroll")]
+    public async Task<IActionResult> Unenroll(Guid moduleId, CancellationToken cancellationToken)
+    {
+        var result = await service.UnenrollAsync(GetUserId(), moduleId, cancellationToken);
+        return Ok(result);
+    }
 }

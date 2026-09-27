@@ -9,4 +9,6 @@ public interface IEnrollmentService
 
     Task<EnrollmentResponse> EnrollAsync(
         Guid userId, Guid moduleId, CancellationToken cancellationToken);
+
+    Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken);
 }

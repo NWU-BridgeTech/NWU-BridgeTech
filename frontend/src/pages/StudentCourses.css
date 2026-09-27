@@ -69,11 +69,18 @@
   letter-spacing: -0.2px;
 }
 
-.student-courses .de-register span {
-    background: #ff00003b;
-    border: 1px solid red;
-    border-radius: 8px;
-    padding: 4px;
-    font-size: 10px;
-    color: red;
+.de-register {
+  background: #ff00003b;
+  border: 1px solid red;
+  border-radius: 6px;
+  padding: 4px;
+  font-size: 10px;
+  color: red;
+  cursor: pointer;
+  font-weight: 700;
 }
+
+.de-register:hover {
+  background: #ff00005a;
+}
+
