@@ -304,7 +304,6 @@ export default function SignUpPage() {
 
         return;
       }
-
       setVerification({
         email: form.email,
         expiresAt: data.verificationExpiresAt,
@@ -334,7 +333,6 @@ export default function SignUpPage() {
           }}
         />
       )}
-
       <a className="bt-skip" href="#main">
         Skip to content
       </a>

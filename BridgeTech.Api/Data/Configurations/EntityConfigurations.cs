@@ -257,3 +257,17 @@ internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguratio
         builder.HasIndex(x => x.VerificationCodeExpiresAt);
     }
 }
+
+internal sealed class LessonProgressConfiguration : IEntityTypeConfiguration<LessonProgress>
+{
+    public void Configure(EntityTypeBuilder<LessonProgress> builder)
+    {
+        // One progress row per user/lesson pair; drives per-lesson completion state.
+        EntityConfigurationHelpers.ConfigureId(builder, "lesson_progress", nameof(LessonProgress.ProgressId));
+        builder.Property(x => x.Completed).HasDefaultValue(false).IsRequired();
+        builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany().HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.LessonId);
+    }
+}

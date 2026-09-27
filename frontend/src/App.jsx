@@ -49,6 +49,7 @@ function App() {
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
+        <Route path="/lessons" element={<Lessons />} />
 
         <Route
           path="/student/certificates"
