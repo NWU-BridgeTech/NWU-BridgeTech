@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import StudentLayout from "../layouts/StudentLayout";
 import ExploreCourses from "../components/student/ExploreCourses";
 import { apiFetch } from "../utils/apiClient";
@@ -15,6 +15,7 @@ function CourseCard({ course }) {
     <article className="course">
       <div className="course-top">
         <span className="tag">{completed ? "Completed" : "In progress"}</span>
+        <span className="de-register">De-Register</span>
       </div>
       <h3>{course.moduleTitle}</h3>
       <div className="course-progress">
@@ -36,7 +37,7 @@ function CourseCard({ course }) {
         </span>
         <p className="next-task">
           {completed
-            ? "You’ve completed every lesson."
+            ? "You've completed every lesson."
             : course.nextLessonTitle || "No lessons yet"}
         </p>
       </div>
@@ -56,24 +57,17 @@ export default function StudentCourses() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    apiFetch("/user/enrollments")
-      .then((data) => {
-        if (!cancelled) setMyCourses(data);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+  const fetchMyCourses = useCallback(() => {
+    setLoading(true);
+    return apiFetch("/user/enrollments")
+      .then((data) => setMyCourses(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchMyCourses();
+  }, [fetchMyCourses]);
 
   const activeCourses = myCourses.filter(
     (course) => course.lessonsDone < course.lessonsTotal,
@@ -123,7 +117,7 @@ export default function StudentCourses() {
             </>
           )}
         </section>
-        <ExploreCourses />
+        <ExploreCourses onEnrolled={fetchMyCourses} />
       </div>
     </StudentLayout>
   );
