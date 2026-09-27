@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import StudentLayout from "../layouts/StudentLayout";
 import ExploreCourses from "../components/student/ExploreCourses";
-import { myCourses } from "../data/studentDashboard";
+import { apiFetch } from "../utils/apiClient";
 import "./StudentCourses.css";
 
 function CourseCard({ course }) {
@@ -15,7 +16,7 @@ function CourseCard({ course }) {
       <div className="course-top">
         <span className="tag">{completed ? "Completed" : "In progress"}</span>
       </div>
-      <h3>{course.title}</h3>
+      <h3>{course.moduleTitle}</h3>
       <div className="course-progress">
         <div className="progress-label">
           <span>
@@ -24,7 +25,7 @@ function CourseCard({ course }) {
           <b>{progress}%</b>
         </div>
         <progress
-          aria-label={`${course.title} lesson completion`}
+          aria-label={`${course.moduleTitle} lesson completion`}
           value={course.lessonsDone}
           max={course.lessonsTotal || 1}
         />
@@ -34,19 +35,46 @@ function CourseCard({ course }) {
           {completed ? "COURSE COMPLETE" : "UP NEXT"}
         </span>
         <p className="next-task">
-          {completed ? "You’ve completed every lesson." : course.nextTask}
+          {completed
+            ? "You’ve completed every lesson."
+            : course.nextLessonTitle || "No lessons yet"}
         </p>
-        {!completed && <p className="task-type">{course.taskType}</p>}
       </div>
-      <button className="btn blue course-action" disabled>
-        {completed ? "Review course" : course.action}{" "}
+      <a
+        className="btn blue course-action"
+        href={completed ? "#" : `/lesson/${course.nextLessonId}`}
+      >
+        {completed ? "Review course" : "Continue lesson"}{" "}
         <span aria-hidden="true">→</span>
-      </button>
+      </a>
     </article>
   );
 }
 
 export default function StudentCourses() {
+  const [myCourses, setMyCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    apiFetch("/user/enrollments")
+      .then((data) => {
+        if (!cancelled) setMyCourses(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const activeCourses = myCourses.filter(
     (course) => course.lessonsDone < course.lessonsTotal,
   );
@@ -68,23 +96,31 @@ export default function StudentCourses() {
               {activeCourses.length === 1 ? "active course" : "active courses"}
             </span>
           </div>
-          <div className="my-grid">
-            {myCourses.map((course) => (
-              <CourseCard key={course.number} course={course} />
-            ))}
-          </div>
-          {myCourses.length === 0 ? (
-            <div className="explore-empty">
-              <h3>No courses yet</h3>
-              <p>Explore the catalogue below to find your first course.</p>
-              <a className="text-action" href="#explore-courses">
-                Explore courses →
-              </a>
-            </div>
-          ) : (
-            <p className="course-preview-note enrolled-note">
-              Lesson and task actions are coming soon.
-            </p>
+
+          {loading && <p>Loading your courses…</p>}
+          {error && <p className="error-message visible">{error}</p>}
+
+          {!loading && !error && (
+            <>
+              <div className="my-grid">
+                {myCourses.map((course) => (
+                  <CourseCard key={course.enrollmentId} course={course} />
+                ))}
+              </div>
+              {myCourses.length === 0 ? (
+                <div className="explore-empty">
+                  <h3>No courses yet</h3>
+                  <p>Explore the catalogue below to find your first course.</p>
+                  <a className="text-action" href="#explore-courses">
+                    Explore courses →
+                  </a>
+                </div>
+              ) : (
+                <p className="course-preview-note enrolled-note">
+                  Lesson and task actions are coming soon.
+                </p>
+              )}
+            </>
           )}
         </section>
         <ExploreCourses />

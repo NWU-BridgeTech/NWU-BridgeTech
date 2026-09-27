@@ -4,6 +4,7 @@ import {
   courseCategories,
   courseRecommendation,
 } from "../../data/studentDashboard";
+import { apiFetch } from "../../utils/apiClient";
 
 export default function ExploreCourses() {
   const recommendedCourse = exploreCourses.find(
