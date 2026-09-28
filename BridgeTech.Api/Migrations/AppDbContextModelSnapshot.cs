@@ -704,6 +704,12 @@ namespace BridgeTech.Api.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("email_verified");
 
+                    b.Property<bool>("EmailVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("email_verified");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(254)

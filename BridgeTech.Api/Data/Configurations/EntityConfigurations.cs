@@ -44,6 +44,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
         builder.Property(x => x.VerificationCode).HasMaxLength(6);
         builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
+        builder.Property(x => x.EmailVerified).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.VerificationCode).HasMaxLength(6);
+        builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
     }
 }
 
@@ -251,11 +256,24 @@ internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
-        builder.Property(x => x.AccountSetupRequired).HasDefaultValue(true).IsRequired();
         builder.Property(x => x.VerificationCode).HasMaxLength(6).IsRequired();
         builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
         builder.HasIndex(x => x.Email).IsUnique();
         builder.HasIndex(x => x.Username).IsUnique();
         builder.HasIndex(x => x.VerificationCodeExpiresAt);
+    }
+}
+
+internal sealed class LessonProgressConfiguration : IEntityTypeConfiguration<LessonProgress>
+{
+    public void Configure(EntityTypeBuilder<LessonProgress> builder)
+    {
+        // One progress row per user/lesson pair; drives per-lesson completion state.
+        EntityConfigurationHelpers.ConfigureId(builder, "lesson_progress", nameof(LessonProgress.ProgressId));
+        builder.Property(x => x.Completed).HasDefaultValue(false).IsRequired();
+        builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany().HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.LessonId);
     }
 }

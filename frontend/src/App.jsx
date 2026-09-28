@@ -23,7 +23,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import AccountSetup from "./pages/AccountSetup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-
 function App() {
   return (
     <BrowserRouter>

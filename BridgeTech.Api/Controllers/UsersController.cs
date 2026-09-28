@@ -9,6 +9,7 @@ namespace BridgeTech.Api.Controllers;
 [ApiController]
 [Route("api/users")]
 [Authorize]
+[Authorize]
 // Provides safe, read-only user profiles for administrative and learning views.
 public class UsersController(AppDbContext dbContext) : ControllerBase
 {
