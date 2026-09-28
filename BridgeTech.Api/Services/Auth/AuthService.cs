@@ -9,6 +9,7 @@ using BridgeTech.Api.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
+using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Auth;
 
@@ -19,19 +20,22 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
+    private readonly INotificationService _notificationService;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IPasswordHasher<User> passwordHasher,
         IEmailService emailService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        INotificationService notificationService)
     {
         _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -202,6 +206,13 @@ public class AuthService : IAuthService
         _context.PendingRegistrations.Remove(pendingRegistration);
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        await _notificationService.NotifyAsync(
+            user.UserId,
+            "account_verified",
+            "Account verified",
+            "Your BridgeTech account has been verified successfully.",
+            cancellationToken: cancellationToken);
 
         try
         {

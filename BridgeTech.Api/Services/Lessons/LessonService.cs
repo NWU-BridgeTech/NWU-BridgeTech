@@ -1,4 +1,5 @@
 using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Notifications;
 using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Lessons;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BridgeTech.Api.Services.Lessons;
 
-public class LessonService(AppDbContext context) : ILessonService
+public class LessonService(AppDbContext context, INotificationService notificationService) : ILessonService
 {
     public async Task<IEnumerable<LessonListItemResponse>> GetLessonsForModuleAsync(
         Guid moduleId, Guid userId, CancellationToken cancellationToken)
@@ -21,7 +22,7 @@ public class LessonService(AppDbContext context) : ILessonService
 
         return await context.Lessons
             .AsNoTracking()
-            .Where(l => l.ModuleId == moduleId) 
+            .Where(l => l.ModuleId == moduleId)
             .OrderBy(l => l.OrderIndex)
             .Select(l => new LessonListItemResponse
             {
@@ -144,6 +145,16 @@ public class LessonService(AppDbContext context) : ILessonService
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        await notificationService.NotifyAsync(
+            userId,
+            enrollment.Status == EnrollmentStatus.Completed ? "module_completed" : "lesson_completed",
+            enrollment.Status == EnrollmentStatus.Completed ? "Module completed" : "Lesson completed",
+            enrollment.Status == EnrollmentStatus.Completed
+                ? "You completed all lessons in this module."
+                : $"You completed the lesson \"{lesson.Title}\".",
+            lessonId,
+            cancellationToken);
 
         return new LessonProgressResponse
         {

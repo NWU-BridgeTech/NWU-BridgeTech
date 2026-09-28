@@ -29,6 +29,9 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.FirstName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.LastName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(30);
+        builder.Property(x => x.Address).HasMaxLength(500);
+        builder.Property(x => x.University).HasMaxLength(200);
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
         builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();

@@ -1,12 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import { certificates, student } from "../data/studentDashboard";
+import useCurrentUser from "../hooks/useCurrentUser";
 import "./StudentCertificates.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+
 function formatDate(date) {
-  return new Date(`${date}T00:00:00+02:00`).toLocaleDateString("en-ZA", {
+  return new Date(date).toLocaleDateString("en-ZA", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -15,8 +17,28 @@ function formatDate(date) {
 }
 
 export default function StudentCertificates() {
+  const { user, loading: userLoading, error: userError } = useCurrentUser();
   const detailsDialog = useRef(null);
+  const [certificates, setCertificates] = useState([]);
+  const [certificatesLoading, setCertificatesLoading] = useState(true);
+  const [certificatesError, setCertificatesError] = useState("");
   const [selectedCertificate, setSelectedCertificate] = useState(null);
+
+  useEffect(() => {
+    if (!user?.userId) return;
+
+    const token = localStorage.getItem("token");
+    fetch(`${API_URL}/api/certificates/user/${user.userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load certificates.");
+        return response.json();
+      })
+      .then(setCertificates)
+      .catch(() => setCertificatesError("Unable to load your certificates."))
+      .finally(() => setCertificatesLoading(false));
+  }, [user, userLoading]);
 
   function openDetails(certificate) {
     setSelectedCertificate(certificate);
@@ -40,7 +62,13 @@ export default function StudentCertificates() {
             </span>
           </div>
 
-          {certificates.length > 0 ? (
+          {userError || certificatesError ? (
+            <p role="alert" className="certificates-message">
+              {userError || certificatesError}
+            </p>
+          ) : userLoading || (user?.userId && certificatesLoading) ? (
+            <p className="certificates-message">Loading your certificates...</p>
+          ) : certificates.length > 0 ? (
             <ul className="certificate-list">
               {certificates.map((certificate) => (
                 <li className="certificate-card" key={certificate.id}>
@@ -51,7 +79,7 @@ export default function StudentCertificates() {
                     <span className="activity-status success">
                       Course completed
                     </span>
-                    <h3>{certificate.course}</h3>
+                    <h3>{certificate.moduleTitle || "Completed module"}</h3>
                     <p>
                       Issued{" "}
                       <time dateTime={certificate.issuedAt}>
@@ -62,7 +90,7 @@ export default function StudentCertificates() {
                   <button
                     className="btn"
                     onClick={() => openDetails(certificate)}
-                    aria-label={`View certificate: ${certificate.course}`}
+                    aria-label={`View certificate: ${certificate.moduleTitle || "Completed module"}`}
                   >
                     View details <span aria-hidden="true">→</span>
                   </button>
@@ -109,7 +137,7 @@ export default function StudentCertificates() {
             <>
               <div className="certificate-detail-summary">
                 <Award size={36} strokeWidth={1.5} aria-hidden="true" />
-                <h3>{selectedCertificate.course}</h3>
+                <h3>{selectedCertificate.moduleTitle || "Completed module"}</h3>
                 <span className="activity-status success">
                   Course completed
                 </span>
@@ -117,7 +145,9 @@ export default function StudentCertificates() {
               <dl className="certificate-details">
                 <div>
                   <dt>Issued to</dt>
-                  <dd>{student.displayName}</dd>
+                  <dd>
+                    {user ? `${user.firstName} ${user.lastName}`.trim() : ""}
+                  </dd>
                 </div>
                 <div>
                   <dt>Issued by</dt>

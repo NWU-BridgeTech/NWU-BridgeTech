@@ -8,6 +8,7 @@ import StudentAssessments from "./pages/StudentAssessments";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
+import StudentProfile from "./pages/StudentProfile";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -21,6 +22,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import AccountSetup from "./pages/AccountSetup";
+import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 function App() {
@@ -33,6 +35,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/signout" element={<SignOut />} />
 
         <Route element={<ProtectedRoute setupOnly />}>
           <Route path="/account/setup" element={<AccountSetup />} />
@@ -51,6 +54,7 @@ function App() {
             element={<StudentCertificates />}
           />
           <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
 
