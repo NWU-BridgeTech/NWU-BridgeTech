@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PublicHomepage from "./pages/PublicHomepage";
+import RootRoute from "./components/RootRoute";
 import Home from "./pages/Home";
 import StudentCourses from "./pages/StudentCourses";
 import StudentAssessments from "./pages/StudentAssessments";
@@ -20,6 +20,7 @@ import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import AccountSetup from "./pages/AccountSetup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 
@@ -27,12 +28,16 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<PublicHomepage />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+
+        <Route element={<ProtectedRoute setupOnly />}>
+          <Route path="/account/setup" element={<AccountSetup />} />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />

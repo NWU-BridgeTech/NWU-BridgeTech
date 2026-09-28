@@ -23,7 +23,7 @@ export default function Login() {
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED")
           setVerification({
-            email: identifier,
+            email: data.email || identifier,
             expiresAt:
               data.verificationExpiresAt ||
               new Date(Date.now() + 600000).toISOString(),

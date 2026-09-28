@@ -31,6 +31,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Role).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
@@ -250,6 +251,7 @@ internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.AccountSetupRequired).HasDefaultValue(true).IsRequired();
         builder.Property(x => x.VerificationCode).HasMaxLength(6).IsRequired();
         builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
         builder.HasIndex(x => x.Email).IsUnique();

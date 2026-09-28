@@ -77,6 +77,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
+            AccountSetupRequired = true,
             CreatedAt = DateTimeOffset.UtcNow,
             VerificationCode = GenerateCode(),
             VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
@@ -108,19 +109,36 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            throw new UnauthorizedAccessException(
-                "Invalid username/email or password.");
+            var pendingRegistration = await _context.PendingRegistrations
+                .FirstOrDefaultAsync(registration =>
+                    registration.Username == request.Identifier ||
+                    registration.Email == request.Identifier, cancellationToken);
+
+            if (pendingRegistration is null ||
+                !VerifyPassword(request.Password, pendingRegistration.PasswordHash))
+            {
+                throw InvalidCredentials();
+            }
+
+            var pendingException = new UnauthorizedAccessException(
+                "Email verification is required.");
+            pendingException.Data["Code"] = "EMAIL_NOT_VERIFIED";
+            pendingException.Data["Email"] = pendingRegistration.Email;
+            pendingException.Data["VerificationExpiresAt"] = pendingRegistration.VerificationCodeExpiresAt;
+            throw pendingException;
         }
 
         if (!VerifyPassword(request.Password, user.PasswordHash))
         {
-            throw new UnauthorizedAccessException(
-                "Invalid username/email or password.");
+            throw InvalidCredentials();
         }
 
         if (!user.EmailVerified)
         {
-            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
+            var exception = new UnauthorizedAccessException("Email verification is required.");
+            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
+            exception.Data["Email"] = user.Email;
+            exception.Data["VerificationExpiresAt"] = user.VerificationCodeExpiresAt;
             throw exception;
         }
 
@@ -173,6 +191,7 @@ public class AuthService : IAuthService
             Email = pendingRegistration.Email,
             PasswordHash = pendingRegistration.PasswordHash,
             GithubUsername = pendingRegistration.GithubUsername,
+            AccountSetupRequired = pendingRegistration.AccountSetupRequired,
             Role = UserRole.Student,
             CreatedAt = pendingRegistration.CreatedAt,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -264,6 +283,9 @@ public class AuthService : IAuthService
     }
 
     private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+
+    private static UnauthorizedAccessException InvalidCredentials() =>
+        new("Invalid username/email or password.");
 
     private static InvalidOperationException VerificationError(string message, string code)
     {
@@ -391,6 +413,10 @@ public class AuthService : IAuthService
             new Claim(
                 ClaimTypes.Role,
                 user.Role.ToString()),
+
+            new Claim(
+                "account_setup_required",
+                user.AccountSetupRequired.ToString().ToLowerInvariant()),
 
             new Claim(
                 "token_type",

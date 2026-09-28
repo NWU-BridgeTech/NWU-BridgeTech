@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using BridgeTech.Api.Common.Options;
 using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Notifications;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -16,17 +17,20 @@ public sealed class GitHubService : IGitHubService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly GitHubApiOptions _options;
     private readonly IDataProtector _stateProtector;
+    private readonly INotificationService _notificationService;
 
     public GitHubService(
         AppDbContext dbContext,
         IHttpClientFactory httpClientFactory,
         IOptions<GitHubApiOptions> options,
-        IDataProtectionProvider dataProtectionProvider)
+        IDataProtectionProvider dataProtectionProvider,
+        INotificationService notificationService)
     {
         _dbContext = dbContext;
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _stateProtector = dataProtectionProvider.CreateProtector("BridgeTech.GitHubOAuthState");
+        _notificationService = notificationService;
     }
 
     public string CreateAuthorizationUrl(Guid userId)
@@ -83,8 +87,15 @@ public sealed class GitHubService : IGitHubService
             throw new InvalidOperationException("That GitHub account is already connected to another BridgeTech account.");
 
         user.GithubUsername = githubUser.Login;
+        user.AccountSetupRequired = false;
         user.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.NotifyAsync(
+            user.UserId,
+            "github_connected",
+            "GitHub account connected",
+            $"Your GitHub account @{githubUser.Login} is now connected to BridgeTech.",
+            cancellationToken: cancellationToken);
         return githubUser.Login;
     }
 

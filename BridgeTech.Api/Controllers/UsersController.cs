@@ -24,6 +24,7 @@ public class UsersController(AppDbContext dbContext) : ControllerBase
             candidate.LastName,
             candidate.Email,
             candidate.GithubUsername,
+            candidate.AccountSetupRequired,
             candidate.Role,
             candidate.EmailVerified,
             UnreadNotificationCount = candidate.Notifications.Count(notification => !notification.IsRead),
@@ -31,6 +32,20 @@ public class UsersController(AppDbContext dbContext) : ControllerBase
             CertificatesEarned = candidate.Certificates.Count()
         }).SingleOrDefaultAsync(cancellationToken);
         return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpPost("me/setup/complete")]
+    public async Task<IActionResult> CompleteAccountSetup(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
+
+        var user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.UserId == userId, cancellationToken);
+        if (user is null) return NotFound();
+
+        user.AccountSetupRequired = false;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return NoContent();
     }
 
     [HttpGet]
