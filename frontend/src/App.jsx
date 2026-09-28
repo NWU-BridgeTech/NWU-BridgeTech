@@ -9,6 +9,7 @@ import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
+import StudentNotifications from "./pages/StudentNotifications";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -55,6 +56,10 @@ function App() {
           />
           <Route path="/student/github" element={<StudentGithub />} />
           <Route path="/student/profile" element={<StudentProfile />} />
+          <Route
+            path="/student/notifications"
+            element={<StudentNotifications />}
+          />
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
 

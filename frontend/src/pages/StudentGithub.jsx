@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { clearAuthTokens, getToken } from "../utils/authStorage";
 import { Link } from "react-router-dom";
 import { GitBranch } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
@@ -24,7 +25,7 @@ export default function StudentGithub() {
     window.history.replaceState({}, document.title, window.location.pathname);
 
     fetch(`${API_URL}/api/github/me`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load GitHub connection.");
@@ -39,7 +40,7 @@ export default function StudentGithub() {
     setConnecting(true);
     try {
       const response = await fetch(`${API_URL}/api/github/connect`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       const responseText = await response.text();
       let data = {};
@@ -52,8 +53,7 @@ export default function StudentGithub() {
       }
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("refreshToken");
+          clearAuthTokens();
           throw new Error("Your session has expired. Please log in again.");
         }
         throw new Error(data.message || "Unable to start GitHub connection.");

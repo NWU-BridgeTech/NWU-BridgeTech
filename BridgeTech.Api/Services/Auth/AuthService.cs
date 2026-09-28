@@ -205,14 +205,15 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         _context.PendingRegistrations.Remove(pendingRegistration);
         await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
 
         await _notificationService.NotifyAsync(
             user.UserId,
-            "account_verified",
-            "Account verified",
-            "Your BridgeTech account has been verified successfully.",
+            "account_registered",
+            "Welcome to BridgeTech",
+            "Your account is ready. Complete your setup to enter your workspace.",
             cancellationToken: cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         try
         {

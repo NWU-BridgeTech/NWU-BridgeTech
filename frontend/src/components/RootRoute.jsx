@@ -1,8 +1,9 @@
 import { Navigate } from "react-router-dom";
 import PublicHomepage from "../pages/PublicHomepage";
+import { getToken } from "../utils/authStorage";
 
 function getTokenPayload() {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (!token) return null;
 
   try {

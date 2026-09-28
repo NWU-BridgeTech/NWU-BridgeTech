@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import useCurrentUser from "../hooks/useCurrentUser";
+import { getToken } from "../utils/authStorage";
 import "./StudentProfile.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -9,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 function authHeaders() {
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
+    Authorization: `Bearer ${getToken()}`,
   };
 }
 

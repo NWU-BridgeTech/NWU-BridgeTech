@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { clearAuthTokens, getToken } from "../utils/authStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
@@ -15,7 +17,7 @@ export default function Notifications() {
   ).length;
 
   async function loadNotifications() {
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (!token) return;
 
     try {
@@ -23,8 +25,7 @@ export default function Notifications() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
+        clearAuthTokens();
         window.location.href = "/login";
         return;
       }
@@ -41,9 +42,11 @@ export default function Notifications() {
   useEffect(() => {
     const initialLoad = window.setTimeout(loadNotifications, 0);
     const interval = window.setInterval(loadNotifications, 30000);
+    window.addEventListener("notifications-changed", loadNotifications);
     return () => {
       window.clearTimeout(initialLoad);
       window.clearInterval(interval);
+      window.removeEventListener("notifications-changed", loadNotifications);
     };
   }, []);
 
@@ -72,7 +75,7 @@ export default function Notifications() {
   async function markRead(id) {
     const response = await fetch(`${API_URL}/api/notifications/${id}/read`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (response.ok) {
       setNotifications((items) =>
@@ -86,7 +89,7 @@ export default function Notifications() {
   async function markAllRead() {
     const response = await fetch(`${API_URL}/api/notifications/read-all`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (response.ok)
       setNotifications((items) =>
@@ -189,6 +192,13 @@ export default function Notifications() {
           </p>
         )}
         <div className="notifications-footer">
+          <Link
+            className="text-action"
+            to="/student/notifications"
+            onClick={closeNotifications}
+          >
+            View all notifications
+          </Link>
           <button
             className="text-action"
             disabled={unreadCount === 0}

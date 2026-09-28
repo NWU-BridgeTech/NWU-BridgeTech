@@ -3,10 +3,11 @@ using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Enrollments;
 using Microsoft.EntityFrameworkCore;
+using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Enrollments;
 
-public class EnrollmentService(AppDbContext context) : IEnrollmentService
+public class EnrollmentService(AppDbContext context, INotificationService notificationService) : IEnrollmentService
 {
     public async Task<IEnumerable<EnrollmentResponse>> GetMyEnrollmentsAsync(
         Guid userId, CancellationToken cancellationToken)
@@ -96,6 +97,14 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
             .Select(l => new { l.LessonId, l.Title })
             .FirstOrDefaultAsync(cancellationToken);
 
+        await notificationService.NotifyAsync(
+            userId,
+            "course_enrolled",
+            "Course enrolled",
+            $"You are now enrolled in {module.Title}.",
+            moduleId,
+            cancellationToken);
+
         return new EnrollmentResponse
         {
             EnrollmentId = enrollment.EnrollmentId,
@@ -111,7 +120,7 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         };
     }
 
-   public async Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken)
+    public async Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken)
     {
         var enrollment = await context.Enrollments
             .FirstOrDefaultAsync(e => e.UserId == userId && e.ModuleId == moduleId, cancellationToken);
@@ -120,6 +129,11 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         {
             return false;
         }
+
+        var moduleTitle = await context.Modules
+            .Where(module => module.ModuleId == moduleId)
+            .Select(module => module.Title)
+            .SingleOrDefaultAsync(cancellationToken);
 
         var progressToRemove = await context.LessonProgress
             .Include(p => p.Lesson)
@@ -130,6 +144,15 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         context.Enrollments.Remove(enrollment);
 
         await context.SaveChangesAsync(cancellationToken);
+        await notificationService.NotifyAsync(
+            userId,
+            "course_unenrolled",
+            "Course de-registered",
+            moduleTitle is null
+                ? "You have been removed from a course."
+                : $"You have been de-registered from {moduleTitle}.",
+            moduleId,
+            cancellationToken);
         return true;
     }
 }

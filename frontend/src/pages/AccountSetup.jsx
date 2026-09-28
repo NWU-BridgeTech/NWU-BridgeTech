@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getRefreshToken, getToken, setAuthTokens } from "../utils/authStorage";
 import "./AccountSetup.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -10,7 +11,7 @@ export default function AccountSetup() {
 
   useEffect(() => {
     fetch(`${API_URL}/api/users/me`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load your account.");
@@ -22,14 +23,13 @@ export default function AccountSetup() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              refreshToken: localStorage.getItem("refreshToken"),
+              refreshToken: getRefreshToken(),
             }),
           })
             .then((refreshResponse) => refreshResponse.json())
             .then((tokens) => {
-              if (tokens.token) localStorage.setItem("token", tokens.token);
-              if (tokens.refreshToken)
-                localStorage.setItem("refreshToken", tokens.refreshToken);
+              if (tokens.token)
+                setAuthTokens(tokens.token, tokens.refreshToken);
               window.location.href = "/home";
             });
         }
@@ -44,7 +44,7 @@ export default function AccountSetup() {
     try {
       const response = await fetch(`${API_URL}/api/users/me/setup/complete`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!response.ok)
         throw new Error("Unable to finish setting up your account.");
@@ -53,15 +53,13 @@ export default function AccountSetup() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          refreshToken: localStorage.getItem("refreshToken"),
+          refreshToken: getRefreshToken(),
         }),
       });
       const tokens = await refreshResponse.json();
       if (!refreshResponse.ok || !tokens.token)
         throw new Error("Unable to refresh your session.");
-      localStorage.setItem("token", tokens.token);
-      if (tokens.refreshToken)
-        localStorage.setItem("refreshToken", tokens.refreshToken);
+      setAuthTokens(tokens.token, tokens.refreshToken);
       window.location.href = "/home";
     } catch (setupError) {
       setError(setupError.message);

@@ -22,6 +22,7 @@ function CourseCard({ course, onChanged }) {
         method: "DELETE",
       });
       if (success) {
+        window.dispatchEvent(new Event("notifications-changed"));
         onChanged?.();
       } else {
         alert("You are not enrolled in this module.");
@@ -120,7 +121,11 @@ export default function StudentCourses() {
             <>
               <div className="my-grid">
                 {myCourses.map((course) => (
-                  <CourseCard key={course.enrollmentId} course={course} onChanged={fetchMyCourses} />
+                  <CourseCard
+                    key={course.enrollmentId}
+                    course={course}
+                    onChanged={fetchMyCourses}
+                  />
                 ))}
               </div>
               {myCourses.length === 0 ? (

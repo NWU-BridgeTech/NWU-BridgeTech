@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Award } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
 import useCurrentUser from "../hooks/useCurrentUser";
+import { getToken } from "../utils/authStorage";
 import "./StudentCertificates.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -27,7 +28,7 @@ export default function StudentCertificates() {
   useEffect(() => {
     if (!user?.userId) return;
 
-    const token = localStorage.getItem("token");
+    const token = getToken();
     fetch(`${API_URL}/api/certificates/user/${user.userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })

@@ -1,7 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { getToken } from "../utils/authStorage";
 
 function getTokenPayload() {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (!token) return null;
 
   try {

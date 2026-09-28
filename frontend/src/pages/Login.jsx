@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { setAuthTokens } from "../utils/authStorage";
 import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
 import "./Login.css";
@@ -32,7 +33,17 @@ const Login = () => {
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(
+          response.ok
+            ? "The server returned an invalid response."
+            : responseText || "The server returned an unexpected error.",
+        );
+      }
 
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
@@ -49,10 +60,9 @@ const Login = () => {
         throw new Error(data.message || "Invalid username/email or password.");
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      setAuthTokens(data.token, data.refreshToken);
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "user",
         JSON.stringify({
           userId: data.userId,
