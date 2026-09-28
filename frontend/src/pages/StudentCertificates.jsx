@@ -24,6 +24,7 @@ export default function StudentCertificates() {
   const [certificatesLoading, setCertificatesLoading] = useState(true);
   const [certificatesError, setCertificatesError] = useState("");
   const [selectedCertificate, setSelectedCertificate] = useState(null);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     if (!user?.userId) return;
@@ -42,8 +43,28 @@ export default function StudentCertificates() {
   }, [user, userLoading]);
 
   function openDetails(certificate) {
+    setDownloadError("");
     setSelectedCertificate(certificate);
     detailsDialog.current.showModal();
+  }
+
+  async function downloadCertificate(format) {
+    setDownloadError("");
+    const response = await fetch(
+      `${API_URL}/api/certificates/${selectedCertificate.certificateId}/image?format=${format}`,
+      { headers: { Authorization: `Bearer ${getToken()}` } },
+    );
+    if (!response.ok) {
+      setDownloadError("Unable to generate this certificate image.");
+      return;
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedCertificate.certificateNumber}.${format}`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -72,7 +93,10 @@ export default function StudentCertificates() {
           ) : certificates.length > 0 ? (
             <ul className="certificate-list">
               {certificates.map((certificate) => (
-                <li className="certificate-card" key={certificate.id}>
+                <li
+                  className="certificate-card"
+                  key={certificate.certificateId}
+                >
                   <div className="certificate-icon" aria-hidden="true">
                     <Award size={28} strokeWidth={1.5} />
                   </div>
@@ -94,6 +118,12 @@ export default function StudentCertificates() {
                     aria-label={`View certificate: ${certificate.moduleTitle || "Completed module"}`}
                   >
                     View details <span aria-hidden="true">→</span>
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => downloadCertificate("pdf")}
+                  >
+                    Download PDF
                   </button>
                 </li>
               ))}
@@ -162,18 +192,40 @@ export default function StudentCertificates() {
                     </time>
                   </dd>
                 </div>
+                <div>
+                  <dt>Certificate number</dt>
+                  <dd>{selectedCertificate.certificateNumber}</dd>
+                </div>
               </dl>
               <div className="enrolment-preview">
                 <p id="certificate-download-note">
-                  Certificate PDF downloads are coming soon.
+                  Download a signed certificate image for sharing or printing.
                 </p>
-                <button
-                  className="btn blue"
-                  disabled
-                  aria-describedby="certificate-download-note"
-                >
-                  Download PDF
-                </button>
+                <div className="certificate-download-actions">
+                  <button
+                    className="btn blue"
+                    onClick={() => downloadCertificate("png")}
+                  >
+                    Download PNG
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => downloadCertificate("jpeg")}
+                  >
+                    Download JPEG
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => downloadCertificate("pdf")}
+                  >
+                    Download PDF
+                  </button>
+                </div>
+                {downloadError ? (
+                  <p className="profile-message error" role="alert">
+                    {downloadError}
+                  </p>
+                ) : null}
               </div>
             </>
           )}

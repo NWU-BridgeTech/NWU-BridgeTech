@@ -1,5 +1,6 @@
 using BridgeTech.Api.Data;
 using BridgeTech.Api.Services.Notifications;
+using BridgeTech.Api.Services.Certificates;
 using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Lessons;
@@ -7,7 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BridgeTech.Api.Services.Lessons;
 
-public class LessonService(AppDbContext context, INotificationService notificationService) : ILessonService
+public class LessonService(
+    AppDbContext context,
+    INotificationService notificationService,
+    ICertificateService certificateService) : ILessonService
 {
     public async Task<IEnumerable<LessonListItemResponse>> GetLessonsForModuleAsync(
         Guid moduleId, Guid userId, CancellationToken cancellationToken)
@@ -145,6 +149,14 @@ public class LessonService(AppDbContext context, INotificationService notificati
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        if (enrollment.Status == EnrollmentStatus.Completed)
+        {
+            await certificateService.IssueForCompletionAsync(
+                userId,
+                lesson.ModuleId,
+                cancellationToken);
+        }
 
         await notificationService.NotifyAsync(
             userId,

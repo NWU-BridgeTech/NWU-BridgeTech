@@ -9,6 +9,7 @@ import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
+import VerifyCertificate from "./pages/VerifyCertificate";
 import StudentNotifications from "./pages/StudentNotifications";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
@@ -36,6 +37,10 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route
+          path="/verify/:certificateNumber"
+          element={<VerifyCertificate />}
+        />
         <Route path="/signout" element={<SignOut />} />
 
         <Route element={<ProtectedRoute setupOnly />}>
