@@ -7,7 +7,7 @@ export default function SignOut() {
 
   useEffect(() => {
     clearAuthTokens();
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
   return <p>Signing you out...</p>;
