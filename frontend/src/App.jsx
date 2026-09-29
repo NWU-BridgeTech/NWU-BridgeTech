@@ -23,6 +23,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
+import Quizzes from "./pages/Quizzes";
 
 function AdminSection({ children }) {
   return <AppLayout>{children}</AppLayout>;
@@ -42,7 +43,7 @@ function App() {
 
         <Route
           path="/student/assessments"
-          element={<StudentAssessments />}
+          element={<Quizzes />}
         />
 
         <Route
@@ -50,6 +51,7 @@ function App() {
           element={<StudentPracticalWork />}
         />
         <Route path="/lessons" element={<Lessons />} />
+        <Route path="/quizzes" element={<Quizzes />} />
 
         <Route
           path="/student/certificates"
