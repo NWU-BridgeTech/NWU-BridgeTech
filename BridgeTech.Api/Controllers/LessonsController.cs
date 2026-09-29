@@ -3,6 +3,7 @@ using BridgeTech.Api.DTOs.Lessons;
 using BridgeTech.Api.Services.Lessons;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BridgeTech.Api.Common.Exceptions;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -31,8 +32,15 @@ public class LessonsController(ILessonService service) : ControllerBase
     public async Task<IActionResult> MarkComplete(
         Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await service.MarkCompleteAsync(lessonId, GetUserId(), cancellationToken);
-        return result is null ? NotFound() : Ok(result);
+        try
+        {
+            var result = await service.MarkCompleteAsync(lessonId, GetUserId(), cancellationToken);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (QuizNotPassedException ex)
+        {
+            return Conflict(new { code = "QUIZ_NOT_PASSED", message = ex.Message });
+        }
     }
 
     [HttpPost("modules/{moduleId:guid}/lessons")]
@@ -50,5 +58,19 @@ public class LessonsController(ILessonService service) : ControllerBase
         return Guid.TryParse(idClaim, out var id)
             ? id
             : throw new UnauthorizedAccessException("User id claim missing or invalid.");
+    }
+
+    [HttpGet("modules/{moduleId:guid}/lessons/current")]
+    public async Task<IActionResult> GetCurrentLesson(Guid moduleId, CancellationToken ct)
+    {
+        var result = await service.GetCurrentForModuleAsync(moduleId, GetUserId(), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpGet("lessons/{lessonId:guid}/view")]
+    public async Task<IActionResult> GetLessonView(Guid lessonId, CancellationToken ct)
+    {
+        var result = await service.GetViewAsync(lessonId, GetUserId(), ct);
+        return result is null ? NotFound() : Ok(result);
     }
 }

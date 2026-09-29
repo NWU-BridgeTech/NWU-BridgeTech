@@ -65,7 +65,7 @@ function CourseCard({ course, onChanged }) {
       </div>
       <a
         className="btn blue course-action"
-        href={completed ? "#" : `/lesson/${course.nextLessonId}`}
+        href={`/modules/${course.moduleId}/lessons`}
       >
         {completed ? "Review course" : "Continue lesson"}{" "}
         <span aria-hidden="true">→</span>
