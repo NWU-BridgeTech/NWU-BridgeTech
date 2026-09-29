@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./ForgotPassword.css";
+import { Link, useNavigate } from "react-router-dom";
+import AuthShell, { PasswordInput } from "../components/AuthShell";
+import { PHOTOS } from "../components/authPhotos";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -14,60 +14,48 @@ const ForgotPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showPw, setShowPw] = useState(false);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const passwordMismatch =
-    confirmPassword.length > 0 &&
-    confirmPassword !== newPassword;
+    confirmPassword.length > 0 && confirmPassword !== newPassword;
 
   const passwordValid =
     newPassword.length >= 8 &&
     confirmPassword.length > 0 &&
     confirmPassword === newPassword;
 
+  const post = async (path, body, fallback) => {
+    const response = await fetch(`${API_URL}/api/auth/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || fallback);
+    }
+    return data;
+  };
+
   const handleSendCode = async (event) => {
     event.preventDefault();
-
     setError("");
     setSuccess("");
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-          }),
-        }
+      await post(
+        "forgot-password",
+        { email: email.trim() },
+        "Unable to send reset code."
       );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to send reset code."
-        );
-      }
-
-      setSuccess(
-        "A password reset code has been sent to your email."
-      );
-
+      setSuccess("A password reset code has been sent to your email.");
       setStep(2);
-    } catch (error) {
-      setError(
-        error.message ||
-          "Unable to send reset code. Please try again."
-      );
+    } catch (err) {
+      setError(err.message || "Unable to send reset code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -75,7 +63,6 @@ const ForgotPassword = () => {
 
   const handleVerifyCode = (event) => {
     event.preventDefault();
-
     setError("");
     setSuccess("");
 
@@ -83,14 +70,11 @@ const ForgotPassword = () => {
       setError("Please enter the 6-digit reset code.");
       return;
     }
-
     setStep(3);
   };
-  
 
   const handleResetPassword = async (event) => {
     event.preventDefault();
-
     setError("");
     setSuccess("");
 
@@ -98,7 +82,6 @@ const ForgotPassword = () => {
       setError("Use at least 8 characters.");
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setError("Passwords don't match.");
       return;
@@ -107,255 +90,169 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/auth/reset-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            code: code.trim(),
-            newPassword,
-          }),
-        }
+      await post(
+        "reset-password",
+        { email: email.trim(), code: code.trim(), newPassword },
+        "Unable to reset your password."
       );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to reset your password."
-        );
-      }
-
       setSuccess("Password reset successfully.");
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-    } catch (error) {
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
       setError(
-        error.message ||
-          "Unable to reset your password. Please try again."
+        err.message || "Unable to reset your password. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="forgot-page">
-      <div className="forgot-card">
-        <div className="brand">
-          <b>Bridge</b>
-          <b>Tech</b>
+  const messages = (
+    <>
+      {error && (
+        <div className="au-alert error" role="alert">
+          {error}
         </div>
+      )}
+      {success && (
+        <div className="au-alert ok" role="status">
+          {success}
+        </div>
+      )}
+    </>
+  );
 
-        {step === 1 && (
-          <>
-            <h2>Reset your password</h2>
+  return (
+    <AuthShell
+      photo={PHOTOS.reset}
+      title="Locked out? It happens."
+      text="We'll email you a code so you can set a new password."
+    >
+      {step === 1 && (
+        <>
+          <h1>Reset your password</h1>
+          <p className="au-lede">
+            Enter your email address and we'll send you a reset code.
+          </p>
+          {messages}
 
-            <p className="sub">
-              Enter your email address and we'll send you a reset
-              code.
-            </p>
-
-            {error && (
-              <div className="error-message visible">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="success-message visible">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleSendCode}>
-              <div className="form-group">
-                <label htmlFor="email">Email address</label>
-
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(event) =>
-                    setEmail(event.target.value)
-                  }
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn blue submit-btn"
+          <form onSubmit={handleSendCode}>
+            <div className="au-field">
+              <label htmlFor="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                className="au-input"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 disabled={loading}
-              >
-                {loading ? "Sending..." : "Send reset code"}
-              </button>
-            </form>
-          </>
-        )}
+              />
+            </div>
 
-        {step === 2 && (
-          <>
-            <h2>Enter your reset code</h2>
+            <button type="submit" className="au-button" disabled={loading}>
+              {loading ? "Sending..." : "Send reset code"}
+            </button>
+          </form>
+        </>
+      )}
 
-            <p className="sub">
-              Enter the 6-digit code sent to your email address.
-            </p>
+      {step === 2 && (
+        <>
+          <h1>Enter your reset code</h1>
+          <p className="au-lede">
+            Enter the 6-digit code sent to your email address.
+          </p>
+          {messages}
 
-            {error && (
-              <div className="error-message visible">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="success-message visible">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleVerifyCode}>
-              <div className="form-group">
-                <label htmlFor="code">Reset code</label>
-
-                <input
-                  id="code"
-                  name="code"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength="6"
-                  placeholder="Enter 6-digit code"
-                  value={code}
-                  onChange={(event) =>
-                    setCode(
-                      event.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 6)
-                    )
-                  }
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn blue submit-btn"
+          <form onSubmit={handleVerifyCode}>
+            <div className="au-field">
+              <label htmlFor="code">Reset code</label>
+              <input
+                id="code"
+                name="code"
+                className="au-input"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength="6"
+                placeholder="Enter 6-digit code"
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                required
                 disabled={loading}
-              >
-                Verify code
-              </button>
-            </form>
-          </>
-        )}
+              />
+            </div>
 
-        {step === 3 && (
-          <>
-            <h2>Create a new password</h2>
+            <button type="submit" className="au-button" disabled={loading}>
+              Verify code
+            </button>
+          </form>
+        </>
+      )}
 
-            <p className="sub">
-              Enter a new password for your BridgeTech account.
-            </p>
+      {step === 3 && (
+        <>
+          <h1>Create a new password</h1>
+          <p className="au-lede">
+            Enter a new password for your BridgeTech account.
+          </p>
+          {messages}
 
-            {error && (
-              <div className="error-message visible">
-                {error}
-              </div>
-            )}
+          <form onSubmit={handleResetPassword}>
+            <div className="au-field">
+              <label htmlFor="newPassword">New password</label>
+              <PasswordInput
+                id="newPassword"
+                name="newPassword"
+                autoComplete="new-password"
+                placeholder="At least 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <p className="au-hint">At least 8 characters.</p>
+            </div>
 
-            {success && (
-              <div className="success-message visible">
-                {success}
-              </div>
-            )}
+            <div className="au-field">
+              <label htmlFor="confirmPassword">Confirm password</label>
+              <PasswordInput
+                id="confirmPassword"
+                name="confirmPassword"
+                showToggle={false}
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={loading}
+                aria-invalid={passwordMismatch}
+              />
+              {passwordMismatch && (
+                <p className="au-error">Passwords don't match.</p>
+              )}
+            </div>
 
-            <form onSubmit={handleResetPassword}>
-              <div className="form-group">
-                <label htmlFor="newPassword">
-                  New password
-                </label>
+            <button
+              type="submit"
+              className="au-button"
+              disabled={loading || !passwordValid}
+            >
+              {loading ? "Resetting..." : "Reset password"}
+            </button>
+          </form>
+        </>
+      )}
 
-                <div className="pw-row">
-                  <input
-                    id="newPassword"
-                    name="newPassword"
-                    className="input"
-                    type={showPw ? "text" : "password"}
-                    placeholder="At least 8 characters"
-                    value={newPassword}
-                    onChange={(event) =>
-                      setNewPassword(event.target.value)
-                    }
-                    required
-                    disabled={loading}
-                    style={{ paddingRight: "64px" }}
-                  />
-
-                  <button
-                    type="button"
-                    className="pw-toggle"
-                    onClick={() =>
-                      setShowPw((value) => !value)
-                    }
-                    aria-pressed={showPw}
-                  >
-                    {showPw ? "Hide" : "Show"}
-                  </button>
-                </div>
-
-                <p className="field-hint">
-                  At least 8 characters.
-                </p>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="confirmPassword">
-                  Confirm password
-                </label>
-
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  className="input"
-                  type="password"
-                  placeholder="Re-enter your password"
-                  value={confirmPassword}
-                  onChange={(event) =>
-                    setConfirmPassword(event.target.value)
-                  }
-                  required
-                  disabled={loading}
-                  aria-invalid={passwordMismatch}
-                />
-
-                {passwordMismatch && (
-                  <p className="field-error">
-                    Passwords don't match.
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                className="btn blue submit-btn"
-                disabled={loading || !passwordValid}
-              >
-                {loading ? "Resetting..." : "Reset password"}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+      <p className="au-switch">
+        Remembered it? <Link to="/login">Back to sign in</Link>
+      </p>
+    </AuthShell>
   );
 };
 
