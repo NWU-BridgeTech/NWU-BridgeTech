@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
 import "./Login.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,10 +37,7 @@ const Login = () => {
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
           setVerification({
-            email:
-              data.email ||
-              data.identifier ||
-              identifier.trim(),
+            email: data.email || data.identifier || identifier.trim(),
             expiresAt:
               data.verificationExpiresAt ||
               new Date(Date.now() + 600000).toISOString(),
@@ -50,9 +46,7 @@ const Login = () => {
           return;
         }
 
-        throw new Error(
-          data.message || "Invalid username/email or password."
-        );
+        throw new Error(data.message || "Invalid username/email or password.");
       }
 
       localStorage.setItem("token", data.token);
@@ -65,22 +59,16 @@ const Login = () => {
           username: data.username,
           email: data.email,
           role: data.role,
-        })
+        }),
       );
 
-      if (
-        data.role === "Admin" ||
-        data.role === "SuperAdmin"
-      ) {
+      if (data.role === "Admin" || data.role === "SuperAdmin") {
         navigate("/admin");
       } else {
         navigate("/home");
       }
     } catch (error) {
-      setError(
-        error.message ||
-          "Unable to log in. Please try again."
-      );
+      setError(error.message || "Unable to log in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -101,9 +89,7 @@ const Login = () => {
 
       <div className="login-card">
         <div className="hero-image">
-          <span className="hero-text">
-            Helping to build a better future
-          </span>
+          <span className="hero-text">Helping to build a better future</span>
 
           <img
             src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
@@ -114,34 +100,26 @@ const Login = () => {
         <div className="brand">
           <b>Bridge</b>
           <b>Tech</b>
+          <b>Bridge</b>
+          <b>Tech</b>
         </div>
 
         <h2>Login</h2>
 
-        <p className="sub">
-          Sign in to continue to BridgeTech.
-        </p>
+        <p className="sub">Sign in to continue to BridgeTech.</p>
 
-        {error && (
-          <div className="login-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="login-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="identifier">
-              Email or Username:
-            </label>
+            <label htmlFor="identifier">Email or Username:</label>
 
             <input
               type="text"
               id="identifier"
               placeholder="name@gmail.com"
               value={identifier}
-              onChange={(event) =>
-                setIdentifier(event.target.value)
-              }
+              onChange={(event) => setIdentifier(event.target.value)}
               required
               disabled={loading}
             />
@@ -149,14 +127,9 @@ const Login = () => {
 
           <div className="form-group">
             <div className="label-row">
-              <label htmlFor="password">
-                Password:
-              </label>
+              <label htmlFor="password">Password:</label>
 
-              <Link
-                to="/forgot-password"
-                className="forgot-link"
-              >
+              <Link to="/forgot-password" className="forgot-link">
                 Forgot password?
               </Link>
             </div>
@@ -166,9 +139,7 @@ const Login = () => {
               id="password"
               placeholder="Enter your password"
               value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
+              onChange={(event) => setPassword(event.target.value)}
               required
               disabled={loading}
             />
@@ -186,10 +157,7 @@ const Login = () => {
         <div className="login-footer">
           <p>
             Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="signup-link"
-            >
+            <Link to="/signup" className="signup-link">
               Sign up
             </Link>
           </p>
@@ -198,6 +166,5 @@ const Login = () => {
     </div>
   );
 };
-
 
 export default Login;

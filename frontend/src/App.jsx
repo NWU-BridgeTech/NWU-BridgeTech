@@ -35,15 +35,9 @@ function App() {
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
 
-        <Route
-          path="/student/courses"
-          element={<StudentCourses />}
-        />
+        <Route path="/student/courses" element={<StudentCourses />} />
 
-        <Route
-          path="/student/assessments"
-          element={<StudentAssessments />}
-        />
+        <Route path="/student/assessments" element={<StudentAssessments />} />
 
         <Route
           path="/student/practical-work"
@@ -52,17 +46,14 @@ function App() {
         <Route path="/lessons" element={<Lessons />} />
 
         <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
-        <Route path="/modules/:moduleId/lessons/:lessonId" element={<Lessons />} /> 
-
         <Route
-          path="/student/certificates"
-          element={<StudentCertificates />}
+          path="/modules/:moduleId/lessons/:lessonId"
+          element={<Lessons />}
         />
 
-        <Route
-          path="/student/github"
-          element={<StudentGithub />}
-        />
+        <Route path="/student/certificates" element={<StudentCertificates />} />
+
+        <Route path="/student/github" element={<StudentGithub />} />
 
         <Route path="/lessons" element={<Lessons />} />
 
@@ -131,29 +122,17 @@ function App() {
           }
         />
 
-        <Route
-          path="/system-status"
-          element={<SystemStatus />}
-        />
+        <Route path="/system-status" element={<SystemStatus />} />
 
         <Route path="/login" element={<Login />} />
 
         <Route path="/signup" element={<SignUp />} />
 
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/privacy-policy"
-          element={<PrivacyPolicy />}
-        />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-        <Route
-          path="/terms"
-          element={<TermsOfService />}
-        />
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </BrowserRouter>
   );
