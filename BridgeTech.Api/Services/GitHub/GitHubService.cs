@@ -25,7 +25,6 @@ public sealed class GitHubService : IGitHubService
         IOptions<GitHubApiOptions> options,
         IDataProtectionProvider dataProtectionProvider,
         INotificationService notificationService)
-        IDataProtectionProvider dataProtectionProvider)
     {
         _dbContext = dbContext;
         _httpClientFactory = httpClientFactory;
