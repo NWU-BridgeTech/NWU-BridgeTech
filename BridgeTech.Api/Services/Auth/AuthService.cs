@@ -8,7 +8,6 @@ using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Identity;
 
 namespace BridgeTech.Api.Services.Auth;
 
@@ -16,22 +15,11 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IEmailService _emailService;
-    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(
-        AppDbContext context,
-        IConfiguration configuration,
-        IPasswordHasher<User> passwordHasher,
-        IEmailService emailService,
-        ILogger<AuthService> logger)
+    public AuthService(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
         _configuration = configuration;
-        _passwordHasher = passwordHasher;
-        _emailService = emailService;
-        _logger = logger;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -52,50 +40,35 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Email is already in use.");
         }
 
-        bool pendingUsernameExists = await _context.PendingRegistrations
-            .AnyAsync(x => x.Username == request.Username, cancellationToken);
-
-        if (pendingUsernameExists)
+        var user = new User
         {
-            throw new InvalidOperationException("Username is already in use.");
-        }
-
-        bool pendingEmailExists = await _context.PendingRegistrations
-            .AnyAsync(x => x.Email == request.Email, cancellationToken);
-
-        if (pendingEmailExists)
-        {
-            throw new InvalidOperationException("Email is already in use.");
-        }
-
-        var pendingRegistration = new PendingRegistration
-        {
-            PendingRegistrationId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
             Username = request.Username,
             FirstName = request.FirstName,
             LastName = request.LastName,
             Email = request.Email,
-            PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
+            PasswordHash = HashPassword(request.Password),
             GithubUsername = request.GithubUsername,
+            Role = UserRole.Student,
             CreatedAt = DateTimeOffset.UtcNow,
-            VerificationCode = GenerateCode(),
-            VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
-            LastCodeSentAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        _context.PendingRegistrations.Add(pendingRegistration);
+        _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _emailService.SendVerificationCodeAsync(
-            pendingRegistration.Email,
-            pendingRegistration.VerificationCode,
-            cancellationToken);
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
 
         return new AuthResponse
         {
-            Email = pendingRegistration.Email,
-            ExpiresAt = DateTimeOffset.UtcNow,
-            VerificationExpiresAt = pendingRegistration.VerificationCodeExpiresAt
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
         };
     }
 
@@ -118,12 +91,6 @@ public class AuthService : IAuthService
                 "Invalid username/email or password.");
         }
 
-        if (!user.EmailVerified)
-        {
-            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
-            throw exception;
-        }
-
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
 
@@ -137,139 +104,6 @@ public class AuthService : IAuthService
             RefreshToken = refreshToken,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
         };
-    }
-
-    public async Task<VerificationResponse> VerifyEmailAsync(VerificationRequest request, CancellationToken cancellationToken = default)
-    {
-        var pendingRegistration = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken)
-            ?? throw VerificationError("Incorrect verification code.", "VERIFICATION_FAILED");
-
-        if (pendingRegistration.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
-            throw VerificationError("Verification code expired.", "CODE_EXPIRED");
-
-        if (pendingRegistration.VerificationCode != request.Code)
-        {
-            pendingRegistration.VerificationAttempts++;
-            if (pendingRegistration.VerificationAttempts >= 5)
-            {
-                pendingRegistration.VerificationCode = string.Empty;
-            }
-
-            await _context.SaveChangesAsync(cancellationToken);
-            throw VerificationError(
-                $"Incorrect verification code. {Math.Max(0, 5 - pendingRegistration.VerificationAttempts)} attempts remaining.",
-                "INCORRECT_CODE");
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
-        var user = new User
-        {
-            UserId = Guid.NewGuid(),
-            Username = pendingRegistration.Username,
-            FirstName = pendingRegistration.FirstName,
-            LastName = pendingRegistration.LastName,
-            Email = pendingRegistration.Email,
-            PasswordHash = pendingRegistration.PasswordHash,
-            GithubUsername = pendingRegistration.GithubUsername,
-            Role = UserRole.Student,
-            CreatedAt = pendingRegistration.CreatedAt,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            EmailVerified = true
-        };
-
-        _context.Users.Add(user);
-        _context.PendingRegistrations.Remove(pendingRegistration);
-        await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-
-        try
-        {
-            await _emailService.SendWelcomeEmailAsync(user.Email, user.FirstName, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Welcome email could not be sent to {Email}.", user.Email);
-        }
-
-        return new VerificationResponse { Token = GenerateAccessToken(user), RefreshToken = GenerateRefreshToken(user) };
-    }
-
-    public async Task<VerificationResponse> ResendVerificationAsync(string email, CancellationToken cancellationToken = default)
-    {
-        var pendingRegistration = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
-
-        if (pendingRegistration is null)
-        {
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
-                ?? throw new InvalidOperationException("Account not found.");
-            if (existingUser.EmailVerified) throw new InvalidOperationException("Email is already verified.");
-
-            var now = DateTimeOffset.UtcNow;
-            if (existingUser.LastCodeSentAt is { } sentAt && sentAt.AddSeconds(60) > now)
-                throw new InvalidOperationException($"Please wait {(int)Math.Ceiling((sentAt.AddSeconds(60) - now).TotalSeconds)} seconds before requesting another code.");
-            existingUser.VerificationCode = GenerateCode();
-            existingUser.VerificationCodeExpiresAt = now.AddMinutes(10);
-            existingUser.VerificationAttempts = 0;
-            existingUser.LastCodeSentAt = now;
-            await _context.SaveChangesAsync(cancellationToken);
-            await _emailService.SendVerificationCodeAsync(existingUser.Email, existingUser.VerificationCode, cancellationToken);
-            return new VerificationResponse { ExpiresAt = existingUser.VerificationCodeExpiresAt.Value };
-        }
-
-        var pendingNow = DateTimeOffset.UtcNow;
-        if (pendingRegistration.LastCodeSentAt.AddSeconds(60) > pendingNow)
-            throw new InvalidOperationException($"Please wait {(int)Math.Ceiling((pendingRegistration.LastCodeSentAt.AddSeconds(60) - pendingNow).TotalSeconds)} seconds before requesting another code.");
-        pendingRegistration.VerificationCode = GenerateCode();
-        pendingRegistration.VerificationCodeExpiresAt = pendingNow.AddMinutes(10);
-        pendingRegistration.VerificationAttempts = 0;
-        pendingRegistration.LastCodeSentAt = pendingNow;
-        await _context.SaveChangesAsync(cancellationToken);
-        await _emailService.SendVerificationCodeAsync(pendingRegistration.Email, pendingRegistration.VerificationCode, cancellationToken);
-        return new VerificationResponse { ExpiresAt = pendingRegistration.VerificationCodeExpiresAt };
-    }
-
-    public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-        if (user is null) return;
-        user.PasswordResetCode = GenerateCode();
-        user.PasswordResetCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
-        user.PasswordResetAttempts = 0;
-        user.PasswordResetLastSentAt = DateTimeOffset.UtcNow;
-        await _context.SaveChangesAsync(cancellationToken);
-        await _emailService.SendPasswordResetCodeAsync(user.Email, user.PasswordResetCode, cancellationToken);
-    }
-
-    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken)
-            ?? throw new InvalidOperationException("Invalid or expired reset code.");
-        if (user.PasswordResetCodeExpiresAt is null || user.PasswordResetCodeExpiresAt <= DateTimeOffset.UtcNow || user.PasswordResetCode is null)
-            throw new InvalidOperationException("Reset code expired.");
-        if (user.PasswordResetCode != request.Code)
-        {
-            user.PasswordResetAttempts++;
-            if (user.PasswordResetAttempts >= 5) user.PasswordResetCode = null;
-            await _context.SaveChangesAsync(cancellationToken);
-            throw new InvalidOperationException("Incorrect reset code.");
-        }
-        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
-        user.PasswordResetCode = null;
-        user.PasswordResetCodeExpiresAt = null;
-        user.PasswordResetAttempts = 0;
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-    private static InvalidOperationException VerificationError(string message, string code)
-    {
-        var exception = new InvalidOperationException(message);
-        exception.Data["Code"] = code;
-        return exception;
     }
     public async Task<AuthResponse> RefreshTokenAsync(
         RefreshTokenRequest request, CancellationToken cancellationToken = default)
@@ -331,8 +165,6 @@ public class AuthService : IAuthService
 
     private bool VerifyPassword(string password, string storedHash)
     {
-        if (storedHash.StartsWith("AQAAAA", StringComparison.Ordinal))
-            return _passwordHasher.VerifyHashedPassword(null!, storedHash, password) != PasswordVerificationResult.Failed;
         string[] parts = storedHash.Split('$');
 
         if (parts.Length != 4 || parts[0] != "PBKDF2")
