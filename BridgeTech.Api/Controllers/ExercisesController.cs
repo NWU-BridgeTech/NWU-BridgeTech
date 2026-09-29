@@ -1,10 +1,12 @@
 using BridgeTech.Api.Services.Exercises;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/exercises")]
+[Authorize]
 // Provides exercise instructions and records learner repository submissions.
 public class ExercisesController(IExerciseService service) : ControllerBase
 {

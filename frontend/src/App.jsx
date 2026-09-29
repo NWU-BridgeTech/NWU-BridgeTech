@@ -20,6 +20,7 @@ import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 
 function App() {
@@ -27,40 +28,44 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<PublicHomepage />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/student/courses" element={<StudentCourses />} />
-        <Route path="/student/assessments" element={<StudentAssessments />} />
-        <Route
-          path="/student/practical-work"
-          element={<StudentPracticalWork />}
-        />
-        <Route path="/student/certificates" element={<StudentCertificates />} />
-        <Route path="/student/github" element={<StudentGithub />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/system-status" element={<SystemStatus />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
         <Route path="/signup" element={<SignUp />} />
-
-        <Route path="/admin/modules" element={<AdminModules />} />
-
-        <Route path="/admin/lessons" element={<AdminLessons />} />
-
-        <Route path="/admin/assessments" element={<AdminAssessments />} />
-
-        <Route
-          path="/admin/practical-exercises"
-          element={<AdminPracticalExercises />}
-        />
-
-        <Route path="/admin/students" element={<AdminStudents />} />
-
-        <Route path="/admin/administrators" element={<AdminAdministrators />} />
-
-        <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/student/courses" element={<StudentCourses />} />
+          <Route path="/student/assessments" element={<StudentAssessments />} />
+          <Route
+            path="/student/practical-work"
+            element={<StudentPracticalWork />}
+          />
+          <Route
+            path="/student/certificates"
+            element={<StudentCertificates />}
+          />
+          <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/system-status" element={<SystemStatus />} />
+        </Route>
+
+        <Route element={<ProtectedRoute requiredRole="Admin" />}>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/modules" element={<AdminModules />} />
+          <Route path="/admin/lessons" element={<AdminLessons />} />
+          <Route path="/admin/assessments" element={<AdminAssessments />} />
+          <Route
+            path="/admin/practical-exercises"
+            element={<AdminPracticalExercises />}
+          />
+          <Route path="/admin/students" element={<AdminStudents />} />
+          <Route
+            path="/admin/administrators"
+            element={<AdminAdministrators />}
+          />
+          <Route path="/admin/settings" element={<AdminSettings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

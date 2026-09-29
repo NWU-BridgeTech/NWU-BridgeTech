@@ -1,17 +1,71 @@
-import formatDeadline from "../utils/formatDeadline";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { GitBranch } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import { githubConnection } from "../data/studentDashboard";
 import "./StudentGithub.css";
 
-export default function StudentGithub() {
-  const connected = Boolean(githubConnection.username);
-  const repository = connected ? githubConnection.repository : null;
-  let lastSynced = "Not synced yet";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-  if (connected && githubConnection.lastSyncedAt) {
-    lastSynced = formatDeadline(githubConnection.lastSyncedAt) + " SAST";
+export default function StudentGithub() {
+  const [username, setUsername] = useState(null);
+  const [repository] = useState(null);
+  const repositoryUrl = null;
+  const [error, setError] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("github") === "error"
+      ? params.get("message") || "Unable to connect your GitHub account."
+      : "";
+  });
+  const [connecting, setConnecting] = useState(false);
+  const lastSynced = "Not synced yet";
+  const connected = Boolean(username);
+
+  useEffect(() => {
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    fetch(`${API_URL}/api/github/me`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load GitHub connection.");
+        return response.json();
+      })
+      .then((data) => setUsername(data.username))
+      .catch(() => setError("Unable to load your GitHub connection."));
+  }, []);
+
+  async function connectGithub() {
+    setError("");
+    setConnecting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/github/connect`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const responseText = await response.text();
+      let data = {};
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = {};
+        }
+      }
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          throw new Error("Your session has expired. Please log in again.");
+        }
+        throw new Error(data.message || "Unable to start GitHub connection.");
+      }
+      if (!data.authorizationUrl) {
+        throw new Error("GitHub OAuth is not configured correctly.");
+      }
+      window.location.href = data.authorizationUrl;
+    } catch (connectionError) {
+      setError(connectionError.message);
+      setConnecting(false);
+    }
   }
 
   return (
@@ -45,9 +99,9 @@ export default function StudentGithub() {
               <div>
                 {connected ? (
                   <>
-                    <h4>@{githubConnection.username}</h4>
+                    <h4>@{username}</h4>
                     <a
-                      href={`https://github.com/${encodeURIComponent(githubConnection.username)}`}
+                      href={`https://github.com/${encodeURIComponent(username)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -69,13 +123,19 @@ export default function StudentGithub() {
             <div className="github-card-footer">
               <button
                 className="btn blue"
-                disabled
+                onClick={connectGithub}
+                disabled={connecting}
                 aria-describedby="github-account-note"
               >
-                {connected ? "Manage connection" : "Connect GitHub"}
+                {connecting
+                  ? "Connecting..."
+                  : connected
+                    ? "Reconnect GitHub"
+                    : "Connect GitHub"}
               </button>
               <p id="github-account-note">
-                GitHub account linking and sync are coming soon.
+                {error ||
+                  "Your GitHub username will be saved to your BridgeTech profile."}
               </p>
             </div>
           </section>
@@ -97,9 +157,9 @@ export default function StudentGithub() {
                 <>
                   <h4>{repository}</h4>
                   <p>The repository linked to your practical work.</p>
-                  {githubConnection.repositoryUrl && (
+                  {repositoryUrl && (
                     <a
-                      href={githubConnection.repositoryUrl}
+                      href={repositoryUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
