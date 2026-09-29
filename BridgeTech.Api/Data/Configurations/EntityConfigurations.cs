@@ -34,6 +34,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.University).HasMaxLength(200);
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.GithubAccessToken).HasMaxLength(2000);
+        builder.Property(x => x.GithubRepository).HasMaxLength(200);
         builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Role).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");

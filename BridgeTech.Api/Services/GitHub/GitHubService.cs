@@ -40,7 +40,7 @@ public sealed class GitHubService : IGitHubService
         var state = Uri.EscapeDataString(_stateProtector.Protect(payload));
         var callbackUrl = Uri.EscapeDataString(_options.CallbackUrl);
 
-        return $"https://github.com/login/oauth/authorize?client_id={Uri.EscapeDataString(_options.ClientId)}&redirect_uri={callbackUrl}&scope=read:user&state={state}";
+        return $"https://github.com/login/oauth/authorize?client_id={Uri.EscapeDataString(_options.ClientId)}&redirect_uri={callbackUrl}&scope=read:user%20public_repo&state={state}";
     }
 
     public async Task<string> ConnectUserAsync(string state, string code, CancellationToken cancellationToken = default)
@@ -87,6 +87,8 @@ public sealed class GitHubService : IGitHubService
             throw new InvalidOperationException("That GitHub account is already connected to another BridgeTech account.");
 
         user.GithubUsername = githubUser.Login;
+        user.GithubAccessToken = _stateProtector.Protect(token.AccessToken);
+        user.GithubRepository = null;
         user.AccountSetupRequired = false;
         user.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -104,6 +106,49 @@ public sealed class GitHubService : IGitHubService
             .Where(x => x.UserId == userId)
             .Select(x => x.GithubUsername)
             .SingleOrDefaultAsync(cancellationToken);
+
+    public Task<string?> GetLinkedRepositoryAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        _dbContext.Users
+            .Where(x => x.UserId == userId)
+            .Select(x => x.GithubRepository)
+            .SingleOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<GitHubRepositoryResponse>> GetRepositoriesAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var client = await CreateGitHubClientAsync(userId, cancellationToken);
+        using var response = await client.GetAsync("https://api.github.com/user/repos?visibility=public&affiliation=owner,collaborator&sort=updated&per_page=100", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var repositories = await response.Content.ReadFromJsonAsync<List<GitHubRepositoryApiResponse>>(cancellationToken)
+            ?? new List<GitHubRepositoryApiResponse>();
+        return repositories.Where(x => !string.IsNullOrWhiteSpace(x.FullName))
+            .Select(x => new GitHubRepositoryResponse(x.FullName, x.HtmlUrl, x.IsPrivate))
+            .ToList();
+    }
+
+    public async Task<GitHubRepositoryResponse> LinkRepositoryAsync(Guid userId, string fullName, CancellationToken cancellationToken = default)
+    {
+        var repositories = await GetRepositoriesAsync(userId, cancellationToken);
+        var repository = repositories.SingleOrDefault(x => string.Equals(x.FullName, fullName.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (repository is null) throw new InvalidOperationException("Choose a public repository belonging to your connected GitHub account.");
+
+        var user = await _dbContext.Users.SingleAsync(x => x.UserId == userId, cancellationToken);
+        user.GithubRepository = repository.FullName;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.NotifyAsync(userId, "github_repository_linked", "Repository linked", $"{repository.FullName} is now linked to your BridgeTech practical work.", cancellationToken: cancellationToken);
+        return repository;
+    }
+
+    private async Task<HttpClient> CreateGitHubClientAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var encryptedToken = await _dbContext.Users.Where(x => x.UserId == userId).Select(x => x.GithubAccessToken).SingleOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(encryptedToken)) throw new InvalidOperationException("Connect your GitHub account first.");
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("BridgeTech/1.0");
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _stateProtector.Unprotect(encryptedToken));
+        return client;
+    }
 
     private OAuthState ReadState(string state)
     {
@@ -136,4 +181,8 @@ public sealed class GitHubService : IGitHubService
     private sealed record OAuthState(Guid UserId, DateTimeOffset ExpiresAt);
     private sealed record AccessTokenResponse([property: JsonPropertyName("access_token")] string AccessToken);
     private sealed record GitHubUserResponse(string Login);
+    private sealed record GitHubRepositoryApiResponse(
+        [property: JsonPropertyName("full_name")] string FullName,
+        [property: JsonPropertyName("html_url")] string HtmlUrl,
+        [property: JsonPropertyName("private")] bool IsPrivate);
 }

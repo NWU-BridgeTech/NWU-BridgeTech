@@ -15,6 +15,8 @@ public class User
     public string? University { get; set; }
     public string PasswordHash { get; set; } = null!;
     public string? GithubUsername { get; set; }
+    public string? GithubAccessToken { get; set; }
+    public string? GithubRepository { get; set; }
     public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
