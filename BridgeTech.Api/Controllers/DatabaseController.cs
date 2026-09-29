@@ -1,4 +1,5 @@
 using BridgeTech.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,7 @@ namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/database")]
+[Authorize]
 public class DatabaseController(AppDbContext dbContext) : ControllerBase
 {
     [HttpGet("status")]

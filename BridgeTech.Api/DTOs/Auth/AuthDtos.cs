@@ -56,6 +56,30 @@ public class AuthResponse
     public string Token { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTimeOffset ExpiresAt { get; set; }
+    public DateTimeOffset? VerificationExpiresAt { get; set; }
+}
+
+public class VerificationRequest
+{
+    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+    [Required, RegularExpression("^\\d{6}$")] public string Code { get; set; } = string.Empty;
+}
+
+public class ForgotPasswordRequest
+{
+    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordRequest : VerificationRequest
+{
+    [Required, StringLength(128, MinimumLength = 8)] public string NewPassword { get; set; } = string.Empty;
+}
+
+public class VerificationResponse
+{
+    public DateTimeOffset ExpiresAt { get; set; }
+    public string? Token { get; set; }
+    public string? RefreshToken { get; set; }
 }
 
 public class RefreshTokenRequest

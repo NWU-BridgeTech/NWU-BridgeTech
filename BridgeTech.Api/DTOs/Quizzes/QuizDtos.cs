@@ -12,6 +12,15 @@ public class QuizResponse
     public DateTimeOffset CreatedAt { get; set; }
 }
 
+public class QuizContentResponse
+{
+    public Guid QuizId { get; set; }
+    public Guid ModuleId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public short PassingScore { get; set; }
+    public List<QuizQuestionResponse> Questions { get; set; } = new();
+}
+
 public class CreateQuizRequest
 {
     [Required]
@@ -93,6 +102,7 @@ public class UpdateQuizQuestionRequest
 
 public class QuizOptionResponse //for student view
 {
+    public Guid OptionId { get; set; }
     public Guid QuestionId { get; set; }
     public string OptionText { get; set; } = string.Empty;
     public short OrderIndex { get; set; }

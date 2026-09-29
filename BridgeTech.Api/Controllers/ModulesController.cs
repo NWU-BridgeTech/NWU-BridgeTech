@@ -1,14 +1,16 @@
-using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Modules;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/modules")]
+[Authorize]
 // Handles HTTP requests for learning modules. Database access remains in the
 // injected context so the controller does not create connections manually.
-public class ModulesController(AppDbContext dbContext) : ControllerBase
+public class ModulesController(IModuleService service) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetModules(
@@ -16,12 +18,20 @@ public class ModulesController(AppDbContext dbContext) : ControllerBase
     {
         // AsNoTracking is appropriate for a read-only endpoint because EF Core
         // does not need to monitor entities that will not be updated here.
-        var modules = await dbContext.Modules
-            .AsNoTracking()
-            // The order matches the module order_index column in PostgreSQL.
-            .OrderBy(module => module.OrderIndex)
-            .ToListAsync(cancellationToken);
+        return Ok(await service.GetAllAsync(cancellationToken));
+    }
 
-        return Ok(modules);
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailableModules(CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetAvailableForUserAsync(GetUserId(), cancellationToken));
+    }
+
+    private Guid GetUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(idClaim, out var id)
+            ? id
+            : throw new UnauthorizedAccessException("User id claim missing or invalid.");
     }
 }

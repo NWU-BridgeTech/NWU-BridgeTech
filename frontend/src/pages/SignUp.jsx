@@ -1,236 +1,147 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import VerificationModal from "../components/VerificationModal";
 import "./SignUp.css";
 
-function BridgeMark() {
-  return (
-    <svg
-      viewBox="0 0 520 300"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="0"
-        y1="230"
-        x2="520"
-        y2="230"
-        stroke="#f3f1ea"
-        strokeWidth="2"
-        style={{ animationDelay: "0s" }}
-      />
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="90"
-        y1="230"
-        x2="90"
-        y2="10"
-        stroke="#f3f1ea"
-        strokeWidth="3"
-        style={{ animationDelay: ".25s" }}
-      />
+const SignUp = () => {
+  const navigate = useNavigate();
 
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="330"
-        y1="230"
-        x2="330"
-        y2="10"
-        stroke="#f3f1ea"
-        strokeWidth="3"
-        style={{ animationDelay: ".35s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M0 230 C 90 60, 90 60, 210 230"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".5s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M210 230 C 330 30, 330 30, 450 230"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".6s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M450 230 C 470 150, 500 120, 520 100"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".7s" }}
-      />
-
-      {Array.from({ length: 11 }).map((_, i) => {
-        const x = 20 + i * 19;
-
-        return (
-          <line
-            className="bm-line"
-            pathLength="1"
-            key={`a${x}`}
-            x1={x}
-            y1="230"
-            x2={x}
-            y2={230 - Math.max(6, 150 - Math.abs(x - 90) * 1.35)}
-            stroke="#f3f1ea"
-            strokeWidth="1"
-            style={{ animationDelay: `${0.85 + i * 0.03}s` }}
-          />
-        );
-      })}
-
-      {Array.from({ length: 12 }).map((_, i) => {
-        const x = 240 + i * 19;
-
-        return (
-          <line
-            className="bm-line"
-            pathLength="1"
-            key={`b${x}`}
-            x1={x}
-            y1="230"
-            x2={x}
-            y2={230 - Math.max(6, 200 - Math.abs(x - 330) * 1.35)}
-            stroke="#f3f1ea"
-            strokeWidth="1"
-            style={{ animationDelay: `${1.2 + i * 0.03}s` }}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-const initialForm = {
-  name: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-  agree: false,
-};
-
-const signupDraftKey = "bridgetech-signup-draft";
-
-export default function SignUpPage() {
-  const [form, setForm] = useState(() => {
-    try {
-      const savedForm = sessionStorage.getItem(signupDraftKey);
-
-      return savedForm
-        ? { ...initialForm, ...JSON.parse(savedForm) }
-        : initialForm;
-    } catch {
-      return initialForm;
-    }
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    agree: false,
   });
 
   const [errors, setErrors] = useState({});
-  const [showPw, setShowPw] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [photoFailed, setPhotoFailed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [verification, setVerification] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const signupDraftKey = "bridgetech_signup_draft";
 
   useEffect(() => {
-    sessionStorage.setItem(signupDraftKey, JSON.stringify(form));
-  }, [form]);
+    try {
+      const savedDraft = sessionStorage.getItem(signupDraftKey);
 
-  const confirmMismatch =
-    form.confirmPassword.length > 0 &&
-    form.confirmPassword !== form.password;
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
 
-  function update(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
-
-    if (errors[field] || errors.submit) {
-      setErrors((currentErrors) => {
-        const nextErrors = { ...currentErrors };
-
-        delete nextErrors[field];
-        delete nextErrors.submit;
-
-        return nextErrors;
-      });
+        setForm((current) => ({
+          ...current,
+          name: parsed.name || "",
+          email: parsed.email || "",
+          agree: Boolean(parsed.agree),
+        }));
+      }
+    } catch {
+      sessionStorage.removeItem(signupDraftKey);
     }
-  }
+  }, []);
 
-  function validate() {
-    const next = {};
+  useEffect(() => {
+    const draft = {
+      name: form.name,
+      email: form.email,
+      agree: form.agree,
+    };
+
+    sessionStorage.setItem(
+      signupDraftKey,
+      JSON.stringify(draft)
+    );
+  }, [form.name, form.email, form.agree]);
+
+  const update = (field, value) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      [field]: "",
+      submit: "",
+    }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
 
     if (!form.name.trim()) {
-      next.name = "Enter your full name.";
+      newErrors.name = "Please enter your name.";
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      next.email = "Enter a valid email address.";
+    if (!form.email.trim()) {
+      newErrors.email = "Please enter your email.";
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+    ) {
+      newErrors.email = "Please enter a valid email address.";
     }
 
-    if (form.password.length < 8) {
-      next.password = "Use at least 8 characters.";
+    if (!form.password) {
+      newErrors.password = "Please enter a password.";
+    } else if (form.password.length < 8) {
+      newErrors.password =
+        "Password must be at least 8 characters.";
     }
 
-    if (form.confirmPassword !== form.password) {
-      next.confirmPassword = "Passwords don't match.";
+    if (!form.confirmPassword) {
+      newErrors.confirmPassword =
+        "Please confirm your password.";
+    } else if (
+      form.password !== form.confirmPassword
+    ) {
+      newErrors.confirmPassword =
+        "Passwords do not match.";
     }
 
     if (!form.agree) {
-      next.agree = "You need to agree to continue.";
+      newErrors.agree =
+        "You must agree to the Terms of Service and Privacy Policy.";
     }
 
-    return next;
-  }
+    setErrors(newErrors);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (isLoading) {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (loading) {
       return;
     }
 
-    const next = validate();
-
-    setErrors(next);
-
-    if (Object.keys(next).length !== 0) {
+    if (!validate()) {
       return;
     }
 
-    const nameParts = form.name.trim().split(/\s+/);
-
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(" ") || firstName;
-
-    const username = form.email
-      .split("@")[0]
-      .replace(/[^a-zA-Z0-9._-]/g, "")
-      .slice(0, 50);
-
-    if (username.length < 3) {
-      setErrors({
-        email:
-          "Your email address must contain at least 3 characters before the @ symbol.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setErrors({});
+    setLoading(true);
 
     try {
+      const nameParts = form.name.trim().split(/\s+/);
+
+      const firstName = nameParts[0] || "";
+      const lastName =
+        nameParts.length > 1
+          ? nameParts.slice(1).join(" ")
+          : "";
+
+      const username =
+        form.email
+          .split("@")[0]
+          .trim()
+          .toLowerCase();
+
       const response = await fetch(
-        "http://localhost:5174/api/auth/register",
+        `${API_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {
@@ -240,300 +151,289 @@ export default function SignUpPage() {
             username,
             firstName,
             lastName,
-            email: form.email,
+            email: form.email.trim(),
             password: form.password,
           }),
         }
       );
 
-      const data = await response.json();
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
+        const message =
+          data?.message ||
+          data?.error ||
+          "Unable to create your account.";
+
         setErrors({
-          submit: data.message || "Unable to create your account.",
+          submit: message,
         });
+
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      if (!data?.verificationExpiresAt) {
+        setErrors({
+          submit:
+            "The server did not return a verification expiry. Please try again.",
+        });
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          role: data.role,
-        })
-      );
+        return;
+      }
 
-      sessionStorage.removeItem(signupDraftKey);
-      setSubmitted(true);
+      setVerification({
+        email: form.email.trim(),
+        expiresAt: data.verificationExpiresAt,
+      });
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Registration error:", error);
 
       setErrors({
         submit:
-          "Unable to connect to the server. Please make sure the backend is running.",
+          "Unable to connect to the server. Please try again.",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="bt">
-      <a className="bt-skip" href="#main">
-        Skip to content
-      </a>
-
-      <header className="su-top">
-        <a className="logo" href="/" aria-label="BridgeTech home">
-          Bridge<i>Tech</i>
-        </a>
-      </header>
-
-      <main id="main" className="su-grid">
-        <div className="su-form-wrap">
-          {submitted ? (
-            <div className="su-success" role="status">
-              <h2>Account created</h2>
-
-              <p>
-                Your BridgeTech account has been created successfully with{" "}
-                <strong>{form.email}</strong>. You can now start working
-                towards your learning goals and building your skills.
-              </p>
-
-              <button
-                type="button"
-                className="button dark button-full"
-                onClick={() => {
-                  window.location.href = "/login";
-                }}
-              >
-                Sign in
-              </button>
-            </div>
-          ) : (
-            <form className="su-form" onSubmit={handleSubmit} noValidate>
-              <p className="eyebrow">Get started</p>
+    <>
+      <div className="signup-page">
+        <div className="signup-card">
+          <div className="signup-content">
+            <div className="signup-heading">
+              <div className="signup-eyebrow">
+                BRIDGETECH
+              </div>
 
               <h1>Create your account.</h1>
 
-              <p className="lede">
-                Set up your BridgeTech account to start working towards your learning goals and building your skills.
+              <p>
+                Get closer to the work you'll actually do.
               </p>
+            </div>
 
-              <div className="field">
-                <label htmlFor="su-name">Full name</label>
+            <form
+              className="signup-form"
+              onSubmit={handleSubmit}
+              noValidate
+            >
+              <div className="field-group">
+                <label htmlFor="name">
+                  Full name
+                </label>
 
                 <input
-                  id="su-name"
-                  className="input"
+                  id="name"
                   type="text"
-                  autoComplete="name"
-                  placeholder="Jordan Ellis"
                   value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
-                  aria-invalid={Boolean(errors.name)}
-                  aria-describedby={
-                    errors.name ? "su-name-error" : undefined
+                  onChange={(event) =>
+                    update("name", event.target.value)
                   }
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                  disabled={loading}
                 />
 
                 {errors.name && (
-                  <p className="field-error" id="su-name-error">
+                  <span className="field-error">
                     {errors.name}
-                  </p>
+                  </span>
                 )}
               </div>
 
-              <div className="field">
-                <label htmlFor="su-email">Email</label>
+              <div className="field-group">
+                <label htmlFor="email">
+                  Email address
+                </label>
 
                 <input
-                  id="su-email"
-                  className="input"
+                  id="email"
                   type="email"
-                  autoComplete="email"
-                  placeholder="you@university.edu"
                   value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={
-                    errors.email ? "su-email-error" : undefined
+                  onChange={(event) =>
+                    update("email", event.target.value)
                   }
+                  placeholder="Enter your email"
+                  autoComplete="email"
+                  disabled={loading}
                 />
 
                 {errors.email && (
-                  <p className="field-error" id="su-email-error">
+                  <span className="field-error">
                     {errors.email}
-                  </p>
+                  </span>
                 )}
               </div>
 
-              <div className="field">
-                <label htmlFor="su-password">Password</label>
+              <div className="field-group">
+                <label htmlFor="password">
+                  Password
+                </label>
 
-                <div className="pw-row">
+                <div className="password-input-wrap">
                   <input
-                    id="su-password"
-                    className="input"
-                    type={showPw ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="At least 8 characters"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
                     value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    aria-invalid={Boolean(errors.password)}
-                    aria-describedby={
-                      errors.password
-                        ? "su-password-error"
-                        : "su-password-hint"
+                    onChange={(event) =>
+                      update(
+                        "password",
+                        event.target.value
+                      )
                     }
-                    style={{ paddingRight: "64px" }}
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                    disabled={loading}
                   />
-
                   <button
+                    className="password-visibility-button"
                     type="button"
-                    className="pw-toggle"
-                    onClick={() => setShowPw((v) => !v)}
-                    aria-pressed={showPw}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    disabled={loading}
                   >
-                    {showPw ? "Hide" : "Show"}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
 
-                {errors.password ? (
-                  <p className="field-error" id="su-password-error">
+                {errors.password && (
+                  <span className="field-error">
                     {errors.password}
-                  </p>
-                ) : (
-                  <p className="field-hint" id="su-password-hint">
-                    At least 8 characters.
-                  </p>
+                  </span>
                 )}
               </div>
 
-              <div className="field">
-                <label htmlFor="su-confirm-password">
+              <div className="field-group">
+                <label htmlFor="confirmPassword">
                   Confirm password
                 </label>
 
                 <input
-                  id="su-confirm-password"
-                  className="input"
+                  id="confirmPassword"
                   type="password"
-                  autoComplete="new-password"
-                  placeholder="Re-enter your password"
                   value={form.confirmPassword}
-                  onChange={(e) =>
-                    update("confirmPassword", e.target.value)
+                  onChange={(event) =>
+                    update(
+                      "confirmPassword",
+                      event.target.value
+                    )
                   }
-                  aria-invalid={Boolean(
-                    errors.confirmPassword || confirmMismatch
-                  )}
-                  aria-describedby={
-                    errors.confirmPassword || confirmMismatch
-                      ? "su-confirm-password-error"
-                      : undefined
-                  }
+                  placeholder="Confirm your password"
+                  autoComplete="new-password"
+                  disabled={loading}
                 />
 
-                {(errors.confirmPassword || confirmMismatch) && (
-                  <p
-                    className="field-error"
-                    id="su-confirm-password-error"
-                  >
-                    {errors.confirmPassword || "Passwords don't match."}
-                  </p>
+                {errors.confirmPassword && (
+                  <span className="field-error">
+                    {errors.confirmPassword}
+                  </span>
                 )}
               </div>
 
-              <div className="checkbox-row">
+              <div className="agreement-row">
                 <input
-                  id="su-agree"
+                  id="agree"
                   type="checkbox"
                   checked={form.agree}
-                  onChange={(e) => update("agree", e.target.checked)}
-                  aria-invalid={Boolean(errors.agree)}
-                  aria-describedby={
-                    errors.agree ? "su-agree-error" : undefined
+                  onChange={(event) =>
+                    update(
+                      "agree",
+                      event.target.checked
+                    )
                   }
+                  disabled={loading}
                 />
 
-                <label htmlFor="su-agree">
-                  I agree to the{" "}
-                  <Link to="/terms">Terms of Service</Link> and{" "}
-                  <Link to="/privacy-policy">Privacy Policy</Link>.
-                </label>
+                <span>
+                  <label htmlFor="agree">
+                    I agree to the{" "}
+                  </label>
+
+                  <Link to="/terms">
+                    Terms of Service
+                  </Link>
+
+                  {" and "}
+
+                  <Link to="/privacy-policy">
+                    Privacy Policy
+                  </Link>
+                </span>
               </div>
 
               {errors.agree && (
-                <p className="field-error" id="su-agree-error">
+                <span className="field-error">
                   {errors.agree}
-                </p>
+                </span>
               )}
 
               {errors.submit && (
-                <p className="field-error">{errors.submit}</p>
+                <div className="submit-error">
+                  {errors.submit}
+                </div>
               )}
 
               <button
                 type="submit"
-                className="button dark button-full"
-                disabled={isLoading}
-                aria-busy={isLoading}
+                className="signup-button"
+                disabled={loading}
               >
-                {isLoading ? (
+                {loading ? (
                   <>
                     <span
                       className="signup-spinner"
                       aria-hidden="true"
-                    />
+                    ></span>
                     Creating account...
                   </>
                 ) : (
                   "Create account"
                 )}
               </button>
-
-              <p className="su-switch">
-                Already have an account?{" "}
-                <a href="/login">Sign in</a>
-              </p>
             </form>
-          )}
+
+            <div className="signup-login">
+              Already have an account?{" "}
+              <Link to="/login">
+                Sign in
+              </Link>
+            </div>
+          </div>
+
+          <div className="signup-visual">
+            <div className="bridge-mark" aria-hidden="true">
+              <span className="bm-line bm-line-left"></span>
+              <span className="bm-line bm-line-middle"></span>
+              <span className="bm-line bm-line-right"></span>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <figure className="su-photo">
-          {!photoFailed ? (
-            <img
-              src="https://images.unsplash.com/photo-1478191696214-796b65712719?auto=format&fit=crop&w=1200&q=85"
-              alt="A steel arch bridge over calm water under a blue sky"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              onError={() => setPhotoFailed(true)}
-            />
-          ) : (
-            <div
-              className="su-photo-fallback"
-              aria-hidden="true"
-            />
-          )}
+      {verification && (
+        <VerificationModal
+          email={verification.email}
+          initialExpiresAt={verification.expiresAt}
+          onVerified={() => {
+            sessionStorage.removeItem(
+              signupDraftKey
+            );
 
-          <div className="su-mark" aria-hidden="true">
-            <BridgeMark />
-          </div>
-
-          <div className="su-photo-copy">
-            <p className="eyebrow">BridgeTech</p>
-
-            <h2>Build Skills for the work ahead</h2>
-          </div>
-        </figure>
-      </main>
-    </div>
+            navigate("/home");
+          }}
+        />
+      )}
+    </>
   );
-}
+};
+
+export default SignUp;

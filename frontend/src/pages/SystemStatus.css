@@ -1,3 +1,130 @@
+.admin-page .system-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid #e6e9ee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.admin-page .system-status-page h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #202733;
+}
+
+.admin-page .system-summary p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #687384;
+}
+
+.admin-page .system-last-check {
+  display: grid;
+  gap: 6px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #687384;
+}
+
+.admin-page .system-last-check time {
+  color: #202733;
+  font-weight: 500;
+}
+
+.admin-page .service-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-page .service-table th,
+.admin-page .service-table td {
+  padding: 18px 12px;
+  border-bottom: 1px solid #edf0f3;
+  text-align: left;
+}
+
+.admin-page .service-table thead th {
+  background: #f8f9fb;
+  color: #687384;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-page .service-table tbody th {
+  width: 24%;
+  font-weight: 500;
+  color: #202733;
+}
+
+.admin-page .service-table td {
+  color: #536176;
+}
+
+.admin-page .service-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.admin-page .service-badge.status-operational {
+  background: #e3f3ea;
+  color: #19815c;
+}
+
+.admin-page .service-badge.status-degraded {
+  background: #fdf1de;
+  color: #a56a13;
+}
+
+.admin-page .service-badge.status-outage {
+  background: #fbe8e7;
+  color: #b3261e;
+}
+
+.admin-page .service-badge.status-unknown {
+  background: #eef0f4;
+  color: #687384;
+}
+
+.admin-page .system-summary.status-operational {
+  border-color: #d7eadf;
+  background: #f7fbf8;
+}
+
+.admin-page .system-summary.status-degraded {
+  border-color: #f0dfbd;
+  background: #fffaf2;
+}
+
+.admin-page .system-summary.status-outage {
+  border-color: #edcfcd;
+  background: #fff8f7;
+}
+
+.admin-page .system-summary.status-unknown {
+  border-color: #e6e9ee;
+  background: #fff;
+}
+
+.admin-page .system-empty {
+  padding: 24px 0;
+  color: #687384;
+  font-size: 14px;
+}
+
 .system-status-page .change.amber {
   color: #a56a13;
 }
@@ -5,12 +132,6 @@
 .system-status-page .pill.watch {
   background: #fdf1de;
   color: #a56a13;
-}
-
-.admin-page .system-status-page .chart {
-  height: 220px;
-  margin-top: 20px;
-  background: none;
 }
 
 .system-status-page .status-line {
@@ -115,45 +236,30 @@
   color: #9aa3af;
 }
 
-.system-status-page footer.admin-foot {
-  border-top: 1px solid #e6e9ee;
-  background: #fff;
-  padding: 20px 42px;
-  margin-top: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12.5px;
-  color: #8a929e;
-}
-
-.system-status-page footer.admin-foot .fbrand {
-  font-weight: 800;
-  color: #202733;
-}
-
-.system-status-page footer.admin-foot .fbrand b {
-  color: #315db6;
-}
-
-.system-status-page footer.admin-foot .flinks {
-  display: flex;
-  gap: 20px;
-}
-
-.system-status-page footer.admin-foot .flinks a {
-  color: #8a929e;
-}
-
-.system-status-page footer.admin-foot .flinks a:hover {
-  color: #315db6;
-}
-
-@media(max-width:550px) {
-  .system-status-page footer.admin-foot {
+@media (max-width: 700px) {
+  .admin-page .system-summary {
     flex-direction: column;
-    gap: 10px;
     align-items: flex-start;
-    padding: 20px 22px;
+  }
+
+  .admin-page .system-last-check {
+    text-align: left;
+  }
+
+  .admin-page .service-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 550px) {
+  .system-status-page .status-line {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .system-status-page .status-line .updated {
+    width: 100%;
+    margin-left: 18px;
   }
 }
