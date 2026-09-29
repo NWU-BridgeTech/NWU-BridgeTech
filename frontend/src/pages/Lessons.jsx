@@ -177,13 +177,7 @@ export default function LessonView() {
                   ? "Take the Quiz"
                   : "Retake the Quiz"}
               </Link>
-              <span className="lesson-quiz-status">
-                {lesson.quiz.passed
-                  ? `Passed (best score ${lesson.quiz.bestScore}%)`
-                  : lesson.quiz.bestScore == null
-                    ? `Score ${lesson.quiz.passingScore}% or more to unlock the next lesson`
-                    : `Best score ${lesson.quiz.bestScore}%. You need ${lesson.quiz.passingScore}% to pass`}
-              </span>
+              
             </div>
           ) : (
             <span />
