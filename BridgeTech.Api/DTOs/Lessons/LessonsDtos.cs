@@ -62,3 +62,30 @@ public class LessonProgressResponse
     public short ModuleProgressPercent { get; set; }
     public string ModuleStatus { get; set; } = string.Empty;
 }
+
+public class LessonQuizInfo
+{
+    public Guid QuizId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public short PassingScore { get; set; }
+    public short? BestScore { get; set; }
+    public bool Passed { get; set; }
+}
+
+public class LessonViewResponse
+{
+    public Guid LessonId { get; set; }
+    public Guid ModuleId { get; set; }
+    public string ModuleTitle { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? Content { get; set; }
+    public int LessonNumber { get; set; }
+    public int LessonTotal { get; set; }
+    public string? VideoUrl { get; set; }
+    public string? AiSummary { get; set; }
+    public bool Completed { get; set; }
+    public bool CanComplete { get; set; }   // quiz passed (or lesson has no quiz)
+    public Guid? PreviousLessonId { get; set; }
+    public Guid? NextLessonId { get; set; }
+    public LessonQuizInfo? Quiz { get; set; }
+}

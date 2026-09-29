@@ -51,6 +51,9 @@ function App() {
         />
         <Route path="/lessons" element={<Lessons />} />
 
+        <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
+        <Route path="/modules/:moduleId/lessons/:lessonId" element={<Lessons />} /> 
+
         <Route
           path="/student/certificates"
           element={<StudentCertificates />}
