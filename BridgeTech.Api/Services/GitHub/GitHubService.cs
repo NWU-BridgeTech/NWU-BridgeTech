@@ -40,7 +40,7 @@ public sealed class GitHubService : IGitHubService
         var state = Uri.EscapeDataString(_stateProtector.Protect(payload));
         var callbackUrl = Uri.EscapeDataString(_options.CallbackUrl);
 
-        return $"https://github.com/login/oauth/authorize?client_id={Uri.EscapeDataString(_options.ClientId)}&redirect_uri={callbackUrl}&scope=read:user%20public_repo&state={state}";
+        return $"https://github.com/login/oauth/authorize?client_id={Uri.EscapeDataString(_options.ClientId)}&redirect_uri={callbackUrl}&scope=read:user&state={state}";
     }
 
     public async Task<string> ConnectUserAsync(string state, string code, CancellationToken cancellationToken = default)
@@ -98,6 +98,8 @@ public sealed class GitHubService : IGitHubService
             "GitHub account connected",
             $"Your GitHub account @{githubUser.Login} is now connected to BridgeTech.",
             cancellationToken: cancellationToken);
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
         return githubUser.Login;
     }
 
