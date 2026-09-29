@@ -1,10 +1,12 @@
 using BridgeTech.Api.Services.Modules;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/modules")]
+[Authorize]
 // Handles HTTP requests for learning modules. Database access remains in the
 // injected context so the controller does not create connections manually.
 public class ModulesController(IModuleService service) : ControllerBase

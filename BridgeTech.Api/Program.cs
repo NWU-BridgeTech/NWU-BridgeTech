@@ -7,6 +7,8 @@ using BridgeTech.Api.Services.Exercises;
 using BridgeTech.Api.Services.Modules;
 using BridgeTech.Api.Services.Quizzes;
 using BridgeTech.Api.Services.Notifications;
+using BridgeTech.Api.Services.GitHub;
+using BridgeTech.Api.Common.Options;
 using BridgeTech.Api.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +18,10 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<GitHubApiOptions>(builder.Configuration.GetSection("GitHub"));
+builder.Services.AddDataProtection();
+builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -33,6 +39,7 @@ builder.Services.AddHttpClient<IEmailService, BrevoEmailService>(client =>
     client.BaseAddress = new Uri("https://api.brevo.com/");
 });
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 
 builder.Services.AddRateLimiter(options =>
 {

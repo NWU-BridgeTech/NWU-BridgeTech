@@ -1,10 +1,12 @@
 using BridgeTech.Api.Services.Ai;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/ai-summaries")]
+[Authorize]
 // Reads AI-generated summaries associated with lesson videos.
 public class AiSummariesController(IAiService service) : ControllerBase
 {
