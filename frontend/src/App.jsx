@@ -27,12 +27,6 @@ import AccountSetup from "./pages/AccountSetup";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-import Lessons from "./pages/Lessons";
-
-function AdminSection({ children }) {
-  return <AppLayout>{children}</AppLayout>;
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -48,6 +42,10 @@ function App() {
           element={<VerifyCertificate />}
         />
         <Route path="/signout" element={<SignOut />} />
+
+        <Route element={<ProtectedRoute setupOnly />}>
+          <Route path="/account/setup" element={<AccountSetup />} />
+        </Route>
 
         <Route element={<ProtectedRoute setupOnly />}>
           <Route path="/account/setup" element={<AccountSetup />} />
