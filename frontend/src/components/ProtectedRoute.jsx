@@ -14,7 +14,7 @@ function getTokenPayload() {
   }
 }
 
-export default function ProtectedRoute({ requiredRole }) {
+export default function ProtectedRoute({ requiredRole, setupOnly = false }) {
   const payload = getTokenPayload();
   const role =
     payload?.role ||
