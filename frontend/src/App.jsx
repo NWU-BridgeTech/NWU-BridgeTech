@@ -1,13 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PublicHomepage from "./pages/PublicHomepage";
+import RootRoute from "./components/RootRoute";
 import Home from "./pages/Home";
 import StudentCourses from "./pages/StudentCourses";
 import StudentAssessments from "./pages/StudentAssessments";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
+import StudentProfile from "./pages/StudentProfile";
+import VerifyCertificate from "./pages/VerifyCertificate";
+import StudentNotifications from "./pages/StudentNotifications";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -20,19 +23,29 @@ import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import AccountSetup from "./pages/AccountSetup";
+import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<PublicHomepage />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route
+          path="/verify/:certificateNumber"
+          element={<VerifyCertificate />}
+        />
+        <Route path="/signout" element={<SignOut />} />
+
+        <Route element={<ProtectedRoute setupOnly />}>
+          <Route path="/account/setup" element={<AccountSetup />} />
+        </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
@@ -47,6 +60,11 @@ function App() {
             element={<StudentCertificates />}
           />
           <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route
+            path="/student/notifications"
+            element={<StudentNotifications />}
+          />
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
 

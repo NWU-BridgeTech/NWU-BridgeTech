@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setAuthTokens } from "../utils/authStorage";
 import { Mail } from "lucide-react";
 import "./VerificationModal.css";
 
@@ -45,9 +46,7 @@ export default function VerificationModal({
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Unable to verify code.");
-      if (data.token) localStorage.setItem("token", data.token);
-      if (data.refreshToken)
-        localStorage.setItem("refreshToken", data.refreshToken);
+      if (data.token) setAuthTokens(data.token, data.refreshToken);
       setVerificationState("success");
       window.setTimeout(onVerified, 650);
     } catch (requestError) {

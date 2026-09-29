@@ -9,4 +9,6 @@ public interface IModuleService
     Task<ModuleResponse> CreateAsync(CreateModuleRequest request, CancellationToken cancellationToken = default);
     Task<ModuleResponse?> UpdateAsync(Guid moduleId, UpdateModuleRequest request, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid moduleId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ModuleListItemResponse>> GetAvailableForUserAsync(
+    Guid userId, CancellationToken cancellationToken);
 }
