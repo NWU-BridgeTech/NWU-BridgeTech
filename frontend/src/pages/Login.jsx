@@ -110,6 +110,8 @@ const Login = () => {
         <div className="brand">
           <b>Bridge</b>
           <b>Tech</b>
+          <b>Bridge</b>
+          <b>Tech</b>
         </div>
 
         <h2>Login</h2>

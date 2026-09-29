@@ -27,6 +27,12 @@ import AccountSetup from "./pages/AccountSetup";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
+import Lessons from "./pages/Lessons";
+
+function AdminSection({ children }) {
+  return <AppLayout>{children}</AppLayout>;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -47,6 +53,23 @@ function App() {
           <Route path="/account/setup" element={<AccountSetup />} />
         </Route>
 
+        <Route path="/student/assessments" element={<StudentAssessments />} />
+
+        <Route
+          path="/student/practical-work"
+          element={<StudentPracticalWork />}
+        />
+        <Route path="/lessons" element={<Lessons />} />
+
+        <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
+        <Route
+          path="/modules/:moduleId/lessons/:lessonId"
+          element={<Lessons />}
+        />
+
+        <Route path="/student/certificates" element={<StudentCertificates />} />
+
+        <Route path="/student/github" element={<StudentGithub />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
           <Route path="/student/courses" element={<StudentCourses />} />

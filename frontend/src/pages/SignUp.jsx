@@ -126,6 +126,7 @@ const initialForm = {
 const signupDraftKey = "bridgetech-signup-draft";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 export default function SignUpPage() {
   const [form, setForm] = useState(() => {
@@ -156,12 +157,14 @@ export default function SignUpPage() {
 
     try {
       sessionStorage.setItem(signupDraftKey, JSON.stringify(safeDraft));
+      sessionStorage.setItem(signupDraftKey, JSON.stringify(safeDraft));
     } catch (error) {
       console.error("Failed to save signup draft:", error);
     }
   }, [form.name, form.email, form.agree]);
 
   const confirmMismatch =
+    form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
     form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
 
   function update(field, value) {
@@ -227,6 +230,7 @@ export default function SignUpPage() {
 
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(" ") || firstName;
+    const lastName = nameParts.slice(1).join(" ") || firstName;
 
     const username = form.email
       .split("@")[0]
@@ -259,6 +263,19 @@ export default function SignUpPage() {
           password: form.password,
         }),
       });
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
       let data = {};
 
@@ -273,10 +290,12 @@ export default function SignUpPage() {
         }
       } catch (error) {
         console.error("Failed to parse server response:", error);
+        console.error("Failed to parse server response:", error);
       }
 
       if (!response.ok) {
         setErrors({
+          submit: data.message || "Unable to create your account.",
           submit: data.message || "Unable to create your account.",
         });
 
@@ -325,6 +344,7 @@ export default function SignUpPage() {
       </a>
 
       <header className="su-top">
+        <a className="logo" href="/" aria-label="BridgeTech home">
         <a className="logo" href="/" aria-label="BridgeTech home">
           Bridge<i>Tech</i>
         </a>
@@ -534,6 +554,7 @@ export default function SignUpPage() {
             />
           ) : (
             <div className="su-photo-fallback" aria-hidden="true" />
+            <div className="su-photo-fallback" aria-hidden="true" />
           )}
 
           <div className="su-mark" aria-hidden="true">
@@ -550,3 +571,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+
