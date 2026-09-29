@@ -1,17 +1,32 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
-import {
-  student,
-  certificates,
-  myCourses,
-  lastActivity,
-  assessments,
-  practicalWork,
-} from "../data/studentDashboard";
+import { apiFetch } from "../utils/apiClient";
 
 export default function Home() {
+  const [myCourses, setMyCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // The profile supplies the greeting name and certificate count; the page
+  // still works without it.
+  const [profile, setProfile] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    apiFetch("/user/enrollments")
+      .then((data) => setMyCourses(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+    apiFetch("/users/me")
+      .then((data) => setProfile(data))
+      .catch(() => setProfile(null))
+      .finally(() => setProfileLoaded(true));
+  }, []);
+
+  // Resume the earliest-enrolled course that still has lessons left.
   const resumeCourse = myCourses.find(
-    (course) => course.number === lastActivity.courseNumber,
+    (course) => course.lessonsDone < course.lessonsTotal,
   );
   const hour = new Date().getHours();
   let greeting = "Good evening";
@@ -33,21 +48,9 @@ export default function Home() {
   );
   const overallProgress =
     lessonsTotal > 0 ? Math.round((lessonsDone / lessonsTotal) * 100) : 0;
-
-  // Learning is self-paced, so open tasks are ordered by what needs action
-  // rather than by due dates.
-  const openTasks = [...practicalWork, ...assessments]
-    .filter(
-      (item) =>
-        item.status !== "Passed" &&
-        item.status !== "Completed" &&
-        item.status !== "Awaiting review",
-    )
-    .sort(
-      (first, second) =>
-        (second.status === "Changes requested") -
-        (first.status === "Changes requested"),
-    );
+  const hasCourses = myCourses.length > 0;
+  const allCoursesComplete = lessonsTotal > 0 && activeCourses.length === 0;
+  const firstName = profile?.firstName;
 
   return (
     <StudentLayout title="Home">
@@ -60,26 +63,57 @@ export default function Home() {
             <div>
               <h2 id="overall-progress-heading">Your progress</h2>
               <p>
-                {greeting}, {student.firstName}. Here’s how your learning is
+                {greeting}
+                {firstName ? `, ${firstName}` : ""}. Here’s how your learning is
                 going.
               </p>
             </div>
-            <strong>
-              {overallProgress}
-              <span>%</span>
-            </strong>
+            {!loading && !error && lessonsTotal > 0 && (
+              <strong>
+                {overallProgress}
+                <span>%</span>
+              </strong>
+            )}
           </div>
-          <progress
-            aria-label="Overall lesson completion"
-            value={lessonsDone}
-            max={lessonsTotal || 1}
-          />
-          <div className="overview-progress-footer">
-            <span>
-              {lessonsDone} of {lessonsTotal} lessons completed
-            </span>
-            <Link to="/student/courses">View my courses →</Link>
-          </div>
+          {loading && <p>Loading your progress…</p>}
+          {error && (
+            <p className="error-message visible">
+              We couldn’t load your progress. Please try again later.
+            </p>
+          )}
+          {!loading && !error && !hasCourses && (
+            <div className="overview-progress-footer">
+              <span>
+                You haven’t enrolled in a course yet. Pick one to start tracking
+                your progress.
+              </span>
+              <a href="/student/courses#explore-courses">Explore courses →</a>
+            </div>
+          )}
+          {!loading && !error && hasCourses && lessonsTotal === 0 && (
+            <div className="overview-progress-footer">
+              <span>
+                Your courses don’t have any lessons yet. Check back soon.
+              </span>
+              <Link to="/student/courses">View my courses →</Link>
+            </div>
+          )}
+          {!loading && !error && lessonsTotal > 0 && (
+            <>
+              <progress
+                aria-label="Overall lesson completion"
+                value={lessonsDone}
+                max={lessonsTotal}
+              />
+              <div className="overview-progress-footer">
+                <span>
+                  {lessonsDone} of {lessonsTotal}{" "}
+                  {lessonsTotal === 1 ? "lesson" : "lessons"} completed
+                </span>
+                <Link to="/student/courses">View my courses →</Link>
+              </div>
+            </>
+          )}
         </section>
 
         <section className="task-section" aria-labelledby="tasks-heading">
@@ -87,68 +121,33 @@ export default function Home() {
             <h2 id="tasks-heading">Needs your attention</h2>
             <span>Work through these at your own pace</span>
           </div>
-          {openTasks.length > 0 ? (
-            <ul className="task-list">
-              {openTasks.map((item) => {
-                const page =
-                  item.type === "assessment"
-                    ? "/student/assessments"
-                    : "/student/practical-work";
-
-                return (
-                  <li key={item.id}>
-                    <div className="task-details">
-                      <h3>{item.title}</h3>
-                      <p>
-                        {item.course} ·{" "}
-                        {item.type === "assessment"
-                          ? "Assessment"
-                          : "Practical work"}
-                      </p>
-                      <span className={`activity-status ${item.tone}`}>
-                        {item.status}
-                      </span>
-                    </div>
-                    <Link
-                      className="task-action"
-                      to={page}
-                      aria-label={`${item.action}: ${item.title}`}
-                    >
-                      {item.action} <span aria-hidden="true">→</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="task-empty">
-              <h3>You’re all caught up</h3>
-              <p>
-                Nothing needs your attention right now. Keep learning at your
-                own pace.
-              </p>
-            </div>
-          )}
+          {/* Open quizzes will be listed here */}
+          <div className="task-empty">
+            <h3>You’re all caught up</h3>
+            <p>
+              Nothing needs your attention right now. Keep learning at your own
+              pace.
+            </p>
+          </div>
         </section>
 
-        <div className="activity-heading">
-          <p>Lesson and task actions are coming soon.</p>
-        </div>
         <div className="home-resume">
           <section className="resume-card" aria-labelledby="continue-heading">
             <div className="action-heading">
               <h3 id="continue-heading">Continue learning</h3>
-              <span className="tag">LAST ACTIVE COURSE</span>
+              <span className="tag">UP NEXT</span>
             </div>
-            {resumeCourse ? (
+            {loading ? (
+              <p>Loading…</p>
+            ) : error ? (
+              <p>Your courses couldn’t be loaded right now.</p>
+            ) : resumeCourse ? (
               <>
-                <p className="resume-course">{resumeCourse.title}</p>
-                <h4>{lastActivity.lesson}</h4>
+                <p className="resume-course">{resumeCourse.moduleTitle}</p>
+                <h4>{resumeCourse.nextLessonTitle}</h4>
                 <p className="lesson-meta">
                   Lesson {resumeCourse.lessonsDone + 1} of{" "}
                   {resumeCourse.lessonsTotal}
-                  <span aria-hidden="true"> · </span>
-                  About {lastActivity.minutes} minutes
                 </p>
                 <div className="resume-progress">
                   <div className="progress-label">
@@ -156,24 +155,31 @@ export default function Home() {
                       {resumeCourse.lessonsDone} of {resumeCourse.lessonsTotal}{" "}
                       lessons completed
                     </span>
-                    <b>
-                      {Math.round(
-                        (resumeCourse.lessonsDone / resumeCourse.lessonsTotal) *
-                          100,
-                      )}
-                      %
-                    </b>
+                    <b>{resumeCourse.progressPercent}%</b>
                   </div>
                   <progress
-                    aria-label={`${resumeCourse.title} lesson completion`}
+                    aria-label={`${resumeCourse.moduleTitle} lesson completion`}
                     value={resumeCourse.lessonsDone}
                     max={resumeCourse.lessonsTotal}
                   />
                 </div>
-                <button className="btn blue resume-button" disabled>
+                <Link
+                  className="btn blue resume-button"
+                  to={`/modules/${resumeCourse.moduleId}/lessons`}
+                >
                   Resume lesson <span aria-hidden="true">→</span>
-                </button>
+                </Link>
               </>
+            ) : allCoursesComplete ? (
+              <div className="activity-empty">
+                <h4>You’ve finished all your courses</h4>
+                <p>
+                  Great work! Explore the catalogue to find your next course.
+                </p>
+                <a className="btn blue" href="/student/courses#explore-courses">
+                  Explore courses
+                </a>
+              </div>
             ) : (
               <div className="activity-empty">
                 <h4>Your next step starts here</h4>
@@ -195,12 +201,14 @@ export default function Home() {
         >
           <div className="stat">
             <dt>Active courses</dt>
-            <dd>{activeCourses.length}</dd>
+            <dd>{loading || error ? "–" : activeCourses.length}</dd>
             <span>Currently in progress</span>
           </div>
           <div className="stat">
             <dt id="certificates-summary">Certificates earned</dt>
-            <dd>{certificates.length}</dd>
+            <dd>
+              {profileLoaded && profile ? profile.certificatesEarned : "–"}
+            </dd>
             <span>Recognising your completed work</span>
           </div>
         </dl>
