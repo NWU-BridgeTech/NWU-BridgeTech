@@ -43,11 +43,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
         builder.Property(x => x.VerificationCode).HasMaxLength(6);
         builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
-        builder.Property(x => x.EmailVerified).HasDefaultValue(false).IsRequired();
-        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
-        builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
-        builder.Property(x => x.VerificationCode).HasMaxLength(6);
-        builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
     }
 }
 

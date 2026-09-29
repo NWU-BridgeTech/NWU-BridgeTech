@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -98,6 +99,159 @@ public class AuthService : IAuthService
             VerificationExpiresAt = pendingRegistration.VerificationCodeExpiresAt
         };
     }
+    public async Task<AuthResponse> GoogleSignupAsync(GoogleSignupRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google signup credential is required.");
+        }
+
+        string? googleClientId =
+            _configuration["Google:ClientId"];
+
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload =
+                await GoogleJsonWebSignature.ValidateAsync(
+                    request.Credential,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { googleClientId }
+                    });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException("Invalid Google signup credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException("The Google account email could not be verified.");
+        }
+
+        string email = payload.Email.Trim();
+
+        bool emailExists = await _context.Users
+            .AnyAsync(
+                u => u.Email == email,
+                cancellationToken);
+
+        if (emailExists)
+        {
+            throw new InvalidOperationException(
+                "An account with this Google email already exists. Please log in instead.");
+        }
+
+        bool pendingEmailExists =
+            await _context.PendingRegistrations
+                .AnyAsync(
+                    x => x.Email == email,
+                    cancellationToken);
+
+        if (pendingEmailExists)
+        {
+            throw new InvalidOperationException("A signup for this Google email is already waiting for verification. Check your email for the verification code.");
+        }
+
+        string firstName =
+            !string.IsNullOrWhiteSpace(payload.GivenName)
+                ? payload.GivenName
+                : "BridgeTech";
+
+        string lastName =
+            !string.IsNullOrWhiteSpace(payload.FamilyName)
+                ? payload.FamilyName
+                : "User";
+
+        string baseUsername =
+            email
+                .Split('@')[0]
+                .Replace(".", "")
+                .Replace("+", "")
+                .Replace("-", "")
+                .Replace("_", "");
+
+        baseUsername = new string(baseUsername.Where(char.IsLetterOrDigit).ToArray());
+
+        if (baseUsername.Length < 3)
+        {
+            baseUsername = "user";
+        }
+
+        if (baseUsername.Length > 50)
+        {
+            baseUsername = baseUsername[..50];
+        }
+
+        string username = baseUsername;
+        int usernameNumber = 1;
+
+        while (
+            await _context.Users.AnyAsync(u => u.Username == username, cancellationToken)
+            ||
+            await _context.PendingRegistrations.AnyAsync(x => x.Username == username, cancellationToken))
+        {
+            string suffix = usernameNumber.ToString();
+
+            int maxBaseLength = 50 - suffix.Length;
+
+            string shortenedBase =
+                baseUsername.Length > maxBaseLength
+                    ? baseUsername[..maxBaseLength]
+                    : baseUsername;
+
+            username =
+                $"{shortenedBase}{suffix}";
+
+            usernameNumber++;
+        }
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string temporaryPassword =
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        var user = new User
+        {
+            UserId = Guid.NewGuid(),
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            PasswordHash = _passwordHasher.HashPassword(null!, temporaryPassword),
+            GithubUsername = null,
+            Role = UserRole.Student,
+            CreatedAt = now,
+            UpdatedAt = now,
+            EmailVerified = true
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = now.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
@@ -136,6 +290,82 @@ public class AuthService : IAuthService
             Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
+    public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request,CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google login credential is required.");
+        }
+
+        string? googleClientId = _configuration["Google:ClientId"];
+
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { googleClientId }
+                });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException(
+                "Invalid Google login credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException(
+                "The Google account email could not be verified.");
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Email == payload.Email,
+                cancellationToken);
+
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException(
+                "No BridgeTech account is registered with this Google email. Please sign up first.");
+        }
+
+        if (!user.EmailVerified)
+        {
+            var exception = new InvalidOperationException(
+                "Email verification is required.");
+
+            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
+
+            throw exception;
+        }
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(
+                GetAccessTokenMinutes())
         };
     }
 

@@ -52,7 +52,6 @@ function App() {
           path="/modules/:moduleId/lessons/:lessonId"
           element={<Lessons />}
         />
-
         <Route path="/admin" element={<Admin />} />
 
         <Route
