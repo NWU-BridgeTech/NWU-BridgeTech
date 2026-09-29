@@ -11,3 +11,4 @@ public interface IGitHubService
 }
 
 public sealed record GitHubRepositoryResponse(string FullName, string HtmlUrl, bool IsPrivate);
+}

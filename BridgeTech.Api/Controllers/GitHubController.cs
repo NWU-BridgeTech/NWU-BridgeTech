@@ -60,6 +60,7 @@ public sealed class GitHubController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.FullName)) return BadRequest(new { message = "Repository full name is required." });
         try { return Ok(await _githubService.LinkRepositoryAsync(userId, request.FullName, cancellationToken)); }
         catch (InvalidOperationException exception) { return BadRequest(new { message = exception.Message }); }
+        return Ok(new { username = await _githubService.GetUsernameAsync(userId, cancellationToken) });
     }
 
     [AllowAnonymous]
