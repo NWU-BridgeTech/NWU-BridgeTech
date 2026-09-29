@@ -1,4 +1,3 @@
-import formatDeadline from "../utils/formatDeadline";
 import { Link } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import {
@@ -34,32 +33,21 @@ export default function Home() {
   );
   const overallProgress =
     lessonsTotal > 0 ? Math.round((lessonsDone / lessonsTotal) * 100) : 0;
-  const now = new Date();
 
-  const upcomingTasks = [...practicalWork, ...assessments].filter(
-    (item) =>
-      item.status !== "Passed" &&
-      item.status !== "Completed" &&
-      item.status !== "Awaiting review",
-  );
-
-  function taskPriority(item) {
-    if (item.dueAt && new Date(item.dueAt) < now) return 0;
-    if (item.status === "Changes requested") return 1;
-    if (item.dueAt) return 2;
-    return 3;
-  }
-
-  upcomingTasks.sort((first, second) => {
-    const priorityDifference = taskPriority(first) - taskPriority(second);
-    if (priorityDifference !== 0) return priorityDifference;
-    if (first.dueAt && second.dueAt) {
-      return new Date(first.dueAt) - new Date(second.dueAt);
-    }
-    if (first.dueAt) return -1;
-    if (second.dueAt) return 1;
-    return 0;
-  });
+  // Learning is self-paced, so open tasks are ordered by what needs action
+  // rather than by due dates.
+  const openTasks = [...practicalWork, ...assessments]
+    .filter(
+      (item) =>
+        item.status !== "Passed" &&
+        item.status !== "Completed" &&
+        item.status !== "Awaiting review",
+    )
+    .sort(
+      (first, second) =>
+        (second.status === "Changes requested") -
+        (first.status === "Changes requested"),
+    );
 
   return (
     <StudentLayout title="Home">
@@ -94,18 +82,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section
-          className="deadline-section"
-          aria-labelledby="deadlines-heading"
-        >
-          <div className="deadline-heading">
-            <h2 id="deadlines-heading">Upcoming &amp; needs attention</h2>
-            <span>All times SAST</span>
+        <section className="task-section" aria-labelledby="tasks-heading">
+          <div className="task-heading">
+            <h2 id="tasks-heading">Needs your attention</h2>
+            <span>Work through these at your own pace</span>
           </div>
-          {upcomingTasks.length > 0 ? (
-            <ul className="deadline-list">
-              {upcomingTasks.map((item) => {
-                const overdue = item.dueAt && new Date(item.dueAt) < now;
+          {openTasks.length > 0 ? (
+            <ul className="task-list">
+              {openTasks.map((item) => {
                 const page =
                   item.type === "assessment"
                     ? "/student/assessments"
@@ -113,7 +97,7 @@ export default function Home() {
 
                 return (
                   <li key={item.id}>
-                    <div className="deadline-task">
+                    <div className="task-details">
                       <h3>{item.title}</h3>
                       <p>
                         {item.course} ·{" "}
@@ -125,22 +109,8 @@ export default function Home() {
                         {item.status}
                       </span>
                     </div>
-                    <div className="deadline-date">
-                      {item.dueAt ? (
-                        <>
-                          <span className={overdue ? "deadline-overdue" : ""}>
-                            {overdue ? "Overdue" : "Due"}
-                          </span>
-                          <time dateTime={item.dueAt}>
-                            {formatDeadline(item.dueAt)}
-                          </time>
-                        </>
-                      ) : (
-                        <span>No deadline</span>
-                      )}
-                    </div>
                     <Link
-                      className="deadline-action"
+                      className="task-action"
                       to={page}
                       aria-label={`${item.action}: ${item.title}`}
                     >
@@ -151,11 +121,11 @@ export default function Home() {
               })}
             </ul>
           ) : (
-            <div className="deadline-empty">
+            <div className="task-empty">
               <h3>You’re all caught up</h3>
               <p>
-                No upcoming deadlines or tasks need your attention. Keep
-                learning at your own pace.
+                Nothing needs your attention right now. Keep learning at your
+                own pace.
               </p>
             </div>
           )}

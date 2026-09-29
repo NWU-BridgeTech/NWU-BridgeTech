@@ -240,7 +240,7 @@
   margin: 0 auto;
   padding: var(--section-space) 40px;
 }
-/* Home overview: progress first, followed by the nearest deadlines. */
+/* Home overview: progress first, followed by open tasks. */
 .home-page .overview-progress {
   padding: var(--card-padding);
   border: 1px solid #dce5f4;
@@ -288,10 +288,10 @@
   color: #274e9f;
   font-weight: 600;
 }
-.home-page .deadline-section {
+.home-page .task-section {
   margin: 28px 0 32px;
 }
-.home-page .deadline-heading {
+.home-page .task-heading {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -299,16 +299,16 @@
   gap: 12px;
   margin-bottom: 12px;
 }
-.home-page .deadline-heading h2 {
+.home-page .task-heading h2 {
   font-size: 20px;
   margin: 0;
   letter-spacing: -0.3px;
 }
-.home-page .deadline-heading > span {
+.home-page .task-heading > span {
   font-size: 12px;
   color: var(--text-secondary);
 }
-.home-page .deadline-list {
+.home-page .task-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -316,58 +316,41 @@
   border: 1px solid #e4e8ed;
   border-radius: 10px;
 }
-.home-page .deadline-list li {
+.home-page .task-list li {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 20px;
   padding: 18px 24px;
 }
-.home-page .deadline-list li + li {
+.home-page .task-list li + li {
   border-top: 1px solid #e8ebef;
 }
-.home-page .deadline-task {
+.home-page .task-details {
   flex: 1;
   min-width: 0;
 }
-.home-page .deadline-task h3 {
+.home-page .task-details h3 {
   margin: 0;
   font-size: 14px;
   font-weight: 650;
 }
-.home-page .deadline-task .activity-status {
+.home-page .task-details .activity-status {
   margin-top: 8px;
 }
-.home-page .deadline-task p {
+.home-page .task-details p {
   margin: 4px 0 0;
   font-size: 12px;
   color: var(--text-secondary);
 }
-.home-page .deadline-date {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: right;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.home-page .deadline-date time {
-  font-size: 13px;
-  font-weight: 600;
-  color: #202939;
-}
-.home-page .deadline-date .deadline-overdue {
-  color: #a13922;
-  font-weight: 650;
-}
-.home-page .deadline-action {
+.home-page .task-action {
   color: #315db6;
   font-size: 13px;
   font-weight: 650;
   padding: 10px 0;
   flex-shrink: 0;
 }
-.home-page .deadline-action:hover {
+.home-page .task-action:hover {
   text-decoration: underline;
 }
 .home-page .home-resume {
@@ -377,17 +360,17 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
-.home-page .deadline-empty {
+.home-page .task-empty {
   padding: 24px;
   background: #fff;
   border: 1px solid #e4e8ed;
   border-radius: 10px;
 }
-.home-page .deadline-empty h3 {
+.home-page .task-empty h3 {
   margin: 0 0 8px;
   font-size: 16px;
 }
-.home-page .deadline-empty p {
+.home-page .task-empty p {
   margin: 0;
   color: var(--text-secondary);
 }
@@ -1238,18 +1221,17 @@
   .home-page .overview-progress-heading strong {
     font-size: 32px;
   }
-  .home-page .deadline-list li {
+  .home-page .task-list li {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 12px;
     padding: 16px 20px;
   }
-  .home-page .deadline-task,
-  .home-page .deadline-date {
+  .home-page .task-details {
     grid-column: 1 / -1;
     text-align: left;
   }
-  .home-page .deadline-action {
+  .home-page .task-action {
     grid-column: 1 / -1;
     justify-self: start;
     padding: 4px 0;
