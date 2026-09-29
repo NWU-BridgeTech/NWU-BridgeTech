@@ -43,43 +43,4 @@ public sealed class ModuleService(AppDbContext db) : IModuleService
     }
 
     private static ModuleResponse ToResponse(Module x) => new() { ModuleId = x.ModuleId, Title = x.Title, Description = x.Description, OrderIndex = x.OrderIndex, CreatedAt = x.CreatedAt, UpdatedAt = x.UpdatedAt };
-
-    public async Task<IEnumerable<ModuleListItemResponse>> GetAvailableForUserAsync(
-    Guid userId, CancellationToken cancellationToken)
-{
-    var enrolledModuleIds = await db.Enrollments
-        .Where(e => e.UserId == userId)
-        .Select(e => e.ModuleId)
-        .ToListAsync(cancellationToken);
-
-    var modules = await db.Modules
-        .AsNoTracking()
-        .Where(m => !enrolledModuleIds.Contains(m.ModuleId))
-        .OrderBy(m => m.OrderIndex)
-        .ToListAsync(cancellationToken);
-
-    var results = new List<ModuleListItemResponse>();
-
-    foreach (var m in modules)
-    {
-        var lessonTitles = await db.Lessons
-            .Where(l => l.ModuleId == m.ModuleId)
-            .OrderBy(l => l.OrderIndex)
-            .Select(l => l.Title)
-            .ToListAsync(cancellationToken);
-
-        results.Add(new ModuleListItemResponse
-        {
-            ModuleId = m.ModuleId,
-            Title = m.Title,
-            Description = m.Description,
-            LessonCount = lessonTitles.Count,
-            LessonTitles = lessonTitles,
-            OrderIndex = m.OrderIndex,
-            UpdatedAt = m.UpdatedAt
-        });
-    }
-
-    return results;
-}
 }

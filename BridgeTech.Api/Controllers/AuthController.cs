@@ -82,9 +82,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new
             {
                 code = ex.Data["Code"] ?? "UNAUTHORIZED",
-                message = ex.Message,
-                email = ex.Data["Email"],
-                verificationExpiresAt = ex.Data["VerificationExpiresAt"]
+                message = ex.Message
             });
         }
     }

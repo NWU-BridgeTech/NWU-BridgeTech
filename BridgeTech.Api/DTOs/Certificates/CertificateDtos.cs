@@ -7,11 +7,7 @@ public class CertificateResponse
     public Guid CertificateId { get; set; }
     public Guid UserId { get; set; }
     public Guid ModuleId { get; set; }
-    public string CertificateNumber { get; set; } = string.Empty;
     public string CertificateHash { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string ModuleTitle { get; set; } = string.Empty;
-    public string StudentName { get; set; } = string.Empty;
     public DateTimeOffset IssuedAt { get; set; }
 }
 
@@ -36,9 +32,6 @@ public class CertificateListItemResponse
     public Guid CertificateId { get; set; }
     public Guid UserId { get; set; }
     public Guid ModuleId { get; set; }
-    public string CertificateNumber { get; set; } = string.Empty;
     public string CertificateHash { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string ModuleTitle { get; set; } = string.Empty;
     public DateTimeOffset IssuedAt { get; set; }
 }

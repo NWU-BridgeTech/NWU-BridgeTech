@@ -50,18 +50,14 @@ export default function Admin() {
           <h2 className="attention-heading" id="attention-heading">
             Needs attention
           </h2>
-
           <p className="attention-intro">
             Select a card to show more information.
           </p>
-
           <div className="metrics dashboard-metrics">
             {attentionItems.map((item) => (
               <button
                 type="button"
-                className={`metric metric-attention ${
-                  selectedItem === item ? "selected" : ""
-                }`}
+                className={`metric metric-attention ${selectedItem === item ? "selected" : ""}`}
                 key={item.label}
                 aria-expanded={selectedItem === item}
                 aria-controls="attention-details"
@@ -76,7 +72,6 @@ export default function Admin() {
               </button>
             ))}
           </div>
-
           <div id="attention-details" hidden={!selectedItem}>
             {selectedItem && (
               <section
@@ -85,13 +80,9 @@ export default function Admin() {
               >
                 <div className="attention-details-header">
                   <div>
-                    <h3 id="attention-details-title">
-                      {selectedItem.label}
-                    </h3>
-
+                    <h3 id="attention-details-title">{selectedItem.label}</h3>
                     <p>{selectedItem.description}</p>
                   </div>
-
                   <button
                     type="button"
                     className="attention-close"
@@ -104,7 +95,6 @@ export default function Admin() {
                     <span aria-hidden="true">×</span>
                   </button>
                 </div>
-
                 <ul className="attention-detail-list">
                   {selectedItem.items.map((item) => (
                     <li key={item.title}>
@@ -127,12 +117,10 @@ export default function Admin() {
               <span className="status-dot" aria-hidden="true" />
               {statusSummary.title}
             </p>
-
             <p className="platform-status-details">
               Service availability and reported issues
             </p>
           </div>
-
           <Link to="/system-status">
             View system status <span aria-hidden="true">→</span>
           </Link>
@@ -143,19 +131,15 @@ export default function Admin() {
           aria-labelledby="learning-heading"
         >
           <h2 id="learning-heading">Learning overview</h2>
-
           <p className="learning-intro">
             A snapshot of student activity and performance.
           </p>
-
           <div className="learning-stats">
             {learningStats.map((stat) => (
               <div className="learning-stat" key={stat.label}>
                 <h3>{stat.label}</h3>
                 <p className="learning-stat-value">{stat.value}</p>
-                <p className="learning-stat-description">
-                  {stat.description}
-                </p>
+                <p className="learning-stat-description">{stat.description}</p>
               </div>
             ))}
           </div>

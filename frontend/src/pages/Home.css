@@ -69,17 +69,6 @@
   gap: 10px;
   flex-shrink: 0;
 }
-.home-page .profile-link {
-  align-items: center;
-  color: inherit;
-  display: flex;
-  gap: 10px;
-  text-decoration: none;
-}
-.home-page .profile-link:hover .profile-name,
-.home-page .profile-link:focus-visible .profile-name {
-  color: #1d67d5;
-}
 .home-page .profile-name {
   font-size: 13px;
   font-weight: 650;

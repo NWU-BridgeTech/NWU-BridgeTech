@@ -1,15 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import useCurrentUser from "../hooks/useCurrentUser";
-import { getToken } from "../utils/authStorage";
+import { certificates, student } from "../data/studentDashboard";
 import "./StudentCertificates.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
-
 function formatDate(date) {
-  return new Date(date).toLocaleDateString("en-ZA", {
+  return new Date(`${date}T00:00:00+02:00`).toLocaleDateString("en-ZA", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -18,53 +15,12 @@ function formatDate(date) {
 }
 
 export default function StudentCertificates() {
-  const { user, loading: userLoading, error: userError } = useCurrentUser();
   const detailsDialog = useRef(null);
-  const [certificates, setCertificates] = useState([]);
-  const [certificatesLoading, setCertificatesLoading] = useState(true);
-  const [certificatesError, setCertificatesError] = useState("");
   const [selectedCertificate, setSelectedCertificate] = useState(null);
-  const [downloadError, setDownloadError] = useState("");
-
-  useEffect(() => {
-    if (!user?.userId) return;
-
-    const token = getToken();
-    fetch(`${API_URL}/api/certificates/user/${user.userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Unable to load certificates.");
-        return response.json();
-      })
-      .then(setCertificates)
-      .catch(() => setCertificatesError("Unable to load your certificates."))
-      .finally(() => setCertificatesLoading(false));
-  }, [user, userLoading]);
 
   function openDetails(certificate) {
-    setDownloadError("");
     setSelectedCertificate(certificate);
     detailsDialog.current.showModal();
-  }
-
-  async function downloadCertificate(format) {
-    setDownloadError("");
-    const response = await fetch(
-      `${API_URL}/api/certificates/${selectedCertificate.certificateId}/image?format=${format}`,
-      { headers: { Authorization: `Bearer ${getToken()}` } },
-    );
-    if (!response.ok) {
-      setDownloadError("Unable to generate this certificate image.");
-      return;
-    }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${selectedCertificate.certificateNumber}.${format}`;
-    link.click();
-    URL.revokeObjectURL(url);
   }
 
   return (
@@ -84,19 +40,10 @@ export default function StudentCertificates() {
             </span>
           </div>
 
-          {userError || certificatesError ? (
-            <p role="alert" className="certificates-message">
-              {userError || certificatesError}
-            </p>
-          ) : userLoading || (user?.userId && certificatesLoading) ? (
-            <p className="certificates-message">Loading your certificates...</p>
-          ) : certificates.length > 0 ? (
+          {certificates.length > 0 ? (
             <ul className="certificate-list">
               {certificates.map((certificate) => (
-                <li
-                  className="certificate-card"
-                  key={certificate.certificateId}
-                >
+                <li className="certificate-card" key={certificate.id}>
                   <div className="certificate-icon" aria-hidden="true">
                     <Award size={28} strokeWidth={1.5} />
                   </div>
@@ -104,7 +51,7 @@ export default function StudentCertificates() {
                     <span className="activity-status success">
                       Course completed
                     </span>
-                    <h3>{certificate.moduleTitle || "Completed module"}</h3>
+                    <h3>{certificate.course}</h3>
                     <p>
                       Issued{" "}
                       <time dateTime={certificate.issuedAt}>
@@ -115,15 +62,9 @@ export default function StudentCertificates() {
                   <button
                     className="btn"
                     onClick={() => openDetails(certificate)}
-                    aria-label={`View certificate: ${certificate.moduleTitle || "Completed module"}`}
+                    aria-label={`View certificate: ${certificate.course}`}
                   >
                     View details <span aria-hidden="true">→</span>
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => downloadCertificate("pdf")}
-                  >
-                    Download PDF
                   </button>
                 </li>
               ))}
@@ -168,7 +109,7 @@ export default function StudentCertificates() {
             <>
               <div className="certificate-detail-summary">
                 <Award size={36} strokeWidth={1.5} aria-hidden="true" />
-                <h3>{selectedCertificate.moduleTitle || "Completed module"}</h3>
+                <h3>{selectedCertificate.course}</h3>
                 <span className="activity-status success">
                   Course completed
                 </span>
@@ -176,9 +117,7 @@ export default function StudentCertificates() {
               <dl className="certificate-details">
                 <div>
                   <dt>Issued to</dt>
-                  <dd>
-                    {user ? `${user.firstName} ${user.lastName}`.trim() : ""}
-                  </dd>
+                  <dd>{student.displayName}</dd>
                 </div>
                 <div>
                   <dt>Issued by</dt>
@@ -192,40 +131,18 @@ export default function StudentCertificates() {
                     </time>
                   </dd>
                 </div>
-                <div>
-                  <dt>Certificate number</dt>
-                  <dd>{selectedCertificate.certificateNumber}</dd>
-                </div>
               </dl>
               <div className="enrolment-preview">
                 <p id="certificate-download-note">
-                  Download a signed certificate image for sharing or printing.
+                  Certificate PDF downloads are coming soon.
                 </p>
-                <div className="certificate-download-actions">
-                  <button
-                    className="btn blue"
-                    onClick={() => downloadCertificate("png")}
-                  >
-                    Download PNG
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => downloadCertificate("jpeg")}
-                  >
-                    Download JPEG
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => downloadCertificate("pdf")}
-                  >
-                    Download PDF
-                  </button>
-                </div>
-                {downloadError ? (
-                  <p className="profile-message error" role="alert">
-                    {downloadError}
-                  </p>
-                ) : null}
+                <button
+                  className="btn blue"
+                  disabled
+                  aria-describedby="certificate-download-note"
+                >
+                  Download PDF
+                </button>
               </div>
             </>
           )}

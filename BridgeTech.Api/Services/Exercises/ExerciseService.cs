@@ -3,11 +3,10 @@ using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.DTOs.Exercises;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Exercises;
 
-public sealed class ExerciseService(AppDbContext db, INotificationService notificationService) : IExerciseService
+public sealed class ExerciseService(AppDbContext db) : IExerciseService
 {
     public async Task<IReadOnlyList<ExerciseListItemResponse>> GetAllAsync(CancellationToken ct = default) =>
         await db.Exercises.AsNoTracking().OrderBy(x => x.CreatedAt)
@@ -36,16 +35,7 @@ public sealed class ExerciseService(AppDbContext db, INotificationService notifi
     {
         if (!await db.Exercises.AnyAsync(x => x.ExerciseId == id, ct)) return null;
         var s = new ExerciseSubmission { SubmissionId = Guid.NewGuid(), ExerciseId = id, UserId = userId, GithubRepoUrl = url, SubmittedAt = DateTimeOffset.UtcNow };
-        db.ExerciseSubmissions.Add(s);
-        await db.SaveChangesAsync(ct);
-        await notificationService.NotifyAsync(
-            userId,
-            "exercise_submitted",
-            "Exercise submitted",
-            "Your GitHub repository submission has been received.",
-            id,
-            ct);
-        return s;
+        db.ExerciseSubmissions.Add(s); await db.SaveChangesAsync(ct); return s;
     }
     public Task<ExerciseSubmission?> GetSubmissionAsync(Guid id, CancellationToken ct = default) => db.ExerciseSubmissions.AsNoTracking().SingleOrDefaultAsync(x => x.SubmissionId == id, ct);
     private static ExerciseResponse ToResponse(Exercise x) => new() { ExerciseId = x.ExerciseId, ModuleId = x.ModuleId, Title = x.Title, Description = x.Description, VerificationType = x.VerificationType, VerificationCriteria = x.VerificationCriteria?.RootElement, CreatedAt = x.CreatedAt, ProgressPercentage = 0 };

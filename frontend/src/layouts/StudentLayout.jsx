@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import StudentSidebar from "../components/StudentSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Notifications from "../pages/Notifications";
-import useCurrentUser from "../hooks/useCurrentUser";
+import { student } from "../data/studentDashboard";
 import "../pages/Home.css";
 import "./AppLayout.css";
 
 export default function StudentLayout({ title, children }) {
-  const { user } = useCurrentUser();
   const [defaultOpen] = useState(
     () =>
       typeof document === "undefined" ||
@@ -36,20 +34,8 @@ export default function StudentLayout({ title, children }) {
               </h1>
               <div className="profile">
                 <Notifications />
-                <Link
-                  to="/student/profile"
-                  className="profile-link"
-                  aria-label="Open your profile and settings"
-                >
-                  <div className="avatar">
-                    {user
-                      ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`
-                      : ""}
-                  </div>
-                  <span className="profile-name">
-                    {user ? `${user.firstName} ${user.lastName}`.trim() : ""}
-                  </span>
-                </Link>
+                <div className="avatar">{student.initials}</div>
+                <span className="profile-name">{student.displayName}</span>
               </div>
             </header>
 

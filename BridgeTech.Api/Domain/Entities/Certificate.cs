@@ -6,9 +6,7 @@ public class Certificate
     public Guid CertificateId { get; set; }
     public Guid UserId { get; set; }
     public Guid ModuleId { get; set; }
-    public string CertificateNumber { get; set; } = null!;
     public string CertificateHash { get; set; } = null!;
-    public string Status { get; set; } = "Valid";
     public DateTimeOffset IssuedAt { get; set; }
 
     public User User { get; set; } = null!;

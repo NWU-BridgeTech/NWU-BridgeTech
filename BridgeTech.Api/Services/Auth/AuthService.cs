@@ -9,7 +9,6 @@ using BridgeTech.Api.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
-using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Auth;
 
@@ -20,22 +19,19 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
-    private readonly INotificationService _notificationService;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IPasswordHasher<User> passwordHasher,
         IEmailService emailService,
-        ILogger<AuthService> logger,
-        INotificationService notificationService)
+        ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
-        _notificationService = notificationService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -81,7 +77,6 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
-            AccountSetupRequired = true,
             CreatedAt = DateTimeOffset.UtcNow,
             VerificationCode = GenerateCode(),
             VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
@@ -113,36 +108,19 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            var pendingRegistration = await _context.PendingRegistrations
-                .FirstOrDefaultAsync(registration =>
-                    registration.Username == request.Identifier ||
-                    registration.Email == request.Identifier, cancellationToken);
-
-            if (pendingRegistration is null ||
-                !VerifyPassword(request.Password, pendingRegistration.PasswordHash))
-            {
-                throw InvalidCredentials();
-            }
-
-            var pendingException = new UnauthorizedAccessException(
-                "Email verification is required.");
-            pendingException.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            pendingException.Data["Email"] = pendingRegistration.Email;
-            pendingException.Data["VerificationExpiresAt"] = pendingRegistration.VerificationCodeExpiresAt;
-            throw pendingException;
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
         }
 
         if (!VerifyPassword(request.Password, user.PasswordHash))
         {
-            throw InvalidCredentials();
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
         }
 
         if (!user.EmailVerified)
         {
-            var exception = new UnauthorizedAccessException("Email verification is required.");
-            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            exception.Data["Email"] = user.Email;
-            exception.Data["VerificationExpiresAt"] = user.VerificationCodeExpiresAt;
+            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
             throw exception;
         }
 
@@ -195,7 +173,6 @@ public class AuthService : IAuthService
             Email = pendingRegistration.Email,
             PasswordHash = pendingRegistration.PasswordHash,
             GithubUsername = pendingRegistration.GithubUsername,
-            AccountSetupRequired = pendingRegistration.AccountSetupRequired,
             Role = UserRole.Student,
             CreatedAt = pendingRegistration.CreatedAt,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -205,14 +182,6 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         _context.PendingRegistrations.Remove(pendingRegistration);
         await _context.SaveChangesAsync(cancellationToken);
-
-        await _notificationService.NotifyAsync(
-            user.UserId,
-            "account_registered",
-            "Welcome to BridgeTech",
-            "Your account is ready. Complete your setup to enter your workspace.",
-            cancellationToken: cancellationToken);
-
         await transaction.CommitAsync(cancellationToken);
 
         try
@@ -295,9 +264,6 @@ public class AuthService : IAuthService
     }
 
     private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-    private static UnauthorizedAccessException InvalidCredentials() =>
-        new("Invalid username/email or password.");
 
     private static InvalidOperationException VerificationError(string message, string code)
     {
@@ -425,10 +391,6 @@ public class AuthService : IAuthService
             new Claim(
                 ClaimTypes.Role,
                 user.Role.ToString()),
-
-            new Claim(
-                "account_setup_required",
-                user.AccountSetupRequired.ToString().ToLowerInvariant()),
 
             new Claim(
                 "token_type",

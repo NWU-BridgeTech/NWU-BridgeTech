@@ -1,54 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import { clearAuthTokens, getToken } from "../utils/authStorage";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+import { initialNotifications } from "../data/studentDashboard";
 
 export default function Notifications() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [notifications, setNotifications] = useState(initialNotifications);
   const container = useRef(null);
   const trigger = useRef(null);
   const unreadCount = notifications.filter(
-    (notification) => !notification.isRead,
+    (notification) => notification.unread,
   ).length;
-
-  async function loadNotifications() {
-    const token = getToken();
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_URL}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401) {
-        clearAuthTokens();
-        window.location.href = "/login";
-        return;
-      }
-      if (!response.ok) throw new Error("Unable to load notifications.");
-      setNotifications(await response.json());
-      setError("");
-    } catch {
-      setError("Unable to load notifications.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    const initialLoad = window.setTimeout(loadNotifications, 0);
-    const interval = window.setInterval(loadNotifications, 30000);
-    window.addEventListener("notifications-changed", loadNotifications);
-    return () => {
-      window.clearTimeout(initialLoad);
-      window.clearInterval(interval);
-      window.removeEventListener("notifications-changed", loadNotifications);
-    };
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -72,29 +33,19 @@ export default function Notifications() {
     };
   }, [open]);
 
-  async function markRead(id) {
-    const response = await fetch(`${API_URL}/api/notifications/${id}/read`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${getToken()}` },
-    });
-    if (response.ok) {
-      setNotifications((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, isRead: true } : item,
-        ),
-      );
-    }
+  function markRead(id) {
+    setNotifications((items) =>
+      items.map((item) => {
+        if (item.id === id) return { ...item, unread: false };
+        return item;
+      }),
+    );
   }
 
-  async function markAllRead() {
-    const response = await fetch(`${API_URL}/api/notifications/read-all`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${getToken()}` },
-    });
-    if (response.ok)
-      setNotifications((items) =>
-        items.map((item) => ({ ...item, isRead: true })),
-      );
+  function markAllRead() {
+    setNotifications((items) =>
+      items.map((item) => ({ ...item, unread: false })),
+    );
   }
 
   function closeNotifications() {
@@ -151,22 +102,16 @@ export default function Notifications() {
             <X size={16} aria-hidden="true" />
           </button>
         </div>
-        {loading ? (
-          <p className="notification-empty">Loading notifications...</p>
-        ) : error ? (
-          <p className="notification-empty" role="alert">
-            {error}
-          </p>
-        ) : notifications.length ? (
+        {notifications.length ? (
           <ul className="notification-list">
             {notifications.map((notification) => (
               <li
                 key={notification.id}
-                className={!notification.isRead ? "is-unread" : ""}
+                className={notification.unread ? "is-unread" : ""}
               >
                 <div className="notification-item-heading">
                   <h3>{notification.title}</h3>
-                  {!notification.isRead && (
+                  {notification.unread && (
                     <span
                       className="notification-unread-dot"
                       aria-label="Unread"
@@ -174,7 +119,7 @@ export default function Notifications() {
                   )}
                 </div>
                 <p>{notification.message}</p>
-                {!notification.isRead && (
+                {notification.unread && (
                   <button
                     className="text-action"
                     aria-label={`Mark as read: ${notification.title}`}
@@ -192,13 +137,6 @@ export default function Notifications() {
           </p>
         )}
         <div className="notifications-footer">
-          <Link
-            className="text-action"
-            to="/student/notifications"
-            onClick={closeNotifications}
-          >
-            View all notifications
-          </Link>
           <button
             className="text-action"
             disabled={unreadCount === 0}

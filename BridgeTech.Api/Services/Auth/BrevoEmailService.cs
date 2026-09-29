@@ -14,7 +14,7 @@ public sealed class BrevoEmailService(
             email,
             "Verify your BridgeTech email",
             $"Your BridgeTech verification code is {code}. It expires in 10 minutes.",
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
     public Task SendPasswordResetCodeAsync(
         string email,
@@ -24,7 +24,7 @@ public sealed class BrevoEmailService(
             email,
             "Reset your BridgeTech password",
             $"Your BridgeTech password reset code is {code}. It expires in 10 minutes.",
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
     public Task SendWelcomeEmailAsync(
         string email,
@@ -34,29 +34,13 @@ public sealed class BrevoEmailService(
             email,
             "Welcome to BridgeTech",
             $"Hi {firstName},\n\nWelcome to BridgeTech! Your email has been verified and your account is ready.\n\nStart learning at http://localhost:5173/home\n\nThe BridgeTech team",
-            cancellationToken: cancellationToken);
-
-    public Task SendCertificateEmailAsync(
-        string email,
-        string firstName,
-        string moduleTitle,
-        string certificateNumber,
-        string certificatePageUrl,
-        byte[] pdf,
-        CancellationToken cancellationToken = default) =>
-        SendAsync(
-            email,
-            $"Your BridgeTech certificate: {moduleTitle}",
-            $"Hi {firstName},\n\nCongratulations on completing {moduleTitle}! Your PDF certificate is attached to this email.\n\nCertificate number: {certificateNumber}\n\nDownload PNG, JPEG, or PDF versions securely from your BridgeTech Certificates page:\n{certificatePageUrl}\n\nThe BridgeTech team",
-            cancellationToken: cancellationToken,
-            attachments: new[] { (FileName: $"{certificateNumber}.pdf", Content: pdf) });
+            cancellationToken);
 
     private async Task SendAsync(
         string email,
         string subject,
         string body,
-        CancellationToken cancellationToken,
-        IReadOnlyList<(string FileName, byte[] Content)>? attachments = null)
+        CancellationToken cancellationToken)
     {
         string? apiKey = configuration["Email:BrevoApiKey"];
         string? fromAddress = configuration["Email:FromAddress"];
@@ -82,12 +66,7 @@ public sealed class BrevoEmailService(
                 new { email }
             },
             subject,
-            textContent = body,
-            attachment = attachments?.Select(attachment => new
-            {
-                content = Convert.ToBase64String(attachment.Content),
-                name = attachment.FileName
-            })
+            textContent = body
         };
 
         using HttpResponseMessage response = await httpClient.PostAsJsonAsync(

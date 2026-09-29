@@ -1,9 +1,7 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import Notifications from "../pages/Notifications";
 import "./AppLayout.css";
-import "../pages/Home.css";
 
 export default function AppLayout({ children }) {
   const [defaultOpen] = useState(
@@ -25,9 +23,6 @@ export default function AppLayout({ children }) {
             <span>
               BridgeTech <span> / Administration</span>
             </span>
-          </div>
-          <div className="home-page admin-notification-anchor">
-            <Notifications />
           </div>
           {children}
         </main>

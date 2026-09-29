@@ -10,14 +10,8 @@ public class User
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public string? PhoneNumber { get; set; }
-    public string? Address { get; set; }
-    public string? University { get; set; }
     public string PasswordHash { get; set; } = null!;
     public string? GithubUsername { get; set; }
-    public string? GithubAccessToken { get; set; }
-    public string? GithubRepository { get; set; }
-    public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

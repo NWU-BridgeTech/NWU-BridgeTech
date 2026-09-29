@@ -41,9 +41,6 @@ public class ModuleListItemResponse
 {
     public Guid ModuleId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public int LessonCount { get; set; }
-    public List<string> LessonTitles { get; set; } = new();
     public short OrderIndex { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
