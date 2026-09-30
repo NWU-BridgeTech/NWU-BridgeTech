@@ -106,7 +106,7 @@ function App() {
             <AdminSection>
               <AdminStudents />
             </AdminSection>
-          }
+          }/>
         <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
