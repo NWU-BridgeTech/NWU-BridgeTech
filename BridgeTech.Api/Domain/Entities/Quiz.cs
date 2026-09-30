@@ -12,4 +12,6 @@ public class Quiz
     public Module Module { get; set; } = null!;
     public ICollection<QuizQuestion> Questions { get; set; } = new List<QuizQuestion>();
     public ICollection<QuizAttempt> Attempts { get; set; } = new List<QuizAttempt>();
+    public Guid? LessonId { get; set; }
+    public Lesson? Lesson { get; set; }   // optional navigation
 }

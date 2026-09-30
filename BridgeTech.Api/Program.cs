@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using BridgeTech.Api.Services.Enrollments;
+using BridgeTech.Api.Services.Lessons;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,7 @@ builder.Services.AddHttpClient<IEmailService, BrevoEmailService>(client =>
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 builder.Services.AddRateLimiter(options =>
 {
