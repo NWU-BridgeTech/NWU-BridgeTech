@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
+import AdminUtilityBar from "../components/AdminUtilityBar";
 import "./Admin.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -124,6 +125,7 @@ export default function Admin() {
 
   return (
     <AppLayout>
+      <AdminUtilityBar />
       <section
         className="learning-overview learning-overview-top"
         aria-labelledby="learning-heading"

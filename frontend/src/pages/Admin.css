@@ -81,6 +81,277 @@
   padding: 22px 42px;
 }
 
+.admin-page .admin-utility-bar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 16px 42px -10px;
+}
+
+.admin-page .admin-utility-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-page .admin-utility-item {
+  position: static;
+}
+
+.admin-page .admin-utility-button {
+  position: relative;
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #465264;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.admin-page .admin-utility-button:hover,
+.admin-page .admin-utility-button.is-open {
+  border-color: #b8c6db;
+  background: #f4f7fb;
+  color: #244b87;
+}
+
+.admin-page .admin-utility-button:focus-visible,
+.admin-page .admin-notification-action:focus-visible,
+.admin-page .admin-notification-mark-read:focus-visible,
+.admin-page .admin-profile-actions a:focus-visible,
+.admin-page .admin-profile-actions button:focus-visible {
+  outline: 2px solid #3159ad;
+  outline-offset: 2px;
+}
+
+.admin-page .admin-utility-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid #f5f6f8;
+  border-radius: 999px;
+  background: #c74b45;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-page .admin-utility-popover {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  width: min(360px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(27, 39, 57, 0.16);
+}
+
+.admin-page .admin-notification-popover {
+  max-height: min(470px, calc(100vh - 120px));
+}
+
+.admin-page .admin-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px;
+  border-bottom: 1px solid #e8ecf1;
+}
+
+.admin-page .admin-popover-heading h2,
+.admin-page .admin-profile-summary h2 {
+  margin: 0;
+  color: #202733;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.admin-page .admin-popover-heading p {
+  margin: 3px 0 0;
+  color: #687384;
+  font-size: 12px;
+}
+
+.admin-page .admin-notification-action,
+.admin-page .admin-notification-mark-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: #3159ad;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-page .admin-notification-action:disabled {
+  color: #9aa3af;
+  cursor: default;
+}
+
+.admin-page .admin-notification-list {
+  max-height: 350px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-page .admin-notification-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.admin-page .admin-notification-list li.is-unread {
+  background: #f7f9fc;
+}
+
+.admin-page .admin-notification-copy {
+  min-width: 0;
+}
+
+.admin-page .admin-notification-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-page .admin-notification-title h3 {
+  margin: 0;
+  color: #303a49;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.admin-page .admin-notification-title > span {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: #3159ad;
+}
+
+.admin-page .admin-notification-copy p {
+  margin: 4px 0;
+  color: #687384;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.admin-page .admin-notification-copy time {
+  color: #8993a1;
+  font-size: 10px;
+}
+
+.admin-page .admin-notification-mark-read {
+  flex: none;
+  padding: 3px 0;
+}
+
+.admin-page .admin-popover-message {
+  margin: 0;
+  padding: 18px 16px;
+  color: #687384;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-page .admin-popover-message[role="alert"] {
+  color: #a33131;
+}
+
+.admin-page .admin-profile-popover {
+  right: 0;
+  left: auto;
+  width: min(300px, calc(100vw - 32px));
+}
+
+.admin-page .admin-profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.admin-page .admin-profile-avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: #eaf0f8;
+  color: #3159ad;
+}
+
+.admin-page .admin-profile-summary p {
+  overflow: hidden;
+  margin: 3px 0;
+  color: #687384;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-page .admin-profile-summary > div > span {
+  color: #3159ad;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.admin-page .admin-profile-actions {
+  display: grid;
+  padding: 6px;
+  border-top: 1px solid #e8ecf1;
+}
+
+.admin-page .admin-profile-actions a,
+.admin-page .admin-profile-actions button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #394353;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-page .admin-profile-actions a:hover,
+.admin-page .admin-profile-actions button:hover {
+  background: #f3f6fa;
+}
+
 .admin-page .metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -680,6 +951,11 @@
     margin-right: 22px;
   }
 
+  .admin-page .admin-utility-bar {
+    margin-left: 22px;
+    margin-right: 22px;
+  }
+
   .admin-page .metrics {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -701,6 +977,11 @@
 }
 
 @media (max-width: 550px) {
+  .admin-page .admin-utility-bar {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
   .admin-page .metrics {
     grid-template-columns: 1fr;
   }
