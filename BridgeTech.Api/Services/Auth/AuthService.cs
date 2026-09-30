@@ -81,7 +81,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
-            AccountSetupRequired = true,
+            AccountSetupRequired = false,
             CreatedAt = DateTimeOffset.UtcNow,
             VerificationCode = GenerateCode(),
             VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
@@ -195,7 +195,7 @@ public class AuthService : IAuthService
             Email = pendingRegistration.Email,
             PasswordHash = pendingRegistration.PasswordHash,
             GithubUsername = pendingRegistration.GithubUsername,
-            AccountSetupRequired = pendingRegistration.AccountSetupRequired,
+            AccountSetupRequired = false,
             Role = UserRole.Student,
             CreatedAt = pendingRegistration.CreatedAt,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -210,7 +210,7 @@ public class AuthService : IAuthService
             user.UserId,
             "account_registered",
             "Welcome to BridgeTech",
-            "Your account is ready. Complete your setup to enter your workspace.",
+            "Your account is ready. Welcome aboard!",
             cancellationToken: cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
