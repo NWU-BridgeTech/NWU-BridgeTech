@@ -4,6 +4,7 @@ using System.Text.Json;
 using BridgeTech.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BridgeTech.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928113430_AddUserProfileFields")]
+    partial class AddUserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,12 +41,6 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnName("certificate_hash")
                         .IsFixedLength();
 
-                    b.Property<string>("CertificateNumber")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)")
-                        .HasColumnName("certificate_number");
-
                     b.Property<DateTimeOffset>("IssuedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -53,14 +50,6 @@ namespace BridgeTech.Api.Migrations
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("Valid")
-                        .HasColumnName("status");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -72,10 +61,6 @@ namespace BridgeTech.Api.Migrations
                     b.HasIndex("CertificateHash")
                         .IsUnique()
                         .HasDatabaseName("ix_certificates_certificate_hash");
-
-                    b.HasIndex("CertificateNumber")
-                        .IsUnique()
-                        .HasDatabaseName("ix_certificates_certificate_number");
 
                     b.HasIndex("ModuleId")
                         .HasDatabaseName("ix_certificates_module_id");
@@ -769,16 +754,6 @@ namespace BridgeTech.Api.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)")
                         .HasColumnName("first_name");
-
-                    b.Property<string>("GithubAccessToken")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("github_access_token");
-
-                    b.Property<string>("GithubRepository")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("github_repository");
 
                     b.Property<string>("GithubUsername")
                         .HasMaxLength(39)

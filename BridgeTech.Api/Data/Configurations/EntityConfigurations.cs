@@ -29,8 +29,14 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.FirstName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.LastName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(30);
+        builder.Property(x => x.Address).HasMaxLength(500);
+        builder.Property(x => x.University).HasMaxLength(200);
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.GithubAccessToken).HasMaxLength(2000);
+        builder.Property(x => x.GithubRepository).HasMaxLength(200);
+        builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Role).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
@@ -220,12 +226,15 @@ internal sealed class CertificateConfiguration : IEntityTypeConfiguration<Certif
     {
         // A certificate is unique per user/module and by its public verification hash.
         EntityConfigurationHelpers.ConfigureId(builder, "certificates", nameof(Certificate.CertificateId));
+        builder.Property(x => x.CertificateNumber).HasMaxLength(40).IsRequired();
         builder.Property(x => x.CertificateHash).HasColumnType("char(64)").IsFixedLength().IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).HasDefaultValue("Valid").IsRequired();
         builder.Property(x => x.IssuedAt).HasDefaultValueSql("now()").IsRequired();
         builder.HasOne(x => x.User).WithMany(x => x.Certificates).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(x => x.Module).WithMany(x => x.Certificates).HasForeignKey(x => x.ModuleId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(x => new { x.UserId, x.ModuleId }).IsUnique();
         builder.HasIndex(x => x.CertificateHash).IsUnique();
+        builder.HasIndex(x => x.CertificateNumber).IsUnique();
         builder.HasIndex(x => x.UserId);
     }
 }

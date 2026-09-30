@@ -12,8 +12,13 @@ public sealed class NotificationService(AppDbContext context) : INotificationSer
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Notification>> GetAsync(Guid userId, bool unreadOnly, CancellationToken cancellationToken = default) =>
-        await context.Notifications.AsNoTracking().Where(n => n.UserId == userId && (!unreadOnly || !n.IsRead)).OrderByDescending(n => n.CreatedAt).Take(100).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<NotificationDto>> GetAsync(Guid userId, bool unreadOnly, CancellationToken cancellationToken = default) =>
+        await context.Notifications.AsNoTracking()
+            .Where(n => n.UserId == userId && (!unreadOnly || !n.IsRead))
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(100)
+            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Message, n.RelatedEntityId, n.IsRead, n.CreatedAt))
+            .ToListAsync(cancellationToken);
 
     public async Task MarkReadAsync(Guid userId, Guid notificationId, CancellationToken cancellationToken = default)
     {

@@ -53,6 +53,9 @@ const Login = () => {
       localStorage.setItem("refreshToken", data.refreshToken);
 
       localStorage.setItem(
+      setAuthTokens(data.token, data.refreshToken);
+
+      sessionStorage.setItem(
         "user",
         JSON.stringify({
           userId: data.userId,

@@ -1,7 +1,7 @@
 const API_BASE = "http://localhost:5174/api"; // match your actual backend port
 
 export async function apiFetch(path, options = {}) {
-  const token = localStorage.getItem("token"); // or wherever the JWT is stored after login
+  const token = sessionStorage.getItem("token");
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,

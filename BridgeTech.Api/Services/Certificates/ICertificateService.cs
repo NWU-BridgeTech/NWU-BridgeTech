@@ -8,4 +8,6 @@ public interface ICertificateService
     Task<IReadOnlyList<CertificateListItemResponse>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CertificateListItemResponse>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<CertificateResponse> CreateAsync(CreateCertificateRequest request, CancellationToken cancellationToken = default);
+    Task<CertificateResponse> IssueForCompletionAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken = default);
+    Task<CertificateResponse?> VerifyAsync(string certificateNumber, CancellationToken cancellationToken = default);
 }

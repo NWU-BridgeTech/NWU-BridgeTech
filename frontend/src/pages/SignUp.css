@@ -444,7 +444,6 @@
   }
 }
 
-
 @media (max-width: 980px) {
   .su-grid {
     grid-template-columns: 1fr 1fr;
