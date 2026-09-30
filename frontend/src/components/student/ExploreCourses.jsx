@@ -38,9 +38,7 @@ export default function ExploreCourses({onEnrolled}) {
   });
 
   const visibleCourses = showAll ? matchingCourses : matchingCourses.slice(0, 3);
-  const visibleCourses = showAll
-    ? matchingCourses
-    : matchingCourses.slice(0, 3);
+ 
 
   let resultsText = "No courses found";
   if (matchingCourses.length > 0) {
