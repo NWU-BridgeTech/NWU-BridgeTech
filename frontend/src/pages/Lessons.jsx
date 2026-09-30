@@ -1,5 +1,9 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import './Lessons.css';
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 const lesson = {
   moduleName: "Cloud Basics",
@@ -25,27 +29,88 @@ function getYouTubeThumbnail(url) {
 }
 
 export default function LessonView() {
+  const { lessonId } = useParams();
+  const [lessonData, setLessonData] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(lessonId));
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    if (!lessonId) {
+      setLessonData(null);
+      setIsLoading(false);
+      setLoadError("");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoadError("Sign in to view this lesson and its summary.");
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsLoading(true);
+    setLoadError("");
+
+    fetch(`${API_URL}/api/lessons/${lessonId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            response.status === 404
+              ? "This lesson could not be found."
+              : "Could not load this lesson. Please try again."
+          );
+        }
+        return response.json();
+      })
+      .then((data) => setLessonData(data))
+      .catch((error) => {
+        if (error.name !== "AbortError") setLoadError(error.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [lessonId]);
+
+  const displayedLesson = lessonId
+    ? {
+        moduleName: "Lesson",
+        lessonNumber: lessonData?.orderIndex ?? 0,
+        lessonTotal: lesson.lessonTotal,
+        lessonTitle: lessonData?.title ?? (loadError ? "Lesson unavailable" : "Loading lesson..."),
+        content: lessonData?.content ?? "",
+        videoUrl: lessonData?.videoUrl ?? "",
+        aiSummary: lessonData?.aiSummary ?? "",
+      }
+    : { ...lesson, aiSummary: "" };
+
   const progressPercent = Math.round(
-    (lesson.lessonNumber - 1) / lesson.lessonTotal * 100
+    (displayedLesson.lessonNumber - 1) / displayedLesson.lessonTotal * 100
   );
 
   return (
-    <StudentLayout title={lesson.moduleName}>
+    <StudentLayout title={displayedLesson.moduleName}>
       <div className="content lesson-view">
         <section className="lesson-header">
           <h2 className="lesson-title">
-            Lesson {lesson.lessonNumber}: {lesson.lessonTitle}
+            Lesson {displayedLesson.lessonNumber || ""}: {displayedLesson.lessonTitle}
           </h2>
 
           <div className="lesson-progress">
             <div className="lesson-progress-bar">
               <div
                 className="lesson-progress-fill"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${Math.max(0, progressPercent)}%` }}
               />
             </div>
             <span className="lesson-progress-label">
-              Lesson {lesson.lessonNumber} of {lesson.lessonTotal}
+              Lesson {displayedLesson.lessonNumber || "-"} of {displayedLesson.lessonTotal}
             </span>
           </div>
         </section>
@@ -54,7 +119,7 @@ export default function LessonView() {
           <div className="lesson-content-card">
             <h3>Description</h3>
             <div className="lesson-content-scroll">
-              {lesson.content.split("\n\n").map((paragraph, i) => (
+              {displayedLesson.content.split("\n\n").map((paragraph, i) => (
                 <p key={i}>{paragraph}</p>
               ))}
             </div>
@@ -62,22 +127,38 @@ export default function LessonView() {
 
         <aside className="lesson-side-card">
             <h3>Video Summary</h3>
-            <p className="lesson-side-label">Watch the video summary before starting the quiz</p>
+            <p className="lesson-side-label">Video summary</p>
 
-            <a
-              href={lesson.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="lesson-video-link"
-            >
-                {getYouTubeThumbnail(lesson.videoUrl) && (
-                    <img
-                        src={getYouTubeThumbnail(lesson.videoUrl)}
-                        alt={lesson.lessonTitle}
-                        className="lesson-video-thumbnail"
-                    />
-                    )}
-            </a>
+            {displayedLesson.videoUrl && (
+              <a
+                href={displayedLesson.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lesson-video-link"
+              >
+                {getYouTubeThumbnail(displayedLesson.videoUrl) && (
+                  <img
+                    src={getYouTubeThumbnail(displayedLesson.videoUrl)}
+                    alt={`Watch ${displayedLesson.lessonTitle} on YouTube`}
+                    className="lesson-video-thumbnail"
+                  />
+                )}
+              </a>
+            )}
+
+            <div className="lesson-ai-summary" aria-live="polite">
+              {isLoading ? (
+                <p>Loading video summary...</p>
+              ) : loadError ? (
+                <p role="alert">{loadError}</p>
+              ) : displayedLesson.aiSummary ? (
+                displayedLesson.aiSummary.split("\n\n").map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))
+              ) : (
+                <p>An AI summary has not been generated for this lesson yet.</p>
+              )}
+            </div>
         </aside>
         </div>
 

@@ -50,6 +50,7 @@ function App() {
           element={<StudentPracticalWork />}
         />
         <Route path="/lessons" element={<Lessons />} />
+        <Route path="/lessons/:lessonId" element={<Lessons />} />
 
         <Route
           path="/student/certificates"
@@ -60,8 +61,6 @@ function App() {
           path="/student/github"
           element={<StudentGithub />}
         />
-
-        <Route path="/lessons" element={<Lessons />} />
 
         <Route path="/admin" element={<Admin />} />
 
