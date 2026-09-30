@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RootRoute from "./components/RootRoute";
@@ -29,84 +28,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
 
-function AdminSection({ children }) {
-  return <AppLayout>{children}</AppLayout>;
-}
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<PublicHomepage />} />
-        <Route path="/home" element={<Home />} />
-
-        <Route path="/student/courses" element={<StudentCourses />} />
-
-        <Route path="/student/assessments" element={<StudentAssessments />} />
-
-        <Route
-          path="/student/practical-work"
-          element={<StudentPracticalWork />}
-        />
-        <Route path="/lessons" element={<Lessons />} />
-
-        <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
-        <Route
-          path="/modules/:moduleId/lessons/:lessonId"
-          element={<Lessons />}
-        />
-
-        <Route path="/student/certificates" element={<StudentCertificates />} />
-
-        <Route path="/student/github" element={<StudentGithub />} />
-
-        <Route path="/lessons" element={<Lessons />} />
-
-        <Route path="/admin" element={<Admin />} />
-
-        <Route
-          path="/admin/modules"
-          element={
-            <AdminSection>
-              <AdminModules />
-            </AdminSection>
-          }
-        />
-
-        <Route
-          path="/admin/lessons"
-          element={
-            <AdminSection>
-              <AdminLessons />
-            </AdminSection>
-          }
-        />
-
-        <Route
-          path="/admin/assessments"
-          element={
-            <AdminSection>
-              <AdminAssessments />
-            </AdminSection>
-          }
-        />
-
-        <Route
-          path="/admin/practical-exercises"
-          element={
-            <AdminSection>
-              <AdminPracticalExercises />
-            </AdminSection>
-          }
-        />
-
-        <Route
-          path="/admin/students"
-          element={
-            <AdminSection>
-              <AdminStudents />
-            </AdminSection>
-          }/>
         <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
