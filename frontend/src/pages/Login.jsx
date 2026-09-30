@@ -133,24 +133,24 @@ export default function Login() {
         >
           {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
         </button>
-      </form>
 
-      <div className="au-divider"><span>or</span></div>
-      <div className="au-google">
-        {googleLoading ? (
-          <div className="au-google-loading">
-            <span className="au-spinner" aria-hidden="true" />
-            Signing in with Google...
-          </div>
-        ) : (
-          <GoogleLogin
-            onSuccess={handleGoogleLogin}
-            onError={() => setError("Google login was cancelled or failed.")}
-            text="signin_with"
-            shape="pill"
-          />
-        )}
-      </div>
+        <div className="au-divider"><span>or</span></div>
+        <div className="au-google">
+          {googleLoading ? (
+            <div className="au-google-loading">
+              <span className="au-spinner" aria-hidden="true" />
+              Signing in with Google...
+            </div>
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setError("Google login was cancelled or failed.")}
+              text="signin_with"
+              shape="pill"
+            />
+          )}
+        </div>
+      </form>
 
       <p className="au-switch">
         Don&apos;t have an account? <Link to="/signup">Create an account</Link>

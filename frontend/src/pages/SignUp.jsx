@@ -223,6 +223,7 @@ export default function SignUpPage() {
 
   return (
     <AuthShell
+      wide
       photo={PHOTOS.signup}
       title="Build skills for the work ahead."
       text="Work through tracks and keep a record of what you've practised."
@@ -239,97 +240,82 @@ export default function SignUpPage() {
         />
       )}
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form className="au-form-compact" onSubmit={handleSubmit} noValidate>
         <h1>Create your account</h1>
-        <p className="au-lede">
-          Set up your BridgeTech account to start working through tracks.
-        </p>
 
-        <div className="au-google">
-          <GoogleLogin
-            onSuccess={handleGoogleSignup}
-            onError={() => {
-              if (!isLoading) {
-                setErrors({ submit: "Google signup was cancelled or failed." });
-              }
-            }}
-            useOneTap={false}
-            text="signup_with"
-            shape="pill"
-          />
+        <div className="au-row">
+          <Field id="su-name" label="Full name" error={errors.name}>
+            <input
+              id="su-name"
+              className="au-input"
+              type="text"
+              autoComplete="name"
+              placeholder="Jordan Ellis"
+              value={form.name}
+              onChange={(event) => update("name", event.target.value)}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={describe("su-name", errors.name)}
+            />
+          </Field>
+
+          <Field id="su-email" label="Email" error={errors.email}>
+            <input
+              id="su-email"
+              className="au-input"
+              type="email"
+              autoComplete="email"
+              placeholder="you@university.edu"
+              value={form.email}
+              onChange={(event) => update("email", event.target.value)}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={describe("su-email", errors.email)}
+            />
+          </Field>
         </div>
 
-        <div className="au-divider">
-          <span>or sign up with email</span>
-        </div>
-
-        <Field id="su-name" label="Full name" error={errors.name}>
-          <input
-            id="su-name"
-            className="au-input"
-            type="text"
-            autoComplete="name"
-            placeholder="Jordan Ellis"
-            value={form.name}
-            onChange={(event) => update("name", event.target.value)}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={describe("su-name", errors.name)}
-          />
-        </Field>
-
-        <Field id="su-email" label="Email" error={errors.email}>
-          <input
-            id="su-email"
-            className="au-input"
-            type="email"
-            autoComplete="email"
-            placeholder="you@university.edu"
-            value={form.email}
-            onChange={(event) => update("email", event.target.value)}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={describe("su-email", errors.email)}
-          />
-        </Field>
-
-        <Field
-          id="su-password"
-          label="Password"
-          error={errors.password}
-          hint="At least 8 characters."
-        >
-          <PasswordInput
+        <div className="au-row">
+          <Field
             id="su-password"
-            autoComplete="new-password"
-            placeholder="At least 8 characters"
-            value={form.password}
-            onChange={(event) => update("password", event.target.value)}
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={describe("su-password", errors.password, true)}
-          />
-        </Field>
+            label="Password"
+            error={errors.password}
+            hint="At least 8 characters."
+          >
+            <PasswordInput
+              id="su-password"
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
+              value={form.password}
+              onChange={(event) => update("password", event.target.value)}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={describe("su-password", errors.password, true)}
+            />
+          </Field>
 
-        <Field
-          id="su-confirm-password"
-          label="Confirm password"
-          error={
-            errors.confirmPassword ||
-            (confirmMismatch ? "Passwords don't match." : "")
-          }
-        >
-          <PasswordInput
+          <Field
             id="su-confirm-password"
-            showToggle={false}
-            autoComplete="new-password"
-            placeholder="Re-enter your password"
-            value={form.confirmPassword}
-            onChange={(event) => update("confirmPassword", event.target.value)}
-            aria-invalid={Boolean(errors.confirmPassword || confirmMismatch)}
-            aria-describedby={describe(
-              "su-confirm-password",
-              errors.confirmPassword || confirmMismatch,
-            )}
-          />
-        </Field>
+            label="Confirm password"
+            error={
+              errors.confirmPassword ||
+              (confirmMismatch ? "Passwords don't match." : "")
+            }
+          >
+            <PasswordInput
+              id="su-confirm-password"
+              showToggle={false}
+              autoComplete="new-password"
+              placeholder="Re-enter your password"
+              value={form.confirmPassword}
+              onChange={(event) =>
+                update("confirmPassword", event.target.value)
+              }
+              aria-invalid={Boolean(errors.confirmPassword || confirmMismatch)}
+              aria-describedby={describe(
+                "su-confirm-password",
+                errors.confirmPassword || confirmMismatch,
+              )}
+            />
+          </Field>
+        </div>
 
         <div className="au-check">
           <input
@@ -373,6 +359,24 @@ export default function SignUpPage() {
             "Create account"
           )}
         </button>
+
+        <div className="au-divider">
+          <span>or</span>
+        </div>
+
+        <div className="au-google">
+          <GoogleLogin
+            onSuccess={handleGoogleSignup}
+            onError={() => {
+              if (!isLoading) {
+                setErrors({ submit: "Google signup was cancelled or failed." });
+              }
+            }}
+            useOneTap={false}
+            text="signup_with"
+            shape="pill"
+          />
+        </div>
 
         <p className="au-switch">
           Already have an account? <Link to="/login">Sign in</Link>

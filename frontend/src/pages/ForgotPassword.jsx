@@ -45,7 +45,7 @@ export default function ForgotPassword() {
         { email: email.trim() },
         "Unable to send reset code.",
       );
-      setSuccess("A password reset code has been sent to your email.");
+      setSuccess("If an account exists for that email, we've sent a password reset code.");
       setStep(2);
     } catch (requestError) {
       setError(requestError.message || "Unable to send reset code. Please try again.");

@@ -340,7 +340,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             throw new UnauthorizedAccessException(
-                "No BridgeTech account is registered with this Google email. Please sign up first.");
+                "Unable to sign you in with this Google account. Please try again or sign up for BridgeTech.");
         }
 
         if (!user.EmailVerified)

@@ -526,3 +526,56 @@
   z-index: 1;
   text-shadow: 0 1px 14px rgba(10, 28, 58, 0.65);
 }
+
+/* compact spacing for the Sign up form */
+.au-card:has(.au-form-compact) {
+  padding: 30px 36px 24px;
+}
+
+.au-form-compact h1 {
+  margin-bottom: 4px;
+}
+
+.au-form-compact .au-field {
+  margin-top: 13px;
+}
+
+.au-form-compact .au-field label {
+  margin-bottom: 5px;
+}
+
+.au-form-compact .au-input {
+  height: 44px;
+}
+
+.au-form-compact .au-hint,
+.au-form-compact .au-error {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.au-form-compact .au-check {
+  margin-top: 16px;
+}
+
+.au-form-compact .au-button {
+  height: 46px;
+  margin-top: 18px;
+}
+
+.au-form-compact .au-divider {
+  margin: 14px 0;
+}
+
+.au-form-compact .au-google {
+  min-height: 40px;
+}
+
+.au-form-compact .au-switch {
+  margin-top: 14px;
+}
+
+.au-form-compact .au-alert {
+  margin-top: 14px;
+}
