@@ -32,6 +32,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddSingleton<ICertificateRenderer, CertificateRenderer>();
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<IModuleService, ModuleService>();
 builder.Services.AddScoped<IQuizService, QuizService>();

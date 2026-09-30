@@ -1,9 +1,8 @@
 import { Link, NavLink } from "react-router-dom";
-import { PanelsTopLeft, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -97,23 +96,6 @@ export default function NavigationSidebar({ groups, homePath, title }) {
           ))}
         </nav>
       </SidebarContent>
-
-      <SidebarFooter className="bt-sidebar-footer">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Public website"
-              className="bt-nav-link"
-            >
-              <Link to="/" onClick={closeMobile} aria-label="Public website">
-                <PanelsTopLeft aria-hidden="true" strokeWidth={1.7} />
-                <span>Public website</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </SidebarRoot>
   );
 }

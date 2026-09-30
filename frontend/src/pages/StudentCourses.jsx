@@ -22,6 +22,7 @@ function CourseCard({ course, onChanged }) {
         method: "DELETE",
       });
       if (success) {
+        window.dispatchEvent(new Event("notifications-changed"));
         onChanged?.();
       } else {
         alert("You are not enrolled in this module.");

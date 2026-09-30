@@ -1,17 +1,103 @@
-import formatDeadline from "../utils/formatDeadline";
+import { useEffect, useState } from "react";
+import { clearAuthTokens, getToken } from "../utils/authStorage";
 import { Link } from "react-router-dom";
 import { GitBranch } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import { githubConnection } from "../data/studentDashboard";
 import "./StudentGithub.css";
 
-export default function StudentGithub() {
-  const connected = Boolean(githubConnection.username);
-  const repository = connected ? githubConnection.repository : null;
-  let lastSynced = "Not synced yet";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-  if (connected && githubConnection.lastSyncedAt) {
-    lastSynced = formatDeadline(githubConnection.lastSyncedAt) + " SAST";
+export default function StudentGithub() {
+  const [username, setUsername] = useState(null);
+  const [repository, setRepository] = useState(null);
+  const [repositories, setRepositories] = useState([]);
+  const [selectedRepository, setSelectedRepository] = useState("");
+  const [error, setError] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [loadingRepositories, setLoadingRepositories] = useState(false);
+  const connected = Boolean(username);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("github") === "error") {
+      setError(
+        params.get("message") || "Unable to connect your GitHub account.",
+      );
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    fetch(`${API_URL}/api/github/me`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load GitHub connection.");
+        return response.json();
+      })
+      .then((data) => {
+        setUsername(data.username);
+        setRepository(data.repository);
+        setSelectedRepository(data.repository || "");
+      })
+      .catch(() => setError("Unable to load your GitHub connection."));
+  }, []);
+
+  useEffect(() => {
+    if (!username) return;
+    setLoadingRepositories(true);
+    fetch(`${API_URL}/api/github/repositories`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load repositories.");
+        return response.json();
+      })
+      .then((data) => {
+        setRepositories(data);
+        setSelectedRepository((current) => current || data[0]?.fullName || "");
+      })
+      .catch(() => setError("Unable to load your public repositories."))
+      .finally(() => setLoadingRepositories(false));
+  }, [username]);
+
+  async function connectGithub() {
+    setError("");
+    setConnecting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/github/connect`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401) {
+          clearAuthTokens();
+          throw new Error("Your session has expired. Please log in again.");
+        }
+        throw new Error(data.message || "Unable to start GitHub connection.");
+      }
+      window.location.href = data.authorizationUrl;
+    } catch (connectionError) {
+      setError(connectionError.message);
+      setConnecting(false);
+    }
+  }
+
+  async function linkRepository() {
+    if (!selectedRepository) return;
+    setError("");
+    const response = await fetch(`${API_URL}/api/github/repository`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ fullName: selectedRepository }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(data.message || "Unable to link repository.");
+      return;
+    }
+    setRepository(data.fullName);
   }
 
   return (
@@ -20,8 +106,8 @@ export default function StudentGithub() {
         <div className="github-intro">
           <h2>Your code and practical work</h2>
           <p>
-            Use your GitHub account and repository to keep your practical work
-            connected to the code you write.
+            Connect GitHub and link the repository used for your practical
+            exercises.
           </p>
         </div>
 
@@ -45,9 +131,9 @@ export default function StudentGithub() {
               <div>
                 {connected ? (
                   <>
-                    <h4>@{githubConnection.username}</h4>
+                    <h4>@{username}</h4>
                     <a
-                      href={`https://github.com/${encodeURIComponent(githubConnection.username)}`}
+                      href={`https://github.com/${encodeURIComponent(username)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -57,26 +143,28 @@ export default function StudentGithub() {
                 ) : (
                   <>
                     <h4>No account connected</h4>
-                    <p>Connect your account before linking a repository.</p>
+                    <p>Connect GitHub before choosing a repository.</p>
                   </>
                 )}
               </div>
             </div>
-            <dl className="github-sync">
-              <dt>Last synced</dt>
-              <dd>{lastSynced}</dd>
-            </dl>
             <div className="github-card-footer">
               <button
                 className="btn blue"
-                disabled
-                aria-describedby="github-account-note"
+                onClick={connectGithub}
+                disabled={connecting}
               >
-                {connected ? "Manage connection" : "Connect GitHub"}
+                {connecting
+                  ? "Connecting..."
+                  : connected
+                    ? "Reconnect GitHub"
+                    : "Connect GitHub"}
               </button>
-              <p id="github-account-note">
-                GitHub account linking and sync are coming soon.
-              </p>
+              {error ? (
+                <p className="error-message visible" role="alert">
+                  {error}
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -96,38 +184,57 @@ export default function StudentGithub() {
               {repository ? (
                 <>
                   <h4>{repository}</h4>
-                  <p>The repository linked to your practical work.</p>
-                  {githubConnection.repositoryUrl && (
-                    <a
-                      href={githubConnection.repositoryUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open repository ↗
-                    </a>
-                  )}
+                  <p>This repository is linked to your practical work.</p>
+                  <a
+                    href={`https://github.com/${repository}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open repository ↗
+                  </a>
                 </>
               ) : (
                 <>
                   <h4>No repository linked</h4>
                   <p>
-                    {connected
-                      ? "Link the repository where you keep your practical exercises."
-                      : "Once your account is connected, you can link the repository for your practical exercises."}
+                    Choose a public repository for your practical exercises.
                   </p>
                 </>
               )}
             </div>
             <div className="github-card-footer">
-              <button
-                className="btn"
-                disabled
-                aria-describedby="github-repository-note"
-              >
-                {repository ? "Change repository" : "Link repository"}
-              </button>
-              <p id="github-repository-note">
-                Repository linking is coming soon.
+              {connected && !loadingRepositories && repositories.length > 0 ? (
+                <>
+                  <label className="github-repository-select">
+                    <span>Repository</span>
+                    <select
+                      value={selectedRepository}
+                      onChange={(event) =>
+                        setSelectedRepository(event.target.value)
+                      }
+                    >
+                      {repositories.map((item) => (
+                        <option key={item.fullName} value={item.fullName}>
+                          {item.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button className="btn" onClick={linkRepository}>
+                    {repository ? "Change repository" : "Link repository"}
+                  </button>
+                </>
+              ) : (
+                <button className="btn" disabled>
+                  {loadingRepositories
+                    ? "Loading repositories..."
+                    : connected
+                      ? "No public repositories"
+                      : "Connect GitHub first"}
+                </button>
+              )}
+              <p>
+                Only public repositories are available in this first version.
               </p>
             </div>
           </section>
