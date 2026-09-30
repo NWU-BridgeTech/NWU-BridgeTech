@@ -121,11 +121,7 @@ export default function StudentCourses() {
             <>
               <div className="my-grid">
                 {myCourses.map((course) => (
-                  <CourseCard
-                    key={course.enrollmentId}
-                    course={course}
-                    onChanged={fetchMyCourses}
-                  />
+                  <CourseCard key={course.enrollmentId} course={course} onChanged={fetchMyCourses} />
                 ))}
               </div>
               {myCourses.length === 0 ? (

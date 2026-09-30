@@ -332,195 +332,173 @@ export default function SignUpPage() {
 
       <main id="main" className="su-grid">
         <div className="su-form-wrap">
-          {submitted ? (
-            <div className="su-success" role="status">
-              <h2>Account created</h2>
+          <form className="su-form" onSubmit={handleSubmit} noValidate>
+            <p className="eyebrow">Get started</p>
 
-              <p>
-                Your BridgeTech account has been created successfully with{" "}
-                <strong>{form.email}</strong>. You can now start working through
-                your learning tracks.
-              </p>
+            <h1>Create your account.</h1>
 
-              <button
-                type="button"
-                className="button dark button-full"
-                onClick={() => {
-                  window.location.href = "/login";
-                }}
-              >
-                Sign in
-              </button>
-            </div>
-          ) : (
-            <form className="su-form" onSubmit={handleSubmit} noValidate>
-              <p className="eyebrow">Get started</p>
+            <p className="lede">
+              Set up your BridgeTech account to start working through tracks and
+              keep a record of what you've practised.
+            </p>
 
-              <h1>Create your account.</h1>
+            <div className="field">
+              <label htmlFor="su-name">Full name</label>
 
-              <p className="lede">
-                Set up your BridgeTech account to start working through tracks
-                and keep a record of what you've practised.
-              </p>
+              <input
+                id="su-name"
+                className="input"
+                type="text"
+                autoComplete="name"
+                placeholder="Jordan Ellis"
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "su-name-error" : undefined}
+              />
 
-              <div className="field">
-                <label htmlFor="su-name">Full name</label>
-
-                <input
-                  id="su-name"
-                  className="input"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Jordan Ellis"
-                  value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
-                  aria-invalid={Boolean(errors.name)}
-                  aria-describedby={errors.name ? "su-name-error" : undefined}
-                />
-
-                {errors.name && (
-                  <p className="field-error" id="su-name-error">
-                    {errors.name}
-                  </p>
-                )}
-              </div>
-
-              <div className="field">
-                <label htmlFor="su-email">Email</label>
-
-                <input
-                  id="su-email"
-                  className="input"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@university.edu"
-                  value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? "su-email-error" : undefined}
-                />
-
-                {errors.email && (
-                  <p className="field-error" id="su-email-error">
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-
-              <div className="field">
-                <label htmlFor="su-password">Password</label>
-
-                <div className="pw-row">
-                  <input
-                    id="su-password"
-                    className="input"
-                    type={showPw ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="At least 8 characters"
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    aria-invalid={Boolean(errors.password)}
-                    aria-describedby={
-                      errors.password ? "su-password-error" : "su-password-hint"
-                    }
-                    style={{ paddingRight: "64px" }}
-                  />
-
-                  <button
-                    type="button"
-                    className="pw-toggle"
-                    onClick={() => setShowPw((value) => !value)}
-                    aria-pressed={showPw}
-                  >
-                    {showPw ? "Hide" : "Show"}
-                  </button>
-                </div>
-
-                {errors.password ? (
-                  <p className="field-error" id="su-password-error">
-                    {errors.password}
-                  </p>
-                ) : (
-                  <p className="field-hint" id="su-password-hint">
-                    At least 8 characters.
-                  </p>
-                )}
-              </div>
-
-              <div className="field">
-                <label htmlFor="su-confirm-password">Confirm password</label>
-
-                <input
-                  id="su-confirm-password"
-                  className="input"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Re-enter your password"
-                  value={form.confirmPassword}
-                  onChange={(e) => update("confirmPassword", e.target.value)}
-                  aria-invalid={Boolean(
-                    errors.confirmPassword || confirmMismatch,
-                  )}
-                  aria-describedby={
-                    errors.confirmPassword || confirmMismatch
-                      ? "su-confirm-password-error"
-                      : undefined
-                  }
-                />
-
-                {(errors.confirmPassword || confirmMismatch) && (
-                  <p className="field-error" id="su-confirm-password-error">
-                    {errors.confirmPassword || "Passwords don't match."}
-                  </p>
-                )}
-              </div>
-
-              <div className="checkbox-row">
-                <input
-                  id="su-agree"
-                  type="checkbox"
-                  checked={form.agree}
-                  onChange={(e) => update("agree", e.target.checked)}
-                  aria-invalid={Boolean(errors.agree)}
-                  aria-describedby={errors.agree ? "su-agree-error" : undefined}
-                />
-
-                <span>
-                  <label htmlFor="su-agree">I agree to the</label>{" "}
-                  <Link to="/terms">Terms of Service</Link> and{" "}
-                  <Link to="/privacy-policy">Privacy Policy</Link>.
-                </span>
-              </div>
-
-              {errors.agree && (
-                <p className="field-error" id="su-agree-error">
-                  {errors.agree}
+              {errors.name && (
+                <p className="field-error" id="su-name-error">
+                  {errors.name}
                 </p>
               )}
+            </div>
 
-              {errors.submit && <p className="field-error">{errors.submit}</p>}
+            <div className="field">
+              <label htmlFor="su-email">Email</label>
 
-              <button
-                type="submit"
-                className="button dark button-full"
-                disabled={isLoading}
-                aria-busy={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="signup-spinner" aria-hidden="true" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create account"
+              <input
+                id="su-email"
+                className="input"
+                type="email"
+                autoComplete="email"
+                placeholder="you@university.edu"
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "su-email-error" : undefined}
+              />
+
+              {errors.email && (
+                <p className="field-error" id="su-email-error">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div className="field">
+              <label htmlFor="su-password">Password</label>
+
+              <div className="pw-row">
+                <input
+                  id="su-password"
+                  className="input"
+                  type={showPw ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
+                  value={form.password}
+                  onChange={(e) => update("password", e.target.value)}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={
+                    errors.password ? "su-password-error" : "su-password-hint"
+                  }
+                  style={{ paddingRight: "64px" }}
+                />
+
+                <button
+                  type="button"
+                  className="pw-toggle"
+                  onClick={() => setShowPw((value) => !value)}
+                  aria-pressed={showPw}
+                >
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              {errors.password ? (
+                <p className="field-error" id="su-password-error">
+                  {errors.password}
+                </p>
+              ) : (
+                <p className="field-hint" id="su-password-hint">
+                  At least 8 characters.
+                </p>
+              )}
+            </div>
+
+            <div className="field">
+              <label htmlFor="su-confirm-password">Confirm password</label>
+
+              <input
+                id="su-confirm-password"
+                className="input"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                value={form.confirmPassword}
+                onChange={(e) => update("confirmPassword", e.target.value)}
+                aria-invalid={Boolean(
+                  errors.confirmPassword || confirmMismatch,
                 )}
-              </button>
+                aria-describedby={
+                  errors.confirmPassword || confirmMismatch
+                    ? "su-confirm-password-error"
+                    : undefined
+                }
+              />
 
-              <p className="su-switch">
-                Already have an account? <a href="/login">Sign in</a>
+              {(errors.confirmPassword || confirmMismatch) && (
+                <p className="field-error" id="su-confirm-password-error">
+                  {errors.confirmPassword || "Passwords don't match."}
+                </p>
+              )}
+            </div>
+
+            <div className="checkbox-row">
+              <input
+                id="su-agree"
+                type="checkbox"
+                checked={form.agree}
+                onChange={(e) => update("agree", e.target.checked)}
+                aria-invalid={Boolean(errors.agree)}
+                aria-describedby={errors.agree ? "su-agree-error" : undefined}
+              />
+
+              <span>
+                <label htmlFor="su-agree">I agree to the</label>{" "}
+                <Link to="/terms">Terms of Service</Link> and{" "}
+                <Link to="/privacy-policy">Privacy Policy</Link>.
+              </span>
+            </div>
+
+            {errors.agree && (
+              <p className="field-error" id="su-agree-error">
+                {errors.agree}
               </p>
-            </form>
-          )}
+            )}
+
+            {errors.submit && <p className="field-error">{errors.submit}</p>}
+
+            <button
+              type="submit"
+              className="button dark button-full"
+              disabled={isLoading}
+              aria-busy={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="signup-spinner" aria-hidden="true" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
+            </button>
+
+            <p className="su-switch">
+              Already have an account? <a href="/login">Sign in</a>
+            </p>
+          </form>
         </div>
 
         <figure className="su-photo">
