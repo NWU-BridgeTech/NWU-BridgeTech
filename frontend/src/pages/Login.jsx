@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { setAuthTokens } from "../utils/authStorage";
 import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
 import "./Login.css";
@@ -108,8 +107,6 @@ const Login = () => {
         </div>
 
         <div className="brand">
-          <b>Bridge</b>
-          <b>Tech</b>
           <b>Bridge</b>
           <b>Tech</b>
         </div>

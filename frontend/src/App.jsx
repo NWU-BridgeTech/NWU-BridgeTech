@@ -27,6 +27,12 @@ import AccountSetup from "./pages/AccountSetup";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
+import Lessons from "./pages/Lessons";
+
+function AdminSection({ children }) {
+  return <AppLayout>{children}</AppLayout>;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -58,6 +64,12 @@ function App() {
           element={<StudentPracticalWork />}
         />
         <Route path="/lessons" element={<Lessons />} />
+
+        <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
+        <Route
+          path="/modules/:moduleId/lessons/:lessonId"
+          element={<Lessons />}
+        />
 
         <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
         <Route
