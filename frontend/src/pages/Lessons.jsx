@@ -177,7 +177,6 @@ export default function LessonView() {
                   ? "Take the Quiz"
                   : "Retake the Quiz"}
               </Link>
-              
             </div>
           ) : (
             <span />

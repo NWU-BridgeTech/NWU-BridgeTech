@@ -1,5 +1,4 @@
 using BridgeTech.Api.Services.Certificates;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
