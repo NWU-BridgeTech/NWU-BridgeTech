@@ -125,7 +125,14 @@ export default function Admin() {
 
   return (
     <AppLayout>
-      <AdminUtilityBar />
+      <header className="top dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Student activity and performance from current platform records.</p>
+        </div>
+        <AdminUtilityBar />
+      </header>
+
       <section
         className="learning-overview learning-overview-top"
         aria-labelledby="learning-heading"
@@ -135,8 +142,8 @@ export default function Admin() {
             <h1 id="learning-heading">Learning overview</h1>
             <p>Student activity and performance from current platform records.</p>
           </div>
-          <Link className="btn blue" to="/home">
-            Student view
+          <Link className="btn blue" to="/admin/modules">
+            Create new module +
           </Link>
         </div>
 
@@ -288,26 +295,6 @@ export default function Admin() {
             )}
           </section>
         </div>
-
-        <section
-          className={`platform-status status-${dashboardData?.platformStatus?.state ?? "unknown"}`}
-          aria-label="Platform status"
-        >
-          <div>
-            <p className="platform-status-heading">
-              <span className="status-dot" aria-hidden="true" />
-              {dashboardData?.platformStatus?.title ?? "Platform status unavailable"}
-            </p>
-
-            <p className="platform-status-details">
-              {dashboardData?.platformStatus?.details ?? "Status is available when dashboard data loads."}
-            </p>
-          </div>
-
-          <Link to="/system-status">
-            View system status <span aria-hidden="true">→</span>
-          </Link>
-        </section>
 
       </div>
     </AppLayout>
