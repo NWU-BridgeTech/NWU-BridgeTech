@@ -116,147 +116,147 @@ export default function StudentGithub() {
 
         <div className="github-overview-grid">
           <section
-          className="github-learning-focus"
-          aria-labelledby="github-learning-heading"
-        >
-          <div className="github-section-heading">
-            <div className="github-section-icon" aria-hidden="true">
-              <BadgeCheck size={24} strokeWidth={1.7} />
-            </div>
-            <div>
-              <h2 id="github-learning-heading">GitHub Learning Progress</h2>
-              <p>
-                Build your Git and GitHub skills by completing real development
-                tasks.
-              </p>
-            </div>
-          </div>
-          <div className="github-progress-summary">
-            <div>
-              <strong>
-                {completedSkills} of {skills.length} skills demonstrated
-              </strong>
-              <span>
-                Based only on activity currently verified by PracticalWork.
-              </span>
-            </div>
-            <div className="github-progress-score">
-              <strong>{progressPercent}%</strong>
-              <span>{skillLevel}</span>
-            </div>
-          </div>
-          <div
-            className="github-progress-track"
-            aria-label={`${progressPercent}% of GitHub skills demonstrated`}
+            className="github-learning-focus"
+            aria-labelledby="github-learning-heading"
           >
-            <span style={{ width: `${progressPercent}%` }} />
-          </div>
-          <ol className="github-skill-list">
-            {skills.map((skill) => (
-              <li
-                className={skill.complete ? "complete" : "pending"}
-                key={skill.label}
-              >
-                <span className="github-skill-marker" aria-hidden="true">
-                  {skill.complete ? "✓" : "○"}
-                </span>
-                <span>
-                  <strong>{skill.label}</strong>
-                  <small>{skill.detail}</small>
-                </span>
-                <span className="github-skill-status">
-                  {skill.complete ? "Demonstrated" : "Not tracked"}
-                </span>
-              </li>
-            ))}
-          </ol>
-          </section>
-
-        <div className="github-side-stack">
-          <section
-            className="github-card github-next-skill"
-            aria-labelledby="next-skill-heading"
-          >
-            <div className="github-card-heading">
-              <h3 id="next-skill-heading">Next skill</h3>
-              <span className="github-step-label">Keep learning</span>
-            </div>
-            <h4>
-              {nextSkill?.label || "Keep practising your GitHub workflow"}
-            </h4>
-            <p>
-              {nextSkill?.complete
-                ? "You have demonstrated every currently tracked skill."
-                : "Learn the workflow, then demonstrate it through your practical repository."}
-            </p>
-            <Link className="btn blue" to="/student/practical-work">
-              View practical work <ArrowRight size={16} aria-hidden="true" />
-            </Link>
-          </section>
-
-          <section
-            className="github-card github-repository-card"
-            aria-labelledby="repository-heading"
-          >
-            <div className="github-card-heading">
-              <h3 id="repository-heading">Repository connection</h3>
-              <span
-                className={`activity-status ${repository ? "success" : "neutral"}`}
-              >
-                {repository
-                  ? "Linked"
-                  : connected
-                    ? "Choose one"
-                    : "Not connected"}
-              </span>
-            </div>
-            {repository ? (
-              <>
-                <h4>{repository}</h4>
-                <p>Your practical work is connected to this repository.</p>
-                <a
-                  className="github-repository-link"
-                  href={`https://github.com/${repository}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open repository <ArrowRight size={15} aria-hidden="true" />
-                </a>
-              </>
-            ) : (
-              <>
-                <h4>
-                  {connected
-                    ? "Select your practical repository"
-                    : "Connect GitHub to get started"}
-                </h4>
+            <div className="github-section-heading">
+              <div className="github-section-icon" aria-hidden="true">
+                <BadgeCheck size={24} strokeWidth={1.7} />
+              </div>
+              <div>
+                <h2 id="github-learning-heading">GitHub Learning Progress</h2>
                 <p>
-                  {connected
-                    ? "Link the repository you use for practical work."
-                    : "Connect your account to begin demonstrating GitHub skills."}
+                  Build your Git and GitHub skills by completing real
+                  development tasks.
                 </p>
-              </>
-            )}
-            <div className="github-card-footer">
-              <button
-                className="btn"
-                onClick={connectGithub}
-                disabled={connecting}
-              >
-                {connecting
-                  ? "Connecting..."
-                  : connected
-                    ? "Reconnect GitHub"
-                    : "Connect GitHub"}
-              </button>
-              {error ? (
-                <p className="error-message visible" role="alert">
-                  {error}
-                </p>
-              ) : null}
+              </div>
             </div>
+            <div className="github-progress-summary">
+              <div>
+                <strong>
+                  {completedSkills} of {skills.length} skills demonstrated
+                </strong>
+                <span>
+                  Based only on activity currently verified by PracticalWork.
+                </span>
+              </div>
+              <div className="github-progress-score">
+                <strong>{progressPercent}%</strong>
+                <span>{skillLevel}</span>
+              </div>
+            </div>
+            <div
+              className="github-progress-track"
+              aria-label={`${progressPercent}% of GitHub skills demonstrated`}
+            >
+              <span style={{ width: `${progressPercent}%` }} />
+            </div>
+            <ol className="github-skill-list">
+              {skills.map((skill) => (
+                <li
+                  className={skill.complete ? "complete" : "pending"}
+                  key={skill.label}
+                >
+                  <span className="github-skill-marker" aria-hidden="true">
+                    {skill.complete ? "✓" : "○"}
+                  </span>
+                  <span>
+                    <strong>{skill.label}</strong>
+                    <small>{skill.detail}</small>
+                  </span>
+                  <span className="github-skill-status">
+                    {skill.complete ? "Demonstrated" : "Not tracked"}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </section>
-        </div>
+
+          <div className="github-side-stack">
+            <section
+              className="github-card github-next-skill"
+              aria-labelledby="next-skill-heading"
+            >
+              <div className="github-card-heading">
+                <h3 id="next-skill-heading">Next skill</h3>
+                <span className="github-step-label">Keep learning</span>
+              </div>
+              <h4>
+                {nextSkill?.label || "Keep practising your GitHub workflow"}
+              </h4>
+              <p>
+                {nextSkill?.complete
+                  ? "You have demonstrated every currently tracked skill."
+                  : "Learn the workflow, then demonstrate it through your practical repository."}
+              </p>
+              <Link className="btn blue" to="/student/practical-work">
+                View practical work <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </section>
+
+            <section
+              className="github-card github-repository-card"
+              aria-labelledby="repository-heading"
+            >
+              <div className="github-card-heading">
+                <h3 id="repository-heading">Repository connection</h3>
+                <span
+                  className={`activity-status ${repository ? "success" : "neutral"}`}
+                >
+                  {repository
+                    ? "Linked"
+                    : connected
+                      ? "Choose one"
+                      : "Not connected"}
+                </span>
+              </div>
+              {repository ? (
+                <>
+                  <h4>{repository}</h4>
+                  <p>Your practical work is connected to this repository.</p>
+                  <a
+                    className="github-repository-link"
+                    href={`https://github.com/${repository}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open repository <ArrowRight size={15} aria-hidden="true" />
+                  </a>
+                </>
+              ) : (
+                <>
+                  <h4>
+                    {connected
+                      ? "Select your practical repository"
+                      : "Connect GitHub to get started"}
+                  </h4>
+                  <p>
+                    {connected
+                      ? "Link the repository you use for practical work."
+                      : "Connect your account to begin demonstrating GitHub skills."}
+                  </p>
+                </>
+              )}
+              <div className="github-card-footer">
+                <button
+                  className="btn"
+                  onClick={connectGithub}
+                  disabled={connecting}
+                >
+                  {connecting
+                    ? "Connecting..."
+                    : connected
+                      ? "Reconnect GitHub"
+                      : "Connect GitHub"}
+                </button>
+                {error ? (
+                  <p className="error-message visible" role="alert">
+                    {error}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+          </div>
         </div>
 
         <section
