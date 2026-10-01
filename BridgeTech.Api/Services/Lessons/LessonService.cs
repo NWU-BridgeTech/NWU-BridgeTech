@@ -1,6 +1,4 @@
 using BridgeTech.Api.Data;
-using BridgeTech.Api.Services.Notifications;
-using BridgeTech.Api.Services.Certificates;
 using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Lessons;
@@ -9,10 +7,7 @@ using BridgeTech.Api.Common.Exceptions;
 
 namespace BridgeTech.Api.Services.Lessons;
 
-public class LessonService(
-    AppDbContext context,
-    INotificationService notificationService,
-    ICertificateService certificateService) : ILessonService
+public class LessonService(AppDbContext context) : ILessonService
 {
     public async Task<IEnumerable<LessonListItemResponse>> GetLessonsForModuleAsync(
         Guid moduleId, Guid userId, CancellationToken cancellationToken)
@@ -157,24 +152,6 @@ public class LessonService(
         }
 
         await context.SaveChangesAsync(cancellationToken);
-
-        if (enrollment.Status == EnrollmentStatus.Completed)
-        {
-            await certificateService.IssueForCompletionAsync(
-                userId,
-                lesson.ModuleId,
-                cancellationToken);
-        }
-
-        await notificationService.NotifyAsync(
-            userId,
-            enrollment.Status == EnrollmentStatus.Completed ? "module_completed" : "lesson_completed",
-            enrollment.Status == EnrollmentStatus.Completed ? "Module completed" : "Lesson completed",
-            enrollment.Status == EnrollmentStatus.Completed
-                ? "You completed all lessons in this module."
-                : $"You completed the lesson \"{lesson.Title}\".",
-            lessonId,
-            cancellationToken);
 
         return new LessonProgressResponse
         {

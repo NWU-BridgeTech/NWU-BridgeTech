@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -9,7 +10,6 @@ using BridgeTech.Api.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
-using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Auth;
 
@@ -20,22 +20,19 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
-    private readonly INotificationService _notificationService;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IPasswordHasher<User> passwordHasher,
         IEmailService emailService,
-        ILogger<AuthService> logger,
-        INotificationService notificationService)
+        ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
-        _notificationService = notificationService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -81,7 +78,6 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
-            AccountSetupRequired = false,
             CreatedAt = DateTimeOffset.UtcNow,
             VerificationCode = GenerateCode(),
             VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
@@ -103,6 +99,159 @@ public class AuthService : IAuthService
             VerificationExpiresAt = pendingRegistration.VerificationCodeExpiresAt
         };
     }
+    public async Task<AuthResponse> GoogleSignupAsync(GoogleSignupRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google signup credential is required.");
+        }
+
+        string? googleClientId =
+            _configuration["Google:ClientId"];
+
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload =
+                await GoogleJsonWebSignature.ValidateAsync(
+                    request.Credential,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { googleClientId }
+                    });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException("Invalid Google signup credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException("The Google account email could not be verified.");
+        }
+
+        string email = payload.Email.Trim();
+
+        bool emailExists = await _context.Users
+            .AnyAsync(
+                u => u.Email == email,
+                cancellationToken);
+
+        if (emailExists)
+        {
+            throw new InvalidOperationException(
+                "An account with this Google email already exists. Please log in instead.");
+        }
+
+        bool pendingEmailExists =
+            await _context.PendingRegistrations
+                .AnyAsync(
+                    x => x.Email == email,
+                    cancellationToken);
+
+        if (pendingEmailExists)
+        {
+            throw new InvalidOperationException("A signup for this Google email is already waiting for verification. Check your email for the verification code.");
+        }
+
+        string firstName =
+            !string.IsNullOrWhiteSpace(payload.GivenName)
+                ? payload.GivenName
+                : "BridgeTech";
+
+        string lastName =
+            !string.IsNullOrWhiteSpace(payload.FamilyName)
+                ? payload.FamilyName
+                : "User";
+
+        string baseUsername =
+            email
+                .Split('@')[0]
+                .Replace(".", "")
+                .Replace("+", "")
+                .Replace("-", "")
+                .Replace("_", "");
+
+        baseUsername = new string(baseUsername.Where(char.IsLetterOrDigit).ToArray());
+
+        if (baseUsername.Length < 3)
+        {
+            baseUsername = "user";
+        }
+
+        if (baseUsername.Length > 50)
+        {
+            baseUsername = baseUsername[..50];
+        }
+
+        string username = baseUsername;
+        int usernameNumber = 1;
+
+        while (
+            await _context.Users.AnyAsync(u => u.Username == username, cancellationToken)
+            ||
+            await _context.PendingRegistrations.AnyAsync(x => x.Username == username, cancellationToken))
+        {
+            string suffix = usernameNumber.ToString();
+
+            int maxBaseLength = 50 - suffix.Length;
+
+            string shortenedBase =
+                baseUsername.Length > maxBaseLength
+                    ? baseUsername[..maxBaseLength]
+                    : baseUsername;
+
+            username =
+                $"{shortenedBase}{suffix}";
+
+            usernameNumber++;
+        }
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string temporaryPassword =
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        var user = new User
+        {
+            UserId = Guid.NewGuid(),
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            PasswordHash = _passwordHasher.HashPassword(null!, temporaryPassword),
+            GithubUsername = null,
+            Role = UserRole.Student,
+            CreatedAt = now,
+            UpdatedAt = now,
+            EmailVerified = true
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = now.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
@@ -113,36 +262,19 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            var pendingRegistration = await _context.PendingRegistrations
-                .FirstOrDefaultAsync(registration =>
-                    registration.Username == request.Identifier ||
-                    registration.Email == request.Identifier, cancellationToken);
-
-            if (pendingRegistration is null ||
-                !VerifyPassword(request.Password, pendingRegistration.PasswordHash))
-            {
-                throw InvalidCredentials();
-            }
-
-            var pendingException = new UnauthorizedAccessException(
-                "Email verification is required.");
-            pendingException.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            pendingException.Data["Email"] = pendingRegistration.Email;
-            pendingException.Data["VerificationExpiresAt"] = pendingRegistration.VerificationCodeExpiresAt;
-            throw pendingException;
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
         }
 
         if (!VerifyPassword(request.Password, user.PasswordHash))
         {
-            throw InvalidCredentials();
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
         }
 
         if (!user.EmailVerified)
         {
-            var exception = new UnauthorizedAccessException("Email verification is required.");
-            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            exception.Data["Email"] = user.Email;
-            exception.Data["VerificationExpiresAt"] = user.VerificationCodeExpiresAt;
+            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
             throw exception;
         }
 
@@ -158,6 +290,82 @@ public class AuthService : IAuthService
             Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
+    public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request,CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google login credential is required.");
+        }
+
+        string? googleClientId = _configuration["Google:ClientId"];
+
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { googleClientId }
+                });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException(
+                "Invalid Google login credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException(
+                "The Google account email could not be verified.");
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Email == payload.Email,
+                cancellationToken);
+
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException(
+                "Unable to sign you in with this Google account. Please try again or sign up for BridgeTech.");
+        }
+
+        if (!user.EmailVerified)
+        {
+            var exception = new InvalidOperationException(
+                "Email verification is required.");
+
+            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
+
+            throw exception;
+        }
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(
+                GetAccessTokenMinutes())
         };
     }
 
@@ -195,7 +403,6 @@ public class AuthService : IAuthService
             Email = pendingRegistration.Email,
             PasswordHash = pendingRegistration.PasswordHash,
             GithubUsername = pendingRegistration.GithubUsername,
-            AccountSetupRequired = false,
             Role = UserRole.Student,
             CreatedAt = pendingRegistration.CreatedAt,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -205,14 +412,6 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         _context.PendingRegistrations.Remove(pendingRegistration);
         await _context.SaveChangesAsync(cancellationToken);
-
-        await _notificationService.NotifyAsync(
-            user.UserId,
-            "account_registered",
-            "Welcome to BridgeTech",
-            "Your account is ready. Welcome aboard!",
-            cancellationToken: cancellationToken);
-
         await transaction.CommitAsync(cancellationToken);
 
         try
@@ -295,9 +494,6 @@ public class AuthService : IAuthService
     }
 
     private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-    private static UnauthorizedAccessException InvalidCredentials() =>
-        new("Invalid username/email or password.");
 
     private static InvalidOperationException VerificationError(string message, string code)
     {
@@ -425,10 +621,6 @@ public class AuthService : IAuthService
             new Claim(
                 ClaimTypes.Role,
                 user.Role.ToString()),
-
-            new Claim(
-                "account_setup_required",
-                user.AccountSetupRequired.ToString().ToLowerInvariant()),
 
             new Claim(
                 "token_type",

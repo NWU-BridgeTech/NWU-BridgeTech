@@ -98,6 +98,13 @@ public sealed class BrevoEmailService(
         if (!response.IsSuccessStatusCode)
         {
             string details = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                throw new InvalidOperationException(
+                    "Brevo rejected the email because the API key is disabled. Create or enable a Brevo API key and update Email:BrevoApiKey.");
+            }
+
             throw new InvalidOperationException(
                 $"Brevo rejected the email request with status {(int)response.StatusCode}: {details}");
         }
