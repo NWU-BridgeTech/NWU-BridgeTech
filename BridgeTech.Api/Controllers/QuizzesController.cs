@@ -39,4 +39,21 @@ public class QuizzesController(IQuizService service) : ControllerBase
         var result = await service.SubmitAttemptAsync(userId, request, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
+    [HttpGet("my-attempts")]
+public async Task<IActionResult> GetMyAttempts(CancellationToken cancellationToken)
+{
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+    return Ok(await service.GetMyAttemptsAsync(userId, cancellationToken));
+}
+
+[HttpGet("pending")]
+public async Task<IActionResult> GetQuizzesToRetake(CancellationToken cancellationToken)
+{
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
+
+    return Ok(await service.GetQuizzesToRetakeAsync(userId, cancellationToken));
+}
 }

@@ -14,9 +14,9 @@ public class QuizService : IQuizService
         _context = context;
     }
 
-    public async Task<QuizContentResponse?> GetQuizAsync(Guid quizId, CancellationToken cancellationToken = default)
+   public async Task<QuizContentResponse?> GetQuizAsync(Guid quizId, CancellationToken cancellationToken = default)
 {
-    return await _context.Quizzes
+    var quiz = await _context.Quizzes
         .AsNoTracking()
         .Where(q => q.QuizId == quizId)
         .Select(q => new QuizContentResponse
@@ -48,8 +48,25 @@ public class QuizService : IQuizService
                 .ToList()
         })
         .FirstOrDefaultAsync(cancellationToken);
-}
 
+    if (quiz is null) return null;
+
+
+    foreach (var question in quiz.Questions)
+    {
+        question.Options = question.Options
+            .OrderBy(_ => Random.Shared.Next())
+            .ToList();
+
+       
+        for (short i = 0; i < question.Options.Count; i++)
+        {
+            question.Options[i].OrderIndex = i;
+        }
+    }
+
+    return quiz;
+}
     public async Task<QuizResponse?> GetByIdAsync(Guid quizId, CancellationToken cancellationToken = default)
     {
         return await _context.Quizzes
@@ -143,85 +160,162 @@ public class QuizService : IQuizService
     }
 
     public async Task<QuizAttemptResponse?> StartAttemptAsync(Guid userId, CreateQuizAttemptRequest request, CancellationToken cancellationToken = default)
+{
+    if (request.QuizId is null) return null;
+
+    var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
+    if (quiz is null) return null;
+
+    
+    var existing = await _context.QuizAttempts
+        .Where(a => a.UserId == userId && a.QuizId == quiz.QuizId && a.CompletedAt == null)
+        .OrderByDescending(a => a.StartedAt)
+        .FirstOrDefaultAsync(cancellationToken);
+
+    if (existing is not null)
     {
-        if (request.QuizId is null) return null;
-
-        var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
-        if (quiz is null) return null;
-
-        var attempt = new QuizAttempt
-        {
-            AttemptId = Guid.NewGuid(),
-            UserId = userId,
-            QuizId = request.QuizId.Value,
-            StartedAt = request.StartedAt != default ? request.StartedAt : DateTimeOffset.UtcNow
-        };
-
-        _context.QuizAttempts.Add(attempt);
-        await _context.SaveChangesAsync(cancellationToken);
-
         return new QuizAttemptResponse
         {
-            AttemptId = attempt.AttemptId,
-            UserId = attempt.UserId,
-            QuizId = attempt.QuizId,
-            StartedAt = attempt.StartedAt
+            AttemptId = existing.AttemptId,
+            UserId = existing.UserId,
+            QuizId = existing.QuizId,
+            StartedAt = existing.StartedAt
         };
     }
 
+    var attempt = new QuizAttempt
+    {
+        AttemptId = Guid.NewGuid(),
+        UserId = userId,
+        QuizId = request.QuizId.Value,
+        StartedAt = request.StartedAt != default ? request.StartedAt : DateTimeOffset.UtcNow
+    };
+
+    _context.QuizAttempts.Add(attempt);
+    await _context.SaveChangesAsync(cancellationToken);
+
+    return new QuizAttemptResponse
+    {
+        AttemptId = attempt.AttemptId,
+        UserId = attempt.UserId,
+        QuizId = attempt.QuizId,
+        StartedAt = attempt.StartedAt
+    };
+}
     public async Task<QuizAttemptResponse?> SubmitAttemptAsync(Guid userId, SubmitQuizAttemptRequest request, CancellationToken cancellationToken = default)
+{
+    if (request.AttemptId is null) return null;
+
+    var attempt = await _context.QuizAttempts
+        .Include(a => a.Quiz)
+        .ThenInclude(q => q.Questions)
+        .ThenInclude(q => q.Options)
+        .FirstOrDefaultAsync(a => a.AttemptId == request.AttemptId.Value && a.UserId == userId, cancellationToken);
+
+    if (attempt is null) return null;
+    if (attempt.CompletedAt is not null) return null; 
+
+    int correct = 0;
+    var answeredQuestions = new HashSet<Guid>();
+    var answersToSave = new List<QuizAnswer>();
+
+    foreach (var answerReq in request.Answers)
     {
-        if (request.AttemptId is null) return null;
+        if (answerReq.QuestionId is null || answerReq.OptionId is null) continue;
+        if (!answeredQuestions.Add(answerReq.QuestionId.Value)) continue; 
 
-        var attempt = await _context.QuizAttempts
-            .Include(a => a.Quiz)
-            .ThenInclude(q => q.Questions)
-            .ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(a => a.AttemptId == request.AttemptId.Value && a.UserId == userId, cancellationToken);
+        var question = attempt.Quiz.Questions.FirstOrDefault(q => q.QuestionId == answerReq.QuestionId.Value);
+        if (question is null) continue;
 
-        if (attempt is null) return null;
+        var selectedOption = question.Options.FirstOrDefault(o => o.OptionId == answerReq.OptionId.Value);
+        bool isCorrect = selectedOption?.IsCorrect ?? false;
 
-        int score = 0;
-        var answersToSave = new List<QuizAnswer>();
+        if (isCorrect) correct++;
 
-        foreach (var answerReq in request.Answers)
+        answersToSave.Add(new QuizAnswer
         {
-            if (answerReq.QuestionId is null || answerReq.OptionId is null) continue;
-
-            var question = attempt.Quiz.Questions.FirstOrDefault(q => q.QuestionId == answerReq.QuestionId.Value);
-            if (question is null) continue;
-
-            var selectedOption = question.Options.FirstOrDefault(o => o.OptionId == answerReq.OptionId.Value);
-            bool isCorrect = selectedOption?.IsCorrect ?? false;
-
-            if (isCorrect) score++;
-
-            answersToSave.Add(new QuizAnswer
-            {
-                AnswerId = Guid.NewGuid(),
-                AttemptId = attempt.AttemptId,
-                QuestionId = answerReq.QuestionId.Value,
-                OptionId = answerReq.OptionId.Value,
-                IsCorrect = isCorrect
-            });
-        }
-
-        attempt.CompletedAt = DateTimeOffset.UtcNow;
-        attempt.Score = (short)score;
-        attempt.Passed = attempt.Quiz.PassingScore > 0 && attempt.Score >= attempt.Quiz.PassingScore;
-
-        await _context.QuizAnswers.AddRangeAsync(answersToSave, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return new QuizAttemptResponse
-        {
+            AnswerId = Guid.NewGuid(),
             AttemptId = attempt.AttemptId,
-            UserId = attempt.UserId,
-            QuizId = attempt.QuizId,
-            StartedAt = attempt.StartedAt,
-            Score = attempt.Score,
-            Passed = attempt.Passed,
-            CompletedAt = attempt.CompletedAt
-        };
+            QuestionId = answerReq.QuestionId.Value,
+            OptionId = answerReq.OptionId.Value,
+            IsCorrect = isCorrect
+        });
     }
+
+    
+    int totalQuestions = attempt.Quiz.Questions.Count;
+    int percent = totalQuestions == 0 ? 0 : (int)Math.Round(correct * 100.0 / totalQuestions);
+
+    attempt.CompletedAt = DateTimeOffset.UtcNow;
+    attempt.Score = (short)percent;
+    attempt.Passed = percent >= attempt.Quiz.PassingScore;
+
+    await _context.QuizAnswers.AddRangeAsync(answersToSave, cancellationToken);
+    await _context.SaveChangesAsync(cancellationToken);
+
+    return new QuizAttemptResponse
+    {
+        AttemptId = attempt.AttemptId,
+        UserId = attempt.UserId,
+        QuizId = attempt.QuizId,
+        StartedAt = attempt.StartedAt,
+        Score = attempt.Score,
+        Passed = attempt.Passed,
+        CompletedAt = attempt.CompletedAt
+    };
+}
+    public async Task<IReadOnlyList<QuizAttemptSummaryResponse>> GetMyAttemptsAsync(Guid userId, CancellationToken cancellationToken = default)
+{
+    return await _context.QuizAttempts
+        .AsNoTracking()
+        .Where(a => a.UserId == userId && a.CompletedAt != null)
+        .OrderByDescending(a => a.CompletedAt)
+        .Select(a => new QuizAttemptSummaryResponse
+        {
+            AttemptId = a.AttemptId,
+            QuizId = a.QuizId,
+            QuizTitle = a.Quiz.Title,
+            Score = a.Score ?? 0,
+            PassingScore = a.Quiz.PassingScore,
+            Passed = a.Passed ?? false,
+            StartedAt = a.StartedAt,
+            CompletedAt = a.CompletedAt!.Value
+        })
+        .ToListAsync(cancellationToken);
+}
+
+public async Task<IReadOnlyList<QuizRetakeResponse>> GetQuizzesToRetakeAsync(Guid userId, CancellationToken cancellationToken = default)
+{
+    var attempts = await _context.QuizAttempts
+        .AsNoTracking()
+        .Where(a => a.UserId == userId && a.CompletedAt != null)
+        .Select(a => new { a.QuizId, a.Score, a.Passed, CompletedAt = a.CompletedAt!.Value })
+        .ToListAsync(cancellationToken);
+
+    var lastScoreByFailedQuiz = attempts
+        .GroupBy(a => a.QuizId)
+        .Select(g => g.OrderByDescending(a => a.CompletedAt).First())
+        .Where(a => a.Passed != true)
+        .ToDictionary(a => a.QuizId, a => a.Score ?? 0);
+
+    if (lastScoreByFailedQuiz.Count == 0) return Array.Empty<QuizRetakeResponse>();
+
+    var quizIds = lastScoreByFailedQuiz.Keys.ToList();
+
+    var result = await _context.Quizzes
+        .AsNoTracking()
+        .Where(q => quizIds.Contains(q.QuizId))
+        .Join(_context.Modules, q => q.ModuleId, m => m.ModuleId, (q, m) => new QuizRetakeResponse
+        {
+            QuizId = q.QuizId,
+            ModuleId = q.ModuleId,
+            ModuleTitle = m.Title,
+            Title = q.Title,
+            PassingScore = q.PassingScore
+        })
+        .ToListAsync(cancellationToken);
+
+    foreach (var r in result) r.LastScore = (short)lastScoreByFailedQuiz[r.QuizId];
+    return result;
+}
 }

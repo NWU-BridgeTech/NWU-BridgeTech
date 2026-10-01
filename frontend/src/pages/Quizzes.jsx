@@ -8,8 +8,9 @@ import "./Quizzes.css";
 
 const BACKEND_URL = "http://localhost:5174";
 
+// Same token lookup as QuizzRunner.jsx (localStorage first, then sessionStorage)
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -23,7 +24,7 @@ export default function Quizzes() {
   const [completedQuizzes, setCompletedQuizzes] = useState([]);
   const location = useLocation();
 
- useEffect(() => {
+  useEffect(() => {
     async function loadDashboardData() {
       try {
         setLoading(true);
@@ -34,6 +35,8 @@ export default function Quizzes() {
         if (attemptsRes.ok) {
           const attemptsData = await attemptsRes.json();
           setCompletedQuizzes(attemptsData || []);
+        } else {
+          console.error("my-attempts failed with status", attemptsRes.status);
         }
 
         const pendingRes = await fetch(`${BACKEND_URL}/api/quizzes/pending`, {
@@ -42,6 +45,8 @@ export default function Quizzes() {
         if (pendingRes.ok) {
           const pendingData = await pendingRes.json();
           setQuizzesToRetake(pendingData || []);
+        } else {
+          console.error("pending failed with status", pendingRes.status);
         }
       } catch (err) {
         console.error("Error loading dashboard data:", err);
@@ -97,6 +102,9 @@ export default function Quizzes() {
                               {quiz.moduleTitle}
                             </span>
                             <h3 className="text-md font-semibold mt-2">{quiz.title}</h3>
+                            <p className="text-sm text-slate-500 mt-1">
+                              Last score: {quiz.lastScore}% (need {quiz.passingScore}%)
+                            </p>
                           </div>
                           <button
                             className="btn blue mt-4 self-start"
@@ -131,10 +139,17 @@ export default function Quizzes() {
                         </tr>
                       </thead>
                       <tbody>
+                        {completedQuizzes.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="py-6 text-center text-slate-500">
+                              You haven't completed any quizzes yet.
+                            </td>
+                          </tr>
+                        )}
                         {completedQuizzes.map((attempt) => (
                           <tr key={attempt.attemptId} className="border-b border-slate-100">
                             <td className="py-3 font-medium text-slate-800">{attempt.quizTitle || "Quiz"}</td>
-                            <td className="text-slate-600">{new Date(attempt.startedAt).toLocaleDateString()}</td>
+                            <td className="text-slate-600">{new Date(attempt.completedAt).toLocaleString()}</td>
                             <td className="font-semibold text-slate-800">{attempt.score}%</td>
                             <td>
                               <span
