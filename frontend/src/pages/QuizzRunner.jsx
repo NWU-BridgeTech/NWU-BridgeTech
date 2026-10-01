@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getToken } from "../utils/authStorage";
 
-const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5174';
+const BACKEND_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5174";
 
 const QuizRunner = () => {
   const { quizId } = useParams();
@@ -16,9 +18,9 @@ const QuizRunner = () => {
   const [attemptError, setAttemptError] = useState(null);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getToken();
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
   };
@@ -29,7 +31,6 @@ const QuizRunner = () => {
       setQuizError(null);
       setAttemptError(null);
 
-   
       try {
         console.log(`[QuizRunner] GET: ${BACKEND_URL}/api/quizzes/${quizId}`);
         const quizRes = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}`, {
@@ -42,22 +43,29 @@ const QuizRunner = () => {
         }
 
         const quizData = await quizRes.json();
-        console.log('[QuizRunner] Quiz content fetched successfully:', quizData);
+        console.log(
+          "[QuizRunner] Quiz content fetched successfully:",
+          quizData,
+        );
         setQuiz(quizData);
       } catch (err) {
-        console.error('[QuizRunner] Error fetching quiz:', err);
+        console.error("[QuizRunner] Error fetching quiz:", err);
         setQuizError(err.message);
         setLoading(false);
-        return; 
+        return;
       }
 
-  
       try {
-        console.log(`[QuizRunner] POST: ${BACKEND_URL}/api/quizzes/${quizId}/attempts`);
-        const attemptRes = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}/attempts`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-        });
+        console.log(
+          `[QuizRunner] POST: ${BACKEND_URL}/api/quizzes/${quizId}/attempts`,
+        );
+        const attemptRes = await fetch(
+          `${BACKEND_URL}/api/quizzes/${quizId}/attempts`,
+          {
+            method: "POST",
+            headers: getAuthHeaders(),
+          },
+        );
 
         if (!attemptRes.ok) {
           const text = await attemptRes.text();
@@ -65,16 +73,18 @@ const QuizRunner = () => {
         }
 
         const attemptData = await attemptRes.json();
-        console.log('[QuizRunner] Attempt started:', attemptData);
+        console.log("[QuizRunner] Attempt started:", attemptData);
 
         const activeAttemptId = attemptData.attemptId || attemptData.AttemptId;
         if (!activeAttemptId) {
-          throw new Error('Backend returned attempt object without an AttemptId');
+          throw new Error(
+            "Backend returned attempt object without an AttemptId",
+          );
         }
 
         setAttemptId(activeAttemptId);
       } catch (err) {
-        console.error('[QuizRunner] Error starting attempt:', err);
+        console.error("[QuizRunner] Error starting attempt:", err);
         setAttemptError(err.message);
       } finally {
         setLoading(false);
@@ -95,7 +105,9 @@ const QuizRunner = () => {
     e.preventDefault();
 
     if (!attemptId) {
-      alert(`Cannot submit: Attempt failed to initialize. Error: ${attemptError}`);
+      alert(
+        `Cannot submit: Attempt failed to initialize. Error: ${attemptError}`,
+      );
       return;
     }
 
@@ -110,21 +122,26 @@ const QuizRunner = () => {
         })),
       };
 
-      console.log('[QuizRunner] Submitting payload:', payload);
+      console.log("[QuizRunner] Submitting payload:", payload);
 
-      const response = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}/submit`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/quizzes/${quizId}/submit`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        },
+      );
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || `Submission failed (HTTP ${response.status})`);
+        throw new Error(
+          errData.message || `Submission failed (HTTP ${response.status})`,
+        );
       }
 
-      const result = await response.json();
-      navigate('/quizzes');
+      await response.json();
+      navigate("/quizzes");
     } catch (err) {
       alert(`Submission Error: ${err.message}`);
     } finally {
@@ -132,15 +149,23 @@ const QuizRunner = () => {
     }
   };
 
-  if (loading) return <div className="p-6 text-center text-gray-600">Loading quiz...</div>;
-  if (quizError) return <div className="p-6 text-red-600 text-center font-mono">Quiz Content Error: {quizError}</div>;
+  if (loading)
+    return <div className="p-6 text-center text-gray-600">Loading quiz...</div>;
+  if (quizError)
+    return (
+      <div className="p-6 text-red-600 text-center font-mono">
+        Quiz Content Error: {quizError}
+      </div>
+    );
   if (!quiz) return <div className="p-6 text-center">Quiz not found.</div>;
 
   const questions = quiz.questions || quiz.Questions || [];
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md my-8">
-      <h1 className="text-2xl font-bold mb-2">{quiz.title || quiz.Title || 'Quiz'}</h1>
+      <h1 className="text-2xl font-bold mb-2">
+        {quiz.title || quiz.Title || "Quiz"}
+      </h1>
 
       {attemptError && (
         <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm">
@@ -193,7 +218,7 @@ const QuizRunner = () => {
             disabled={submitting || !attemptId}
             className="w-full bg-blue-600 text-white font-medium py-3 px-6 rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition"
           >
-            {submitting ? 'Submitting...' : 'Submit Answers'}
+            {submitting ? "Submitting..." : "Submit Answers"}
           </button>
         </div>
       </form>

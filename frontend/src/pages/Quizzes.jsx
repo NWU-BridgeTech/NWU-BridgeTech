@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle2, XCircle, Bell } from "lucide-react";
 import StudentSidebar from "../components/StudentSidebar";
 import { SidebarProvider } from "../components/ui/sidebar";
-import { apiFetch } from "../utils/apiClient";
+import { getToken } from "../utils/authStorage";
 import "./Quizzes.css";
 
 const BACKEND_URL = "http://localhost:5174";
 
-// Same token lookup as QuizzRunner.jsx (localStorage first, then sessionStorage)
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const token = getToken();
   return {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
 
@@ -29,9 +28,12 @@ export default function Quizzes() {
       try {
         setLoading(true);
 
-        const attemptsRes = await fetch(`${BACKEND_URL}/api/quizzes/my-attempts`, {
-          headers: getAuthHeaders()
-        });
+        const attemptsRes = await fetch(
+          `${BACKEND_URL}/api/quizzes/my-attempts`,
+          {
+            headers: getAuthHeaders(),
+          },
+        );
         if (attemptsRes.ok) {
           const attemptsData = await attemptsRes.json();
           setCompletedQuizzes(attemptsData || []);
@@ -40,7 +42,7 @@ export default function Quizzes() {
         }
 
         const pendingRes = await fetch(`${BACKEND_URL}/api/quizzes/pending`, {
-          headers: getAuthHeaders()
+          headers: getAuthHeaders(),
         });
         if (pendingRes.ok) {
           const pendingData = await pendingRes.json();
@@ -69,7 +71,9 @@ export default function Quizzes() {
 
         <main className="flex-1 w-full min-h-screen transition-all duration-300 ease-in-out">
           <header className="page-header flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200">
-            <h1 className="text-2xl font-bold text-slate-900">Assessments and Quizzes</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Assessments and Quizzes
+            </h1>
             <div className="flex items-center gap-4">
               <div className="relative cursor-pointer">
                 <Bell size={20} className="text-slate-600" />
@@ -90,20 +94,27 @@ export default function Quizzes() {
                     </span>
                   </div>
                   <p className="sub text-sm text-slate-500 mb-4">
-                    Select an attempted quiz below to retake and improve your score.
+                    Select an attempted quiz below to retake and improve your
+                    score.
                   </p>
 
                   {quizzesToRetake.length > 0 ? (
                     <div className="quizzes-grid grid grid-cols-1 md:grid-cols-2 gap-4">
                       {quizzesToRetake.map((quiz) => (
-                        <div key={quiz.quizId} className="quiz-card p-4 border rounded-lg flex flex-col justify-between">
+                        <div
+                          key={quiz.quizId}
+                          className="quiz-card p-4 border rounded-lg flex flex-col justify-between"
+                        >
                           <div>
                             <span className="quiz-module-badge text-xs bg-slate-100 px-2 py-1 rounded font-medium text-slate-600">
                               {quiz.moduleTitle}
                             </span>
-                            <h3 className="text-md font-semibold mt-2">{quiz.title}</h3>
+                            <h3 className="text-md font-semibold mt-2">
+                              {quiz.title}
+                            </h3>
                             <p className="text-sm text-slate-500 mt-1">
-                              Last score: {quiz.lastScore}% (need {quiz.passingScore}%)
+                              Last score: {quiz.lastScore}% (need{" "}
+                              {quiz.passingScore}%)
                             </p>
                           </div>
                           <button
@@ -123,7 +134,9 @@ export default function Quizzes() {
                 </section>
 
                 <section className="card p-6 bg-white border border-slate-200 rounded-xl">
-                  <h2 className="text-lg font-bold">Completed Quizzes & Marks</h2>
+                  <h2 className="text-lg font-bold">
+                    Completed Quizzes & Marks
+                  </h2>
                   <p className="sub text-sm text-slate-500 mb-4">
                     History of your finished attempts and exact scores.
                   </p>
@@ -141,23 +154,41 @@ export default function Quizzes() {
                       <tbody>
                         {completedQuizzes.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="py-6 text-center text-slate-500">
+                            <td
+                              colSpan={4}
+                              className="py-6 text-center text-slate-500"
+                            >
                               You haven't completed any quizzes yet.
                             </td>
                           </tr>
                         )}
                         {completedQuizzes.map((attempt) => (
-                          <tr key={attempt.attemptId} className="border-b border-slate-100">
-                            <td className="py-3 font-medium text-slate-800">{attempt.quizTitle || "Quiz"}</td>
-                            <td className="text-slate-600">{new Date(attempt.completedAt).toLocaleString()}</td>
-                            <td className="font-semibold text-slate-800">{attempt.score}%</td>
+                          <tr
+                            key={attempt.attemptId}
+                            className="border-b border-slate-100"
+                          >
+                            <td className="py-3 font-medium text-slate-800">
+                              {attempt.quizTitle || "Quiz"}
+                            </td>
+                            <td className="text-slate-600">
+                              {new Date(attempt.completedAt).toLocaleString()}
+                            </td>
+                            <td className="font-semibold text-slate-800">
+                              {attempt.score}%
+                            </td>
                             <td>
                               <span
                                 className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                  attempt.passed ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                                  attempt.passed
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : "bg-rose-50 text-rose-700"
                                 }`}
                               >
-                                {attempt.passed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                                {attempt.passed ? (
+                                  <CheckCircle2 size={12} />
+                                ) : (
+                                  <XCircle size={12} />
+                                )}
                                 {attempt.passed ? "Passed" : "Failed"}
                               </span>
                             </td>

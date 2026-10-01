@@ -29,6 +29,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 import Quizzes from "./pages/Quizzes";
 import QuizzRunner from "./pages/QuizzRunner";
+import Lessons from "./pages/Lessons";
 
 function App() {
   return (
@@ -98,6 +99,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
 
 export default App;
