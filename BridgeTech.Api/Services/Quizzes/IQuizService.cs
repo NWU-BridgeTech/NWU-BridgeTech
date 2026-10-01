@@ -12,4 +12,7 @@ public interface IQuizService
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<QuizAttemptResponse?> StartAttemptAsync(Guid userId, CreateQuizAttemptRequest request, CancellationToken cancellationToken = default);
     Task<QuizAttemptResponse?> SubmitAttemptAsync(Guid userId, SubmitQuizAttemptRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuizAttemptSummaryResponse>> GetMyAttemptsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QuizRetakeResponse>> GetQuizzesToRetakeAsync(Guid userId, CancellationToken cancellationToken = default);
+    
 }
