@@ -17,5 +17,7 @@ public interface ILessonService
         Guid moduleId, CreateLessonRequest request, CancellationToken cancellationToken);
 
     Task<LessonViewResponse?> GetCurrentForModuleAsync(Guid moduleId, Guid userId, CancellationToken ct);
-    Task<LessonViewResponse?> GetViewAsync(Guid lessonId, Guid userId, CancellationToken ct);   
+    Task<LessonViewResponse?> GetViewAsync(Guid lessonId, Guid userId, CancellationToken ct);
+
+
 }
