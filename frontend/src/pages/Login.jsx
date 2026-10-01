@@ -1,178 +1,169 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import VerificationModal from "../components/VerificationModal";
-import { setAuthTokens } from "../utils/authStorage";
-import "./Login.css";
+import AuthShell, { PasswordInput } from "../components/AuthShell";
+import { PHOTOS } from "../components/authPhotos";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-const Login = () => {
+export default function Login() {
   const navigate = useNavigate();
-
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState("");
   const [verification, setVerification] = useState(null);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  function saveUserAndRedirect(data) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        userId: data.userId,
+        username: data.username,
+        email: data.email,
+        role: data.role,
+      }),
+    );
+    navigate(
+      data.role === "Admin" || data.role === "SuperAdmin" ? "/admin" : "/home",
+    );
+  }
 
+  async function handleLogin(event) {
+    event.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          identifier: identifier.trim(),
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
-
-      const responseText = await response.text();
-      let data;
-      try {
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch {
-        throw new Error(
-          response.ok
-            ? "The server returned an invalid response."
-            : responseText || "The server returned an unexpected error.",
-        );
-      }
-
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
           setVerification({
-            email: data.email || data.identifier || identifier.trim(),
+            email: data.email || identifier.trim(),
             expiresAt:
               data.verificationExpiresAt ||
-              new Date(Date.now() + 600000).toISOString(),
+              new Date(Date.now() + 10 * 60 * 1000).toISOString(),
           });
-
           return;
         }
-
         throw new Error(data.message || "Invalid username/email or password.");
       }
-
-      setAuthTokens(data.token, data.refreshToken);
-
-      sessionStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          role: data.role,
-        }),
-      );
-
-      if (data.role === "Admin" || data.role === "SuperAdmin") {
-        navigate("/admin");
-      } else {
-        navigate("/home");
-      }
-    } catch (error) {
-      setError(error.message || "Unable to log in. Please try again.");
+      saveUserAndRedirect(data);
+    } catch (loginError) {
+      setError(loginError.message || "Unable to log in. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  async function handleGoogleLogin(credentialResponse) {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Google login failed.");
+      saveUserAndRedirect(data);
+    } catch (loginError) {
+      setError(loginError.message || "Google login failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   return (
-    <div className="login-page">
+    <AuthShell
+      photo={PHOTOS.signin}
+      title="Welcome back."
+      text="Pick up your tracks where you left off."
+    >
+      <h1>Sign in</h1>
+      <p className="au-lede">Sign in to continue to your BridgeTech account.</p>
+      {error && <div className="au-alert error" role="alert">{error}</div>}
+
+      <form onSubmit={handleLogin}>
+        <div className="au-field">
+          <label htmlFor="identifier">Email or username</label>
+          <input
+            id="identifier"
+            className="au-input"
+            type="text"
+            autoComplete="username"
+            placeholder="Enter your email or username"
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="au-field">
+          <div className="au-label-row">
+            <label htmlFor="password">Password</label>
+            <Link to="/forgot-password">Forgot password?</Link>
+          </div>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="au-button"
+          disabled={loading}
+          aria-busy={loading}
+        >
+          {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
+        </button>
+
+        <div className="au-divider"><span>or</span></div>
+        <div className="au-google">
+          {googleLoading ? (
+            <div className="au-google-loading">
+              <span className="au-spinner" aria-hidden="true" />
+              Signing in with Google...
+            </div>
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setError("Google login was cancelled or failed.")}
+              text="signin_with"
+              shape="pill"
+            />
+          )}
+        </div>
+      </form>
+
+      <p className="au-switch">
+        Don&apos;t have an account? <Link to="/signup">Create an account</Link>
+      </p>
+
       {verification && (
         <VerificationModal
           email={verification.email}
           initialExpiresAt={verification.expiresAt}
           onClose={() => setVerification(null)}
-          onVerified={() => {
-            window.location.href = "/home";
-          }}
+          onVerified={() => navigate("/home")}
         />
       )}
-
-      <div className="login-card">
-        <div className="hero-image">
-          <span className="hero-text">Helping to build a better future</span>
-
-          <img
-            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
-            alt="Helping to build a better future"
-          />
-        </div>
-
-        <div className="brand">
-          <b>Bridge</b>
-          <b>Tech</b>
-        </div>
-
-        <h2>Login</h2>
-
-        <p className="sub">Sign in to continue to BridgeTech.</p>
-
-        {error && <div className="login-error">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="identifier">Email or Username:</label>
-
-            <input
-              type="text"
-              id="identifier"
-              placeholder="name@gmail.com"
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <div className="label-row">
-              <label htmlFor="password">Password:</label>
-
-              <Link to="/forgot-password" className="forgot-link">
-                Forgot password?
-              </Link>
-            </div>
-
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn blue submit-btn"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <p>
-            Don't have an account?{" "}
-            <Link to="/signup" className="signup-link">
-              Sign up
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
-};
-
-export default Login;
+}
