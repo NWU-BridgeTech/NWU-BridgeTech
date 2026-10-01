@@ -1,49 +1,91 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { apiFetch } from "../utils/apiClient";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
-export default function QuizzRunner({ quizId: propQuizId, lessonId: propLessonId, onBack, onComplete }) {
-  const params = useParams();
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5174';
+
+const QuizRunner = () => {
+  const { quizId } = useParams();
   const navigate = useNavigate();
 
-  const quizId = propQuizId || params.quizId;
-  const lessonId = propLessonId || params.lessonId;
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [quiz, setQuiz] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState({});
+  const [attemptId, setAttemptId] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
+  const [quizError, setQuizError] = useState(null);
+  const [attemptError, setAttemptError] = useState(null);
 
-  useEffect(() => {
-    fetchQuizData();
-  }, [quizId, lessonId]);
-
-  const fetchQuizData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const endpoint = quizId
-        ? `/quizzes/${quizId}`
-        : `/lessons/${lessonId}/quiz`;
-
-      const data = await apiFetch(endpoint);
-
-      setQuiz(data.quiz || data);
-      setQuestions(data.questions || data.quiz_questions || []);
-    } catch (err) {
-      setError(err.message || "Failed to load quiz content.");
-    } finally {
-      setLoading(false);
-    }
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
   };
 
-  const handleOptionSelect = (questionId, optionId) => {
-    if (result) return;
-    setUserAnswers((prev) => ({
+  useEffect(() => {
+    const initQuiz = async () => {
+      setLoading(true);
+      setQuizError(null);
+      setAttemptError(null);
+
+   
+      try {
+        console.log(`[QuizRunner] GET: ${BACKEND_URL}/api/quizzes/${quizId}`);
+        const quizRes = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}`, {
+          headers: getAuthHeaders(),
+        });
+
+        if (!quizRes.ok) {
+          const text = await quizRes.text();
+          throw new Error(`HTTP ${quizRes.status}: ${text}`);
+        }
+
+        const quizData = await quizRes.json();
+        console.log('[QuizRunner] Quiz content fetched successfully:', quizData);
+        setQuiz(quizData);
+      } catch (err) {
+        console.error('[QuizRunner] Error fetching quiz:', err);
+        setQuizError(err.message);
+        setLoading(false);
+        return; 
+      }
+
+  
+      try {
+        console.log(`[QuizRunner] POST: ${BACKEND_URL}/api/quizzes/${quizId}/attempts`);
+        const attemptRes = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}/attempts`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        });
+
+        if (!attemptRes.ok) {
+          const text = await attemptRes.text();
+          throw new Error(`HTTP ${attemptRes.status}: ${text}`);
+        }
+
+        const attemptData = await attemptRes.json();
+        console.log('[QuizRunner] Attempt started:', attemptData);
+
+        const activeAttemptId = attemptData.attemptId || attemptData.AttemptId;
+        if (!activeAttemptId) {
+          throw new Error('Backend returned attempt object without an AttemptId');
+        }
+
+        setAttemptId(activeAttemptId);
+      } catch (err) {
+        console.error('[QuizRunner] Error starting attempt:', err);
+        setAttemptError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (quizId) initQuiz();
+  }, [quizId]);
+
+  const handleOptionChange = (questionId, optionId) => {
+    setAnswers((prev) => ({
       ...prev,
       [questionId]: optionId,
     }));
@@ -51,169 +93,92 @@ export default function QuizzRunner({ quizId: propQuizId, lessonId: propLessonId
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting || result) return;
 
-    if (Object.keys(userAnswers).length < questions.length) {
-      alert("Please answer all questions before submitting.");
+    if (!attemptId) {
+      alert(`Cannot submit: Attempt failed to initialize. Error: ${attemptError}`);
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const activeQuizId = quiz.quizId || quiz.quiz_id || quizId;
-      const response = await apiFetch(`/quizzes/${activeQuizId}/submit`, {
-        method: "POST",
-        body: JSON.stringify({ answers: userAnswers }),
+      const payload = {
+        attemptId: attemptId,
+        answers: Object.entries(answers).map(([qId, optId]) => ({
+          questionId: qId,
+          optionId: optId,
+        })),
+      };
+
+      console.log('[QuizRunner] Submitting payload:', payload);
+
+      const response = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}/submit`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
       });
 
-      setResult(response);
-      if (onComplete) onComplete(response);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `Submission failed (HTTP ${response.status})`);
+      }
+
+      const result = await response.json();
+      navigate('/quizzes');
     } catch (err) {
-      alert(err.message || "An error occurred while submitting your answers.");
+      alert(`Submission Error: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate(-1);
-    }
-  };
+  if (loading) return <div className="p-6 text-center text-gray-600">Loading quiz...</div>;
+  if (quizError) return <div className="p-6 text-red-600 text-center font-mono">Quiz Content Error: {quizError}</div>;
+  if (!quiz) return <div className="p-6 text-center">Quiz not found.</div>;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center p-12">
-        <div className="text-gray-500 font-medium">Loading quiz…</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-xl mx-auto my-8 p-6 bg-red-50 border border-red-200 rounded-lg">
-        <h3 className="text-lg font-bold text-red-800 mb-2">Quiz Loading Error</h3>
-        <p className="text-sm text-red-600 mb-4">{error}</p>
-        <button
-          onClick={handleBack}
-          className="px-4 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition"
-        >
-          ← Back
-        </button>
-      </div>
-    );
-  }
+  const questions = quiz.questions || quiz.Questions || [];
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-md border border-gray-100 my-6">
-      <div className="flex items-center justify-between border-b pb-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">{quiz.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Pass Mark:{" "}
-            <span className="font-semibold text-gray-700">
-              {quiz.passingScore || quiz.passing_score || 70}%
-            </span>{" "}
-            | Questions:{" "}
-            <span className="font-semibold text-gray-700">
-              {questions.length}
-            </span>
-          </p>
-        </div>
-        <button
-          onClick={handleBack}
-          className="px-3 py-1.5 border border-gray-300 text-gray-600 rounded-md text-sm hover:bg-gray-50 transition"
-        >
-          ← Back
-        </button>
-      </div>
+    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md my-8">
+      <h1 className="text-2xl font-bold mb-2">{quiz.title || quiz.Title || 'Quiz'}</h1>
 
-      {result && (
-        <div
-          className={`p-6 mb-8 rounded-xl border ${
-            result.passed ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
-          }`}
-        >
-          <h2
-            className={`text-xl font-bold ${
-              result.passed ? "text-green-800" : "text-red-800"
-            }`}
-          >
-            {result.passed ? "Quiz Passed!" : "Quiz Failed"}
-          </h2>
-          <p className="mt-2 text-gray-700">
-            You scored <strong>{result.score}%</strong>.
-          </p>
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={() => {
-                setResult(null);
-                setUserAnswers({});
-              }}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
-            >
-              Retry Quiz
-            </button>
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 transition"
-            >
-              Return to Lesson
-            </button>
-          </div>
+      {attemptError && (
+        <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm">
+          <strong>Attempt Initialization Warning:</strong> {attemptError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {questions.map((q, qIndex) => {
-          const qId = q.questionId || q.question_id;
-          const options = q.options || [];
+        {questions.map((question, index) => {
+          const qId = question.questionId || question.QuestionId;
+          const qText = question.questionText || question.QuestionText;
+          const options = question.options || question.Options || [];
 
           return (
-            <div key={qId} className="p-5 border rounded-lg bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                {qIndex + 1}. {q.questionText || q.question_text}
+            <div key={qId || index} className="p-4 border rounded-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {index + 1}. {qText}
               </h3>
 
-              <div className="space-y-3">
-                {options.map((opt) => {
-                  const optId = opt.optionId || opt.option_id;
-                  const isSelected = userAnswers[qId] === optId;
-                  let optionStyle =
-                    "border-gray-200 bg-white hover:border-indigo-300";
-
-                  if (result) {
-                    if (opt.isCorrect || opt.is_correct) {
-                      optionStyle =
-                        "border-green-500 bg-green-50 text-green-900 font-medium";
-                    } else if (isSelected && !(opt.isCorrect || opt.is_correct)) {
-                      optionStyle = "border-red-500 bg-red-50 text-red-900";
-                    }
-                  } else if (isSelected) {
-                    optionStyle =
-                      "border-indigo-600 bg-indigo-50 ring-2 ring-indigo-500";
-                  }
+              <div className="space-y-2">
+                {options.map((option) => {
+                  const optionVal = option.optionId || option.OptionId;
+                  const optionText = option.optionText || option.OptionText;
 
                   return (
                     <label
-                      key={optId}
-                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition ${optionStyle}`}
+                      key={optionVal}
+                      className="flex items-center space-x-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50 transition"
                     >
                       <input
                         type="radio"
-                        name={`question_${qId}`}
-                        value={optId}
-                        checked={isSelected}
-                        disabled={!!result}
-                        onChange={() => handleOptionSelect(qId, optId)}
-                        className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                        name={`question-${qId}`}
+                        value={optionVal}
+                        checked={answers[qId] === optionVal}
+                        onChange={() => handleOptionChange(qId, optionVal)}
+                        className="h-4 w-4 text-blue-600"
                       />
-                      <span className="ml-3 text-gray-800 text-sm">
-                        {opt.optionText || opt.option_text}
-                      </span>
+                      <span className="text-gray-700">{optionText}</span>
                     </label>
                   );
                 })}
@@ -222,22 +187,18 @@ export default function QuizzRunner({ quizId: propQuizId, lessonId: propLessonId
           );
         })}
 
-        {!result && (
+        <div className="pt-4">
           <button
             type="submit"
-            disabled={
-              submitting || Object.keys(userAnswers).length < questions.length
-            }
-            className={`w-full py-3 px-6 text-white font-semibold rounded-lg shadow transition ${
-              Object.keys(userAnswers).length === questions.length && !submitting
-                ? "bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
+            disabled={submitting || !attemptId}
+            className="w-full bg-blue-600 text-white font-medium py-3 px-6 rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition"
           >
-            {submitting ? "Submitting…" : "Submit Answers"}
+            {submitting ? 'Submitting...' : 'Submit Answers'}
           </button>
-        )}
+        </div>
       </form>
     </div>
   );
-}
+};
+
+export default QuizRunner;

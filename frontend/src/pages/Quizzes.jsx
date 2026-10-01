@@ -1,35 +1,57 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle2, XCircle, Bell } from "lucide-react";
 import StudentSidebar from "../components/StudentSidebar";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { apiFetch } from "../utils/apiClient";
 import "./Quizzes.css";
 
+const BACKEND_URL = "http://localhost:5174";
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token"); 
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+};
+
 export default function Quizzes() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [quizzesToRetake, setQuizzesToRetake] = useState([]);
   const [completedQuizzes, setCompletedQuizzes] = useState([]);
+  const location = useLocation();
 
-  useEffect(() => {
+ useEffect(() => {
     async function loadDashboardData() {
       try {
         setLoading(true);
-        const attempts = await apiFetch("/api/quizzes/my-attempts");
-        setCompletedQuizzes(attempts || []);
 
-        const pending = await apiFetch("/api/quizzes/pending");
-        setQuizzesToRetake(pending || []);
+        const attemptsRes = await fetch(`${BACKEND_URL}/api/quizzes/my-attempts`, {
+          headers: getAuthHeaders()
+        });
+        if (attemptsRes.ok) {
+          const attemptsData = await attemptsRes.json();
+          setCompletedQuizzes(attemptsData || []);
+        }
+
+        const pendingRes = await fetch(`${BACKEND_URL}/api/quizzes/pending`, {
+          headers: getAuthHeaders()
+        });
+        if (pendingRes.ok) {
+          const pendingData = await pendingRes.json();
+          setQuizzesToRetake(pendingData || []);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Error loading dashboard data:", err);
       } finally {
         setLoading(false);
       }
     }
 
     loadDashboardData();
-  }, []);
+  }, [location]);
 
   const handleStartQuiz = (quizId) => {
     navigate(`/quizzes/${quizId}`);
