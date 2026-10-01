@@ -136,24 +136,6 @@
   border: 1px solid #e0e5ed;
 }
 
-.lesson-ai-summary {
-    color: #414d5c;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-.lesson-ai-summary p {
-    margin: 0 0 12px;
-}
-
-.lesson-ai-summary p:last-child {
-    margin-bottom: 0;
-}
-
-.lesson-ai-summary [role="alert"] {
-    color: #a33131;
-}
-
 .lesson-quiz-btn {
   display: inline-flex;
   align-items: center;

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RootRoute from "./components/RootRoute";
@@ -21,7 +22,6 @@ import AdminAdministrators from "./pages/AdminAdministrators";
 import AdminSettings from "./pages/AdminSettings";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
-import Lessons from "./pages/Lessons";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import SignOut from "./pages/SignOut";
@@ -39,6 +39,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
         <Route path="/terms" element={<TermsOfService />} />
         <Route
           path="/verify/:certificateNumber"
@@ -54,7 +55,6 @@ function App() {
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:quizId" element={<QuizzRunner />} />
           <Route path="/lessons/:lessonId/quiz" element={<QuizzRunner />} />
-          <Route path="/student/assessments" element={<StudentAssessments />} />
           <Route
             path="/student/practical-work"
             element={<StudentPracticalWork />}
@@ -70,7 +70,6 @@ function App() {
             element={<StudentNotifications />}
           />
           <Route path="/lessons" element={<Lessons />} />
-          <Route path="/lessons/:lessonId" element={<Lessons />} />
           <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
           <Route
             path="/modules/:moduleId/lessons/:lessonId"

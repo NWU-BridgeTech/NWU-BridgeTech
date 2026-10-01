@@ -1,91 +1,19 @@
-import { useEffect, useState } from "react";
+import formatDeadline from "../utils/formatDeadline";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  Award,
-  BookOpen,
-  CircleCheck,
-  ClipboardCheck,
-} from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import { apiFetch } from "../utils/apiClient";
-
-const RING_RADIUS = 52;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
-function percentComplete(done, total) {
-  return total > 0 ? Math.round((done / total) * 100) : 0;
-}
-
-function lessonLink(course) {
-  return course.nextLessonId
-    ? `/modules/${course.moduleId}/lessons/${course.nextLessonId}`
-    : `/modules/${course.moduleId}/lessons`;
-}
-
-const QUIZ_PAGE_PATH = "/student/assessments";
-
-function quizStatus(quiz) {
-  if (quiz.bestScore == null) {
-    return `Not attempted yet · Pass mark ${quiz.passingScore}%`;
-  }
-  return `Best score ${quiz.bestScore}% · Pass mark ${quiz.passingScore}%`;
-}
-
-function ProgressRing({ percent, lessonsDone, lessonsTotal }) {
-  return (
-    <div className="home-ring">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle className="home-ring-track" cx="60" cy="60" r={RING_RADIUS} />
-        <circle
-          className="home-ring-value"
-          cx="60"
-          cy="60"
-          r={RING_RADIUS}
-          strokeDasharray={RING_CIRCUMFERENCE}
-          strokeDashoffset={RING_CIRCUMFERENCE * (1 - percent / 100)}
-        />
-      </svg>
-      <div className="home-ring-label">
-        <strong>
-          {percent}
-          <span>%</span>
-        </strong>
-        <span>overall</span>
-      </div>
-      <p className="visually-hidden">
-        {lessonsDone} of {lessonsTotal} lessons completed across your courses.
-      </p>
-    </div>
-  );
-}
+import {
+  student,
+  certificates,
+  myCourses,
+  lastActivity,
+  assessments,
+  practicalWork,
+} from "../data/studentDashboard";
 
 export default function Home() {
-  const [myCourses, setMyCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // The profile supplies the greeting name and certificate count; the page
-  // still works without it.
-  const [profile, setProfile] = useState(null);
-  const [profileLoaded, setProfileLoaded] = useState(false);
-  const [pendingQuizzes, setPendingQuizzes] = useState([]);
-
-  useEffect(() => {
-    apiFetch("/user/quizzes/pending")
-      .then((data) => setPendingQuizzes(Array.isArray(data) ? data : []))
-      .catch(() => setPendingQuizzes([]));
-
-    apiFetch("/user/enrollments")
-      .then((data) => setMyCourses(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-
-    apiFetch("/users/me")
-      .then((data) => setProfile(data))
-      .catch(() => setProfile(null))
-      .finally(() => setProfileLoaded(true));
-  }, []);
-
+  const resumeCourse = myCourses.find(
+    (course) => course.number === lastActivity.courseNumber,
+  );
   const hour = new Date().getHours();
   let greeting = "Good evening";
   if (hour < 12) {
@@ -93,13 +21,6 @@ export default function Home() {
   } else if (hour < 18) {
     greeting = "Good afternoon";
   }
-  const firstName = profile?.firstName;
-
-  const activeCourses = myCourses.filter(
-    (course) => course.lessonsDone < course.lessonsTotal,
-  );
-  // Resume the earliest-enrolled course that still has lessons left.
-  const resumeCourse = activeCourses[0];
   const lessonsDone = myCourses.reduce(
     (total, course) => total + course.lessonsDone,
     0,
@@ -108,242 +29,218 @@ export default function Home() {
     (total, course) => total + course.lessonsTotal,
     0,
   );
-  const overallProgress = percentComplete(lessonsDone, lessonsTotal);
-  const hasCourses = myCourses.length > 0;
-  const hasLessons = lessonsTotal > 0;
-  const allCoursesComplete = hasLessons && activeCourses.length === 0;
-  const ready = !loading && !error;
+  const activeCourses = myCourses.filter(
+    (course) => course.lessonsDone < course.lessonsTotal,
+  );
+  const overallProgress =
+    lessonsTotal > 0 ? Math.round((lessonsDone / lessonsTotal) * 100) : 0;
+  const now = new Date();
 
-  let hero;
-  if (loading) {
-    hero = <p className="home-hero-text">Loading your progress…</p>;
-  } else if (error) {
-    hero = (
-      <p className="home-hero-text">
-        We couldn’t load your progress. Please try again later.
-      </p>
-    );
-  } else if (resumeCourse) {
-    hero = (
-      <>
-        <p className="home-hero-eyebrow">
-          Continue learning · {resumeCourse.moduleTitle}
-        </p>
-        <h2 id="home-hero-heading">
-          {resumeCourse.nextLessonTitle || "Your next lesson"}
-        </h2>
-        <p className="home-hero-text">
-          Lesson {resumeCourse.lessonsDone + 1} of {resumeCourse.lessonsTotal}
-        </p>
-        <Link className="home-hero-button" to={lessonLink(resumeCourse)}>
-          Resume lesson <ArrowRight aria-hidden="true" size={18} />
-        </Link>
-      </>
-    );
-  } else if (allCoursesComplete) {
-    hero = (
-      <>
-        <h2 id="home-hero-heading">You’ve finished all your courses</h2>
-        <p className="home-hero-text">
-          Great work! Explore the catalogue to find your next course.
-        </p>
-        <a className="home-hero-button" href="/student/courses#explore-courses">
-          Explore courses <ArrowRight aria-hidden="true" size={18} />
-        </a>
-      </>
-    );
-  } else if (hasCourses) {
-    hero = (
-      <>
-        <h2 id="home-hero-heading">Your lessons are on the way</h2>
-        <p className="home-hero-text">
-          Your courses don’t have any lessons yet. Check back soon.
-        </p>
-        <Link className="home-hero-button" to="/student/courses">
-          View my courses <ArrowRight aria-hidden="true" size={18} />
-        </Link>
-      </>
-    );
-  } else {
-    hero = (
-      <>
-        <h2 id="home-hero-heading">Your next step starts here</h2>
-        <p className="home-hero-text">
-          Enrol in a course to start learning and tracking your progress.
-        </p>
-        <a className="home-hero-button" href="/student/courses#explore-courses">
-          Explore courses <ArrowRight aria-hidden="true" size={18} />
-        </a>
-      </>
-    );
+  const upcomingTasks = [...practicalWork, ...assessments].filter(
+    (item) =>
+      item.status !== "Passed" &&
+      item.status !== "Completed" &&
+      item.status !== "Awaiting review",
+  );
+
+  function taskPriority(item) {
+    if (item.dueAt && new Date(item.dueAt) < now) return 0;
+    if (item.status === "Changes requested") return 1;
+    if (item.dueAt) return 2;
+    return 3;
   }
+
+  upcomingTasks.sort((first, second) => {
+    const priorityDifference = taskPriority(first) - taskPriority(second);
+    if (priorityDifference !== 0) return priorityDifference;
+    if (first.dueAt && second.dueAt) {
+      return new Date(first.dueAt) - new Date(second.dueAt);
+    }
+    if (first.dueAt) return -1;
+    if (second.dueAt) return 1;
+    return 0;
+  });
 
   return (
     <StudentLayout title="Home">
       <div className="content">
-        <section className="home-hero" aria-labelledby="home-hero-heading">
-          <div className="home-hero-main">
-            <p className="home-hero-greeting">
-              {greeting}
-              {firstName ? `, ${firstName}` : ""}
-            </p>
-            {(loading || error) && (
-              <h2 id="home-hero-heading" className="visually-hidden">
-                Your progress
-              </h2>
-            )}
-            {hero}
-          </div>
-          {ready && hasLessons && (
-            <ProgressRing
-              percent={overallProgress}
-              lessonsDone={lessonsDone}
-              lessonsTotal={lessonsTotal}
-            />
-          )}
-        </section>
-
-        <dl className="stats" aria-label="Learning progress summary">
-          <div className="stat">
-            <dt>
-              <BookOpen aria-hidden="true" size={16} /> Active courses
-            </dt>
-            <dd>{ready ? activeCourses.length : "–"}</dd>
-            <span>Currently in progress</span>
-          </div>
-          <div className="stat">
-            <dt>
-              <CircleCheck aria-hidden="true" size={16} /> Lessons completed
-            </dt>
-            <dd>
-              {ready ? lessonsDone : "–"}
-              {ready && hasLessons && <small> / {lessonsTotal}</small>}
-            </dd>
-            <span>Across all your courses</span>
-          </div>
-          <div className="stat">
-            <dt id="certificates-summary">
-              <Award aria-hidden="true" size={16} /> Certificates earned
-            </dt>
-            <dd>
-              {profileLoaded && profile ? profile.certificatesEarned : "–"}
-            </dd>
-            <span>Recognising your completed work</span>
-          </div>
-        </dl>
-
-        <section className="home-next" aria-labelledby="next-up-heading">
-          <div className="home-section-heading">
+        <section
+          className="overview-progress"
+          aria-labelledby="overall-progress-heading"
+        >
+          <div className="overview-progress-heading">
             <div>
-              <h2 id="next-up-heading">Next up</h2>
-              <p>Work through these at your own pace.</p>
-            </div>
-            <Link to="/student/courses">
-              View all courses <ArrowRight aria-hidden="true" size={14} />
-            </Link>
-          </div>
-          {!ready ? (
-            <div className="home-next-empty">
+              <h2 id="overall-progress-heading">Your progress</h2>
               <p>
-                {loading
-                  ? "Loading…"
-                  : "We couldn’t load your next steps right now."}
+                {greeting}, {student.firstName}. Here’s how your learning is
+                going.
               </p>
             </div>
-          ) : activeCourses.length > 0 || pendingQuizzes.length > 0 ? (
-            <ul className="home-next-list">
-              {activeCourses.map((course) => {
-                const percent = percentComplete(
-                  course.lessonsDone,
-                  course.lessonsTotal,
-                );
+            <strong>
+              {overallProgress}
+              <span>%</span>
+            </strong>
+          </div>
+          <progress
+            aria-label="Overall lesson completion"
+            value={lessonsDone}
+            max={lessonsTotal || 1}
+          />
+          <div className="overview-progress-footer">
+            <span>
+              {lessonsDone} of {lessonsTotal} lessons completed
+            </span>
+            <Link to="/student/courses">View my courses →</Link>
+          </div>
+        </section>
+
+        <section
+          className="deadline-section"
+          aria-labelledby="deadlines-heading"
+        >
+          <div className="deadline-heading">
+            <h2 id="deadlines-heading">Upcoming &amp; needs attention</h2>
+            <span>All times SAST</span>
+          </div>
+          {upcomingTasks.length > 0 ? (
+            <ul className="deadline-list">
+              {upcomingTasks.map((item) => {
+                const overdue = item.dueAt && new Date(item.dueAt) < now;
+                const page =
+                  item.type === "assessment"
+                    ? "/student/assessments"
+                    : "/student/practical-work";
+
                 return (
-                  <li key={course.moduleId}>
-                    <Link to={lessonLink(course)}>
-                      <BookOpen
-                        className="home-next-icon"
-                        aria-hidden="true"
-                        size={18}
-                      />
-                      <span className="home-next-details">
-                        <span className="home-next-module">
-                          {course.moduleTitle}
-                        </span>
-                        <strong>
-                          {course.nextLessonTitle || "Next lesson"}
-                        </strong>
-                        <span className="home-next-meta">
-                          Lesson {course.lessonsDone + 1} of{" "}
-                          {course.lessonsTotal}
-                        </span>
+                  <li key={item.id}>
+                    <div className="deadline-task">
+                      <h3>{item.title}</h3>
+                      <p>
+                        {item.course} ·{" "}
+                        {item.type === "assessment"
+                          ? "Assessment"
+                          : "Practical work"}
+                      </p>
+                      <span className={`activity-status ${item.tone}`}>
+                        {item.status}
                       </span>
-                      <span className="home-next-progress">
-                        <progress
-                          aria-label={`${course.moduleTitle} lesson completion`}
-                          value={course.lessonsDone}
-                          max={course.lessonsTotal}
-                        />
-                        <span>{percent}%</span>
-                      </span>
-                      <ArrowRight
-                        className="home-next-arrow"
-                        aria-hidden="true"
-                        size={18}
-                      />
+                    </div>
+                    <div className="deadline-date">
+                      {item.dueAt ? (
+                        <>
+                          <span className={overdue ? "deadline-overdue" : ""}>
+                            {overdue ? "Overdue" : "Due"}
+                          </span>
+                          <time dateTime={item.dueAt}>
+                            {formatDeadline(item.dueAt)}
+                          </time>
+                        </>
+                      ) : (
+                        <span>No deadline</span>
+                      )}
+                    </div>
+                    <Link
+                      className="deadline-action"
+                      to={page}
+                      aria-label={`${item.action}: ${item.title}`}
+                    >
+                      {item.action} <span aria-hidden="true">→</span>
                     </Link>
                   </li>
                 );
               })}
-              {pendingQuizzes.map((quiz) => (
-                <li key={quiz.quizId}>
-                  <Link to={QUIZ_PAGE_PATH}>
-                    <ClipboardCheck
-                      className="home-next-icon"
-                      aria-hidden="true"
-                      size={18}
-                    />
-                    <span className="home-next-details">
-                      <span className="home-next-module">
-                        {quiz.moduleTitle}
-                      </span>
-                      <strong>Quiz: {quiz.title}</strong>
-                      <span className="home-next-meta">
-                        {quizStatus(quiz)}
-                      </span>
-                    </span>
-                    <span className="home-next-status">
-                      <span>
-                        {quiz.bestScore == null ? "Not started" : "Try again"}
-                      </span>
-                    </span>
-                    <ArrowRight
-                      className="home-next-arrow"
-                      aria-hidden="true"
-                      size={18}
-                    />
-                  </Link>
-                </li>
-              ))}
             </ul>
-          ) : allCoursesComplete ? (
-            <div className="home-next-empty">
-              <h3>You’re all caught up</h3>
-              <p>You’ve completed every lesson and passed every quiz.</p>
-            </div>
           ) : (
-            <div className="home-next-empty">
-              <h3>Nothing here yet</h3>
-              <p>Your next lessons and quizzes will show up here.</p>
+            <div className="deadline-empty">
+              <h3>You’re all caught up</h3>
+              <p>
+                No upcoming deadlines or tasks need your attention. Keep
+                learning at your own pace.
+              </p>
             </div>
           )}
+        </section>
+
+        <div className="activity-heading">
+          <p>Lesson and task actions are coming soon.</p>
+        </div>
+        <div className="home-resume">
+          <section className="resume-card" aria-labelledby="continue-heading">
+            <div className="action-heading">
+              <h3 id="continue-heading">Continue learning</h3>
+              <span className="tag">LAST ACTIVE COURSE</span>
+            </div>
+            {resumeCourse ? (
+              <>
+                <p className="resume-course">{resumeCourse.title}</p>
+                <h4>{lastActivity.lesson}</h4>
+                <p className="lesson-meta">
+                  Lesson {resumeCourse.lessonsDone + 1} of{" "}
+                  {resumeCourse.lessonsTotal}
+                  <span aria-hidden="true"> · </span>
+                  About {lastActivity.minutes} minutes
+                </p>
+                <div className="resume-progress">
+                  <div className="progress-label">
+                    <span>
+                      {resumeCourse.lessonsDone} of {resumeCourse.lessonsTotal}{" "}
+                      lessons completed
+                    </span>
+                    <b>
+                      {Math.round(
+                        (resumeCourse.lessonsDone / resumeCourse.lessonsTotal) *
+                          100,
+                      )}
+                      %
+                    </b>
+                  </div>
+                  <progress
+                    aria-label={`${resumeCourse.title} lesson completion`}
+                    value={resumeCourse.lessonsDone}
+                    max={resumeCourse.lessonsTotal}
+                  />
+                </div>
+                <button className="btn blue resume-button" disabled>
+                  Resume lesson <span aria-hidden="true">→</span>
+                </button>
+              </>
+            ) : (
+              <div className="activity-empty">
+                <h4>Your next step starts here</h4>
+                <p>
+                  Explore the course catalogue to find something you’d like to
+                  learn.
+                </p>
+                <a className="btn blue" href="/student/courses#explore-courses">
+                  Explore courses
+                </a>
+              </div>
+            )}
           </section>
+        </div>
+
+        <dl
+          className="stats home-summary"
+          aria-label="Learning progress summary"
+        >
+          <div className="stat">
+            <dt>Active courses</dt>
+            <dd>{activeCourses.length}</dd>
+            <span>Currently in progress</span>
+          </div>
+          <div className="stat">
+            <dt id="certificates-summary">Certificates earned</dt>
+            <dd>{certificates.length}</dd>
+            <span>Recognising your completed work</span>
+          </div>
+        </dl>
       </div>
 
       <footer className="home-footer">
         <span>© {new Date().getFullYear()} BridgeTech</span>
-        <nav aria-label="Legal information">
-          <Link to="/terms">Terms of Service</Link>
-          <Link to="/privacy-policy">Privacy Policy</Link>
+        <nav aria-label="Help and legal information">
+          <button type="button">Help</button>
+          <button type="button">Terms &amp; Privacy</button>
         </nav>
       </footer>
     </StudentLayout>
