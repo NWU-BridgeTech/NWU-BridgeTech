@@ -2,8 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RootRoute from "./components/RootRoute";
-import ProtectedRoute from "./components/ProtectedRoute";
-import SignOut from "./pages/SignOut";
 import Home from "./pages/Home";
 import StudentCourses from "./pages/StudentCourses";
 import StudentAssessments from "./pages/StudentAssessments";
