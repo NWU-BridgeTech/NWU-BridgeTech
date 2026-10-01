@@ -18,4 +18,8 @@ public class EnrollmentResponse
     public short ProgressPercent { get; set; }
     public DateTimeOffset EnrolledAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
+    public int LessonsDone { get; set; }
+    public int LessonsTotal { get; set; }
+    public string? NextLessonTitle { get; set; }
+    public Guid? NextLessonId { get; set; }
 }

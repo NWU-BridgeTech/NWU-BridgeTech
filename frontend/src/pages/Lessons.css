@@ -119,6 +119,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+    color:#fff;
 }
 
 .lesson-nav-group {
@@ -190,6 +191,52 @@
     text-decoration: none;
     background: #315db6;
     color: #fff;
+}
+
+/* Buttons are real <button>s now: reset browser defaults */
+.lesson-previous-btn,
+.lesson-next-btn {
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* Locked / disabled state */
+.lesson-previous-btn:disabled,
+.lesson-next-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Quiz button + status text */
+.lesson-quiz-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.lesson-quiz-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c7787;
+}
+
+/* AI summary under the video thumbnail */
+.lesson-ai-summary {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #414d5c;
+}
+
+/* Let the error message sit on its own row inside the footer */
+.lesson-footer-card {
+    flex-wrap: wrap;
+}
+
+.lesson-footer-card .error-message {
+    flex-basis: 100%;
+    margin: 0;
 }
 
 @media (max-width: 767px) {

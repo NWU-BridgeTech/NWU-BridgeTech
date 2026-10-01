@@ -37,6 +37,29 @@ public sealed class GitHubController : ControllerBase
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             return Unauthorized();
 
+        return Ok(new
+        {
+            username = await _githubService.GetUsernameAsync(userId, cancellationToken),
+            repository = await _githubService.GetLinkedRepositoryAsync(userId, cancellationToken)
+        });
+    }
+
+    [Authorize]
+    [HttpGet("repositories")]
+    public async Task<IActionResult> Repositories(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
+        return Ok(await _githubService.GetRepositoriesAsync(userId, cancellationToken));
+    }
+
+    [Authorize]
+    [HttpPut("repository")]
+    public async Task<IActionResult> LinkRepository([FromBody] LinkRepositoryRequest request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(request.FullName)) return BadRequest(new { message = "Repository full name is required." });
+        try { return Ok(await _githubService.LinkRepositoryAsync(userId, request.FullName, cancellationToken)); }
+        catch (InvalidOperationException exception) { return BadRequest(new { message = exception.Message }); }
         return Ok(new { username = await _githubService.GetUsernameAsync(userId, cancellationToken) });
     }
 
@@ -59,3 +82,5 @@ public sealed class GitHubController : ControllerBase
         }
     }
 }
+
+public sealed record LinkRepositoryRequest(string FullName);

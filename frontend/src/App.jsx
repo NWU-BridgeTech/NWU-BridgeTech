@@ -26,13 +26,14 @@ import Login from "./pages/Login";
 import Lessons from "./pages/Lessons";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import SignOut from "./pages/SignOut";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ---------- PUBLIC ROUTES ---------- */}
         <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -45,7 +46,6 @@ function App() {
         />
         <Route path="/signout" element={<SignOut />} />
 
-        {/* ---------- PROTECTED STUDENT ROUTES ---------- */}
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
           <Route path="/student/courses" element={<StudentCourses />} />
@@ -74,7 +74,6 @@ function App() {
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
 
-        {/* ---------- PROTECTED ADMIN ROUTES ---------- */}
         <Route element={<ProtectedRoute requiredRole="Admin" />}>
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/modules" element={<AdminModules />} />
