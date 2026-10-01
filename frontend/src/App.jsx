@@ -21,12 +21,12 @@ import AdminAdministrators from "./pages/AdminAdministrators";
 import AdminSettings from "./pages/AdminSettings";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
+import Lessons from "./pages/Lessons";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-import Lessons from "./pages/Lessons";
 
 function App() {
   return (
@@ -63,6 +63,7 @@ function App() {
             element={<StudentNotifications />}
           />
           <Route path="/lessons" element={<Lessons />} />
+          <Route path="/lessons/:lessonId" element={<Lessons />} />
           <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
           <Route
             path="/modules/:moduleId/lessons/:lessonId"
