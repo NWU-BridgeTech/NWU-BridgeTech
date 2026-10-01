@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -9,6 +10,8 @@ import StudentAssessments from "./pages/StudentAssessments";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
+import StudentProfile from "./pages/StudentProfile";
+import StudentNotifications from "./pages/StudentNotifications";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
