@@ -106,7 +106,7 @@ export default function StudentCertificates() {
                     </span>
                     <h3>{certificate.moduleTitle || "Completed module"}</h3>
                     <p>
-                      Issued{" "}
+                      Completed{" "}
                       <time dateTime={certificate.issuedAt}>
                         {formatDate(certificate.issuedAt)}
                       </time>
@@ -185,7 +185,7 @@ export default function StudentCertificates() {
                   <dd>BridgeTech</dd>
                 </div>
                 <div>
-                  <dt>Issue date</dt>
+                  <dt>Completion date</dt>
                   <dd>
                     <time dateTime={selectedCertificate.issuedAt}>
                       {formatDate(selectedCertificate.issuedAt)}

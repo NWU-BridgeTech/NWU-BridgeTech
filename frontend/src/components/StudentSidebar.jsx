@@ -1,5 +1,6 @@
 import {
   Award,
+  BadgeCheck,
   BookOpen,
   ClipboardCheck,
   Code2,
@@ -30,6 +31,11 @@ const groups = [
         label: "Certificates",
         path: "/student/certificates",
         icon: Award,
+      },
+      {
+        label: "Badges",
+        path: "/student/badges",
+        icon: BadgeCheck,
       },
       {
         label: "GitHub activity",

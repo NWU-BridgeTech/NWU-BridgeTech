@@ -13,4 +13,5 @@ public class Lesson
 
     public Module Module { get; set; } = null!;
     public ICollection<VideoSummary> VideoSummaries { get; set; } = new List<VideoSummary>();
+    public ICollection<Badge> Badges { get; set; } = new List<Badge>();
 }

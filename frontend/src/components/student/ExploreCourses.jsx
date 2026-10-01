@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../utils/apiClient";
 
-export default function ExploreCourses({onEnrolled}) {
+export default function ExploreCourses({ onEnrolled }) {
   const [availableModules, setAvailableModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,7 +37,9 @@ export default function ExploreCourses({onEnrolled}) {
     return courseText.toLowerCase().includes(query);
   });
 
-  const visibleCourses = showAll ? matchingCourses : matchingCourses.slice(0, 3);
+  const visibleCourses = showAll
+    ? matchingCourses
+    : matchingCourses.slice(0, 3);
 
   let resultsText = "No courses found";
   if (matchingCourses.length > 0) {
@@ -64,8 +66,11 @@ export default function ExploreCourses({onEnrolled}) {
     setEnrollingId(moduleId);
     try {
       await apiFetch(`/modules/${moduleId}/enroll`, { method: "POST" });
-      setAvailableModules((prev) => prev.filter((m) => m.moduleId !== moduleId));
+      setAvailableModules((prev) =>
+        prev.filter((m) => m.moduleId !== moduleId),
+      );
       courseDetailsDialog.current?.close();
+      window.dispatchEvent(new Event("notifications-changed"));
       onEnrolled?.();
     } catch (err) {
       alert("Could not enroll: " + err.message);
@@ -81,7 +86,8 @@ export default function ExploreCourses({onEnrolled}) {
           <h2 id="explore-courses">Explore courses</h2>
         </div>
         <p className="explore-intro">
-          Build your next skill. Find a course that fits your interests and experience.
+          Build your next skill. Find a course that fits your interests and
+          experience.
         </p>
 
         <div className="explore-tools">
@@ -133,7 +139,9 @@ export default function ExploreCourses({onEnrolled}) {
             {matchingCourses.length === 0 && (
               <div className="explore-empty">
                 <h4>No courses match just yet</h4>
-                <p>Try another search term, or check back later for new courses.</p>
+                <p>
+                  Try another search term, or check back later for new courses.
+                </p>
                 {search && (
                   <button className="btn" onClick={resetExplore}>
                     Clear search
@@ -149,7 +157,9 @@ export default function ExploreCourses({onEnrolled}) {
                   aria-expanded={showAll}
                   onClick={() => setShowAll(!showAll)}
                 >
-                  {showAll ? "Show fewer courses" : `View all ${matchingCourses.length} courses`}
+                  {showAll
+                    ? "Show fewer courses"
+                    : `View all ${matchingCourses.length} courses`}
                 </button>
               </div>
             )}

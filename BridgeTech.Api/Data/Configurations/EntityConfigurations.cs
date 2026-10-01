@@ -253,6 +253,19 @@ internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notif
     }
 }
 
+internal sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
+{
+    public void Configure(EntityTypeBuilder<Badge> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "badges", nameof(Badge.BadgeId));
+        builder.Property(x => x.AwardedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany(x => x.Badges).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany(x => x.Badges).HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.UserId);
+    }
+}
+
 internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguration<PendingRegistration>
 {
     public void Configure(EntityTypeBuilder<PendingRegistration> builder)
