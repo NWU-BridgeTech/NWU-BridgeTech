@@ -27,7 +27,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-import Lessons from "./pages/Lessons";
 import Quizzes from "./pages/Quizzes";
 import QuizzRunner from "./pages/QuizzRunner";
 
