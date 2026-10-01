@@ -27,8 +27,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import SignOut from "./pages/SignOut";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./pages/Admin.css";
-import Quizzes from "./pages/Quizzes";
-import QuizzRunner from "./pages/QuizzRunner";
 
 function App() {
   return (
@@ -49,11 +47,6 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
           <Route path="/student/courses" element={<StudentCourses />} />
-          <Route path="/student/assessments" element={<Quizzes />} />
-          <Route path="/quizzes" element={<Quizzes />} />
-          <Route path="/quizzes" element={<Quizzes />} />
-          <Route path="/quizzes/:quizId" element={<QuizzRunner />} />
-          <Route path="/lessons/:lessonId/quiz" element={<QuizzRunner />} />
           <Route path="/student/assessments" element={<StudentAssessments />} />
           <Route
             path="/student/practical-work"
@@ -99,6 +92,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
 
 export default App;
