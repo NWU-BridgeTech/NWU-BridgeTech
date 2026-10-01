@@ -163,54 +163,168 @@ public class LessonService(AppDbContext context) : ILessonService
         };
     }
 
-    public async Task<LessonResponse> CreateAsync(
+    // ---------- Admin: create, list and update lessons ----------
+
+    public async Task<AdminLessonResponse> CreateAsync(
         Guid moduleId, CreateLessonRequest request, CancellationToken cancellationToken)
     {
-        var moduleExists = await context.Modules.AnyAsync(m => m.ModuleId == moduleId, cancellationToken);
-        if (!moduleExists)
-        {
-            throw new InvalidOperationException("Module not found.");
-        }
+        var module = await context.Modules.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.ModuleId == moduleId, cancellationToken)
+            ?? throw new InvalidOperationException("Module not found.");
 
+        var status = Enum.Parse<ContentStatus>(request.Status);
+        EnsureCanPublish(status, request.Content, module.Status);
+
+        // Place the lesson after the module's existing lessons unless an order was given.
+        var orderIndex = request.OrderIndex
+            ?? await NextOrderIndexAsync(moduleId, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
         var lesson = new Lesson
         {
             LessonId = Guid.NewGuid(),
             ModuleId = moduleId,
-            Title = request.Title,
+            Title = request.Title.Trim(),
+            Description = request.Description?.Trim(),
             Content = request.Content,
-            OrderIndex = request.OrderIndex,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            OrderIndex = orderIndex,
+            DurationMinutes = request.DurationMinutes,
+            Status = status,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         context.Lessons.Add(lesson);
 
-        if (!string.IsNullOrWhiteSpace(request.VideoUrl))
+        var videoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl;
+        if (videoUrl is not null)
         {
             context.VideoSummaries.Add(new VideoSummary
             {
                 VideoId = Guid.NewGuid(),
                 LessonId = lesson.LessonId,
-                VideoUrl = request.VideoUrl,
-                GeneratedAt = DateTimeOffset.UtcNow
+                VideoUrl = videoUrl,
+                GeneratedAt = now
             });
         }
 
         await context.SaveChangesAsync(cancellationToken);
-
-        return new LessonResponse
-        {
-            LessonId = lesson.LessonId,
-            ModuleId = lesson.ModuleId,
-            Title = lesson.Title,
-            Content = lesson.Content,
-            OrderIndex = lesson.OrderIndex,
-            CreatedAt = lesson.CreatedAt,
-            UpdatedAt = lesson.UpdatedAt,
-            VideoUrl = request.VideoUrl,
-            Completed = false
-        };
+        return ToAdminResponse(lesson, module.Title, videoUrl);
     }
+
+    public async Task<IReadOnlyList<AdminLessonResponse>> GetAllForAdminAsync(CancellationToken cancellationToken)
+    {
+        var rows = await context.Lessons.AsNoTracking()
+            .OrderBy(l => l.Module.OrderIndex)
+            .ThenBy(l => l.OrderIndex)
+            .Select(l => new
+            {
+                Lesson = l,
+                ModuleTitle = l.Module.Title,
+                VideoUrl = l.VideoSummaries.Select(v => v.VideoUrl).FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => ToAdminResponse(r.Lesson, r.ModuleTitle, r.VideoUrl)).ToList();
+    }
+
+    public async Task<AdminLessonResponse?> UpdateAsync(
+        Guid lessonId, UpdateLessonRequest request, CancellationToken cancellationToken)
+    {
+        var lesson = await context.Lessons
+            .FirstOrDefaultAsync(l => l.LessonId == lessonId, cancellationToken);
+        if (lesson is null) return null;
+
+        // Moving the lesson to another module places it at the end of that module.
+        if (request.ModuleId.HasValue && request.ModuleId.Value != lesson.ModuleId)
+        {
+            var moduleExists = await context.Modules
+                .AnyAsync(m => m.ModuleId == request.ModuleId.Value, cancellationToken);
+            if (!moduleExists) throw new InvalidOperationException("Module not found.");
+
+            lesson.ModuleId = request.ModuleId.Value;
+            lesson.OrderIndex = await NextOrderIndexAsync(lesson.ModuleId, cancellationToken);
+        }
+
+        if (request.Title is not null) lesson.Title = request.Title.Trim();
+        if (request.Description is not null) lesson.Description = request.Description.Trim();
+        if (request.Content is not null) lesson.Content = request.Content;
+        if (request.OrderIndex.HasValue) lesson.OrderIndex = request.OrderIndex.Value;
+        if (request.DurationMinutes.HasValue) lesson.DurationMinutes = request.DurationMinutes.Value;
+        if (request.Status is not null) lesson.Status = Enum.Parse<ContentStatus>(request.Status);
+
+        var module = await context.Modules.AsNoTracking()
+            .Where(m => m.ModuleId == lesson.ModuleId)
+            .Select(m => new { m.Title, m.Status })
+            .FirstAsync(cancellationToken);
+
+        // Check the lesson as it will be saved, after all the changes above.
+        EnsureCanPublish(lesson.Status, lesson.Content, module.Status);
+
+        if (!string.IsNullOrWhiteSpace(request.VideoUrl))
+        {
+            var video = await context.VideoSummaries
+                .FirstOrDefaultAsync(v => v.LessonId == lessonId, cancellationToken);
+            if (video is null)
+            {
+                context.VideoSummaries.Add(new VideoSummary
+                {
+                    VideoId = Guid.NewGuid(),
+                    LessonId = lessonId,
+                    VideoUrl = request.VideoUrl,
+                    GeneratedAt = DateTimeOffset.UtcNow
+                });
+            }
+            else
+            {
+                video.VideoUrl = request.VideoUrl;
+            }
+        }
+
+        lesson.UpdatedAt = DateTimeOffset.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
+
+        var videoUrl = await context.VideoSummaries.AsNoTracking()
+            .Where(v => v.LessonId == lessonId)
+            .Select(v => v.VideoUrl)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return ToAdminResponse(lesson, module.Title, videoUrl);
+    }
+
+    // A lesson can only be published when it has content and its module is published.
+    private static void EnsureCanPublish(ContentStatus status, string? content, ContentStatus moduleStatus)
+    {
+        if (status != ContentStatus.Published) return;
+
+        if (string.IsNullOrWhiteSpace(content) || moduleStatus != ContentStatus.Published)
+            throw new InvalidOperationException(
+                "Add lesson content and choose a published module before publishing.");
+    }
+
+    private async Task<short> NextOrderIndexAsync(Guid moduleId, CancellationToken cancellationToken)
+    {
+        var max = await context.Lessons
+            .Where(l => l.ModuleId == moduleId)
+            .MaxAsync(l => (short?)l.OrderIndex, cancellationToken);
+        return (short)((max ?? 0) + 1);
+    }
+
+    private static AdminLessonResponse ToAdminResponse(Lesson l, string moduleTitle, string? videoUrl) => new()
+    {
+        LessonId = l.LessonId,
+        ModuleId = l.ModuleId,
+        ModuleTitle = moduleTitle,
+        Title = l.Title,
+        Description = l.Description,
+        Content = l.Content,
+        OrderIndex = l.OrderIndex,
+        DurationMinutes = l.DurationMinutes,
+        Status = l.Status.ToString(),
+        VideoUrl = videoUrl,
+        CreatedAt = l.CreatedAt,
+        UpdatedAt = l.UpdatedAt
+    };
 
     private sealed record LessonStub(Guid LessonId, bool Completed);
 
