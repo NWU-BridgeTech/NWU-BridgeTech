@@ -22,7 +22,7 @@ public class LessonService(AppDbContext context) : ILessonService
 
         return await context.Lessons
             .AsNoTracking()
-            .Where(l => l.ModuleId == moduleId)
+            .Where(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published)
             .OrderBy(l => l.OrderIndex)
             .Select(l => new LessonListItemResponse
             {
@@ -41,7 +41,7 @@ public class LessonService(AppDbContext context) : ILessonService
         var lesson = await context.Lessons
             .AsNoTracking()
             .Include(l => l.VideoSummaries)
-            .FirstOrDefaultAsync(l => l.LessonId == lessonId, cancellationToken);
+            .FirstOrDefaultAsync(l => l.LessonId == lessonId && l.Status == ContentStatus.Published, cancellationToken);
 
         if (lesson is null)
         {
@@ -81,7 +81,7 @@ public class LessonService(AppDbContext context) : ILessonService
     {
         var lesson = await context.Lessons
             .AsNoTracking()
-            .FirstOrDefaultAsync(l => l.LessonId == lessonId, cancellationToken);
+            .FirstOrDefaultAsync(l => l.LessonId == lessonId && l.Status == ContentStatus.Published, cancellationToken);
 
         if (lesson is null)
         {
@@ -128,7 +128,7 @@ public class LessonService(AppDbContext context) : ILessonService
         }
 
         var totalLessons = await context.Lessons
-            .CountAsync(l => l.ModuleId == lesson.ModuleId, cancellationToken);
+            .CountAsync(l => l.ModuleId == lesson.ModuleId && l.Status == ContentStatus.Published, cancellationToken);
 
         // Count completed lessons already in the DB, then add 1 if this lesson
         // wasn't already marked complete (its row isn't persisted yet at this point).
@@ -136,7 +136,7 @@ public class LessonService(AppDbContext context) : ILessonService
             .Include(p => p.Lesson)
             .CountAsync(p => p.UserId == userId
                 && p.Completed
-                && p.Lesson.ModuleId == lesson.ModuleId
+                && p.Lesson.ModuleId == lesson.ModuleId && p.Lesson.Status == ContentStatus.Published
                 && p.LessonId != lessonId, cancellationToken);
 
         var completedCount = completedInDb + 1; // +1 for this lesson, always now completed
@@ -344,7 +344,7 @@ public class LessonService(AppDbContext context) : ILessonService
         Guid lessonId, Guid userId, CancellationToken ct)
     {
         var moduleId = await context.Lessons.AsNoTracking()
-            .Where(l => l.LessonId == lessonId)
+            .Where(l => l.LessonId == lessonId && l.Status == ContentStatus.Published)
             .Select(l => (Guid?)l.ModuleId)
             .FirstOrDefaultAsync(ct);
         if (moduleId is null) return null;
@@ -365,7 +365,7 @@ public class LessonService(AppDbContext context) : ILessonService
     private async Task<List<LessonStub>> GetLessonStubsAsync(
         Guid moduleId, Guid userId, CancellationToken ct) =>
         await context.Lessons.AsNoTracking()
-            .Where(l => l.ModuleId == moduleId)
+            .Where(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published)
             .OrderBy(l => l.OrderIndex)
             .Select(l => new LessonStub(
                 l.LessonId,

@@ -9,7 +9,7 @@ namespace BridgeTech.Api.Services.Modules;
 public sealed class ModuleService(AppDbContext db) : IModuleService
 {
     public async Task<IReadOnlyList<ModuleListItemResponse>> GetAllAsync(CancellationToken ct = default) =>
-        await db.Modules.AsNoTracking().OrderBy(x => x.OrderIndex)
+        await db.Modules.AsNoTracking().Where(x => x.Status == ContentStatus.Published).OrderBy(x => x.OrderIndex)
             .Select(x => new ModuleListItemResponse { ModuleId = x.ModuleId, Title = x.Title, OrderIndex = x.OrderIndex, UpdatedAt = x.UpdatedAt })
             .ToListAsync(ct);
 
@@ -134,7 +134,7 @@ public sealed class ModuleService(AppDbContext db) : IModuleService
 
     var modules = await db.Modules
         .AsNoTracking()
-        .Where(m => !enrolledModuleIds.Contains(m.ModuleId))
+        .Where(m => !enrolledModuleIds.Contains(m.ModuleId) && m.Status == ContentStatus.Published)
         .OrderBy(m => m.OrderIndex)
         .ToListAsync(cancellationToken);
 
@@ -143,7 +143,7 @@ public sealed class ModuleService(AppDbContext db) : IModuleService
     foreach (var m in modules)
     {
         var lessonTitles = await db.Lessons
-            .Where(l => l.ModuleId == m.ModuleId)
+            .Where(l => l.ModuleId == m.ModuleId && l.Status == ContentStatus.Published)
             .OrderBy(l => l.OrderIndex)
             .Select(l => l.Title)
             .ToListAsync(cancellationToken);
