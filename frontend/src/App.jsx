@@ -19,10 +19,9 @@ import AdminAdministrators from "./pages/AdminAdministrators";
 import AdminSettings from "./pages/AdminSettings";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
+import Lessons from "./pages/Lessons";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
-import "./pages/Admin.css";
-import Lessons from "./pages/Lessons";
 
 function AdminSection({ children }) {
   return <AppLayout>{children}</AppLayout>;
@@ -45,7 +44,7 @@ function App() {
           element={<StudentAssessments />}
         />
 
-        <Route
+	<Route
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
@@ -62,7 +61,7 @@ function App() {
           element={<StudentGithub />}
         />
 
-        <Route path="/admin" element={<Admin />} />
+	<Route path="/admin" element={<Admin />} />
 
         <Route
           path="/admin/modules"
@@ -73,7 +72,7 @@ function App() {
           }
         />
 
-        <Route
+	 <Route
           path="/admin/lessons"
           element={
             <AdminSection>
@@ -90,8 +89,7 @@ function App() {
             </AdminSection>
           }
         />
-
-        <Route
+	 <Route
           path="/admin/practical-exercises"
           element={
             <AdminSection>
@@ -109,7 +107,7 @@ function App() {
           }
         />
 
-        <Route
+	        <Route
           path="/admin/administrators"
           element={
             <AdminSection>
