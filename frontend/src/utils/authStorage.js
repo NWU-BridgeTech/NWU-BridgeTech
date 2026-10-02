@@ -1,4 +1,4 @@
-const storage = window.sessionStorage;
+const storage = window.localStorage;
 
 export function getToken() {
   return storage.getItem("token");

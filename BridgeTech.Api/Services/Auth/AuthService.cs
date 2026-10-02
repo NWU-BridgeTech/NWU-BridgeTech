@@ -106,7 +106,6 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException(
                 "Google signup credential is required.");
         }
-
         string? googleClientId =
             _configuration["Google:ClientId"];
 

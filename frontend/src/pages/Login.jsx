@@ -186,7 +186,7 @@ export default function Login({ team = false }) {
           email={verification.email}
           initialExpiresAt={verification.expiresAt}
           onClose={() => setVerification(null)}
-          onVerified={() => navigate(team ? "/team-login" : "/login")}
+          onVerified={() => navigate(team ? "/team-login" : "/home")}
         />
       )}
     </AuthShell>
