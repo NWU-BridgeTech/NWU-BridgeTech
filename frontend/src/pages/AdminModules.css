@@ -1,0 +1,154 @@
+.admin-page .modules-page h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #202733;
+}
+.admin-page .modules-message {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #3159ad;
+}
+.admin-page .modules-message:empty {
+  display: none;
+}
+.admin-page .module-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin: 24px 0 12px;
+}
+.admin-page .module-search {
+  flex: 1;
+  max-width: 460px;
+}
+.admin-page .modules-page label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #536176;
+}
+.admin-page .modules-page input,
+.admin-page .modules-page select,
+.admin-page .modules-page textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  background: #fff;
+  color: #202733;
+  font: inherit;
+  font-size: 14px;
+}
+.admin-page .modules-page textarea {
+  resize: vertical;
+}
+.admin-page .modules-page input:focus-visible,
+.admin-page .modules-page select:focus-visible,
+.admin-page .modules-page textarea:focus-visible,
+.admin-page .modules-page button:focus-visible {
+  outline: 2px solid #3159ad;
+  outline-offset: 2px;
+}
+.admin-page .modules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-page .modules-table th {
+  text-align: left;
+  padding: 14px 12px;
+  color: #687384;
+  font-weight: 500;
+  background: #f8f9fb;
+}
+.admin-page .modules-table td {
+  padding: 20px 12px;
+  border-bottom: 1px solid #edf0f3;
+  color: #536176;
+}
+.admin-page .modules-table td:first-child {
+  width: 42%;
+}
+.admin-page .modules-table strong {
+  color: #202733;
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-page .modules-table td p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+  color: #687384;
+}
+.admin-page .module-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.admin-page .module-status.published {
+  background: #eaf8f1;
+  color: #23734e;
+}
+.admin-page .module-status.draft {
+  background: #fff4dc;
+  color: #8a5a12;
+}
+.admin-page .module-edit {
+  border: 1px solid #d8dee8;
+  border-radius: 6px;
+  padding: 7px 12px;
+  background: #fff;
+  color: #3159ad;
+  font: inherit;
+  cursor: pointer;
+}
+.admin-page .module-edit:hover {
+  background: #f3f6fc;
+}
+.admin-page .modules-page button:disabled,
+.admin-page .modules-header button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-page .modules-page .btn {
+  cursor: pointer;
+}
+.admin-page .module-result-count {
+  margin: 18px 0 0;
+  color: #687384;
+  font-size: 12px;
+}
+.admin-page .modules-empty {
+  padding: 40px 0;
+  text-align: center;
+}
+.admin-page .modules-empty p {
+  color: #687384;
+  font-size: 14px;
+  margin: 10px 0 20px;
+}
+.admin-page .module-editor {
+  margin-bottom: 24px;
+}
+.admin-page .module-editor form {
+  max-width: 720px;
+  margin-top: 22px;
+}
+.admin-page .module-editor input,
+.admin-page .module-editor textarea {
+  margin-bottom: 18px;
+}
+.admin-page .module-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.admin-page .module-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}

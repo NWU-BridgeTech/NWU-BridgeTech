@@ -1,0 +1,61 @@
+@host = http://localhost:5174
+
+### Check PostgreSQL connection
+GET {{host}}/api/database/status
+Accept: application/json
+
+### Get modules from PostgreSQL
+GET {{host}}/api/modules
+Accept: application/json
+
+### Get users from PostgresSQL
+Get {{host}}/api/users
+Accept: application/json
+
+
+### Get users from PostgresSQL
+GET {{host}}/api/certificates/21f26bda-2f2d-43f5-bf80-3b1bc5dd12fd
+Accept: application/json
+
+### Get all certificates
+GET {{host}}/api/exercises
+Accept: application/json
+
+### ---- Admin: Students (needs an Admin / SuperAdmin / Reviewer token) ----
+@adminToken = paste-a-jwt-here
+
+### List students (filters: search, moduleId, status, page, pageSize)
+GET {{host}}/api/admin/students?status=Needs support&page=1&pageSize=50
+Authorization: Bearer {{adminToken}}
+
+### Student detail
+GET {{host}}/api/admin/students/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{adminToken}}
+
+### ---- Admin: Administrators (needs an Admin / SuperAdmin token) ----
+
+### List staff (filters: search, role, status, page, pageSize)
+GET {{host}}/api/admin/administrators?role=Reviewer&status=Active
+Authorization: Bearer {{adminToken}}
+
+### Assignable roles
+GET {{host}}/api/admin/administrators/roles
+Authorization: Bearer {{adminToken}}
+
+### Add administrator (sends an invitation email)
+POST {{host}}/api/admin/administrators
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "name": "Jane Doe", "email": "jane.doe@example.com", "role": "Reviewer", "status": "Active" }
+
+### Edit administrator (same body; use status "Inactive" to deactivate)
+PUT {{host}}/api/admin/administrators/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "name": "Jane Doe", "email": "jane.doe@example.com", "role": "Content manager", "status": "Active" }
+
+### Resend invitation (only for accounts that have never signed in)
+POST {{host}}/api/admin/administrators/00000000-0000-0000-0000-000000000000/resend-invitation
+Authorization: Bearer {{adminToken}}

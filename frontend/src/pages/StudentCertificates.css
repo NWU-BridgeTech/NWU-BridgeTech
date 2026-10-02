@@ -1,0 +1,168 @@
+.student-certificates .certificates-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.student-certificates h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+
+.student-certificates .certificates-heading p {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.student-certificates .certificate-count {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #edf3ff;
+  color: #315db6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.student-certificates .certificate-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.student-certificates .certificate-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: var(--card-padding);
+  background: #fff;
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+}
+
+.student-certificates .certificate-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #edf3ff;
+  color: #315db6;
+}
+
+.student-certificates .certificate-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-certificates .certificate-info h3 {
+  margin: 10px 0 6px;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+
+.student-certificates .certificate-info p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.student-certificates .certificate-card button {
+  flex-shrink: 0;
+  color: #274e9f;
+}
+
+.student-certificates .certificate-next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+}
+
+.student-certificates .certificate-next-step p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.student-certificates .certificates-empty {
+  padding: 32px 24px;
+  border: 1px dashed #cbd4e0;
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+.student-certificates .certificates-empty svg {
+  color: #315db6;
+}
+
+.student-certificates .certificates-empty h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+}
+
+.student-certificates .certificates-empty p {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+}
+
+.student-certificates .certificates-empty a {
+  display: inline-block;
+}
+
+.student-certificates .certificate-detail-summary {
+  margin: 24px 0;
+  padding: 24px;
+  background: #f5f8ff;
+  border-radius: 10px;
+  text-align: center;
+  color: #274e9f;
+}
+
+.student-certificates .certificate-detail-summary h3 {
+  margin: 12px 0;
+  font-size: 22px;
+}
+
+.student-certificates .certificate-details div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e8ebef;
+  font-size: 13px;
+}
+
+.student-certificates .certificate-details dt {
+  color: var(--text-secondary);
+}
+
+.student-certificates .certificate-details dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .student-certificates .certificate-card {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .student-certificates .certificate-info {
+    flex-basis: calc(100% - 80px);
+  }
+
+  .student-certificates .certificate-card button {
+    width: 100%;
+  }
+}

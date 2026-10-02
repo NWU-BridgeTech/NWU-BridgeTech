@@ -1,0 +1,130 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+.legal-page {
+  min-height: 100vh;
+  background: #f3f1ea;
+  color: #182230;
+  font-family: "Inter", sans-serif;
+  padding: 48px 24px;
+}
+
+.legal-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e5e8ed;
+  border-radius: 18px;
+  padding: 52px 64px;
+  box-shadow: 0 12px 35px rgba(24, 42, 80, 0.07);
+}
+
+.legal-back {
+  display: inline-block;
+  margin-bottom: 40px;
+  color: #315db6;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.legal-back:hover {
+  text-decoration: underline;
+}
+
+.legal-header {
+  border-bottom: 1px solid #e5e8ed;
+  padding-bottom: 30px;
+  margin-bottom: 34px;
+}
+
+.legal-label {
+  margin: 0 0 10px;
+  color: #315db6;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.legal-header h1 {
+  margin: 0;
+  color: #182a50;
+  font-size: 40px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.legal-updated {
+  margin: 12px 0 0;
+  color: #7c8796;
+  font-size: 14px;
+}
+
+.legal-container section {
+  margin-bottom: 34px;
+}
+
+.legal-container h2 {
+  margin: 0 0 12px;
+  color: #182a50;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.legal-container p {
+  margin: 0 0 14px;
+  color: #687385;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.legal-container ul {
+  margin: 10px 0 0;
+  padding-left: 24px;
+  color: #687385;
+}
+
+.legal-container li {
+  margin-bottom: 9px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.legal-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #e5e8ed;
+  margin-top: 42px;
+  padding-top: 26px;
+  font-size: 14px;
+}
+
+.legal-footer a {
+  color: #315db6;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.legal-footer a:hover {
+  text-decoration: underline;
+}
+
+.legal-footer span {
+  color: #b4bbc5;
+}
+
+@media (max-width: 700px) {
+  .legal-page {
+    padding: 20px 12px;
+  }
+
+  .legal-container {
+    padding: 32px 24px;
+    border-radius: 14px;
+  }
+
+  .legal-header h1 {
+    font-size: 32px;
+  }
+}
