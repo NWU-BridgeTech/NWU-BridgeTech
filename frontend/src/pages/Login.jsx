@@ -10,15 +10,11 @@ const API_URL =
 
 const Login = () => {
   const navigate = useNavigate();
-
-export default function Login() {
-  const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [verification, setVerification] = useState(null);
 
   function saveUserAndRedirect(data) {
