@@ -19,8 +19,10 @@ import AdminAdministrators from "./pages/AdminAdministrators";
 import AdminSettings from "./pages/AdminSettings";
 import SystemStatus from "./pages/SystemStatus";
 import Login from "./pages/Login";
+import TeamArea from "./pages/TeamArea";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
 
@@ -34,6 +36,8 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/instructor" element={<TeamArea role="Instructor" />} />
+        <Route path="/super-admin" element={<TeamArea role="Super Admin" />} />
 
         <Route path="/student/courses" element={<StudentCourses />} />
         <Route path="/student/assessments" element={<StudentAssessments />} />
@@ -120,10 +124,12 @@ function App() {
         <Route path="/system-status" element={<SystemStatus />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/team-login" element={<Login team />} />
 
         <Route path="/signup" element={<SignUp />} />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
