@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -9,6 +10,8 @@ import StudentAssessments from "./pages/StudentAssessments";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
+import StudentProfile from "./pages/StudentProfile";
+import StudentNotifications from "./pages/StudentNotifications";
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -22,6 +25,8 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import "./pages/Admin.css";
+import Quizzes from "./pages/Quizzes";
+import QuizzRunner from "./pages/QuizzRunner";
 import Lessons from "./pages/Lessons";
 
 function AdminSection({ children }) {
@@ -35,37 +40,51 @@ function App() {
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/home" element={<Home />} />
 
-        <Route
-          path="/student/courses"
-          element={<StudentCourses />}
-        />
-
-        <Route
-          path="/student/assessments"
-          element={<StudentAssessments />}
-        />
+        <Route path="/student/courses" element={<StudentCourses />} />
+        <Route path="/student/assessments" element={<StudentAssessments />} />
 
         <Route
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
-        <Route path="/lessons" element={<Lessons />} />
 
+        <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/student/courses" element={<StudentCourses />} />
+          <Route path="/student/assessments" element={<Quizzes />} />
+          <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/quizzes/:quizId" element={<QuizzRunner />} />
+          <Route path="/lessons/:lessonId/quiz" element={<QuizzRunner />} />
+          <Route
+            path="/student/practical-work"
+            element={<StudentPracticalWork />}
+          />
+          <Route
+            path="/student/certificates"
+            element={<StudentCertificates />}
+          />
+          <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route
+            path="/student/notifications"
+            element={<StudentNotifications />}
+          />
+          <Route path="/lessons" element={<Lessons />} />
+          <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
+          <Route
+            path="/modules/:moduleId/lessons/:lessonId"
+            element={<Lessons />}
+          />
+          <Route path="/system-status" element={<SystemStatus />} />
+        </Route>
+
+        <Route path="/lessons" element={<Lessons />} />
         <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
-        <Route path="/modules/:moduleId/lessons/:lessonId" element={<Lessons />} /> 
-
         <Route
-          path="/student/certificates"
-          element={<StudentCertificates />}
+          path="/modules/:moduleId/lessons/:lessonId"
+          element={<Lessons />}
         />
-
-        <Route
-          path="/student/github"
-          element={<StudentGithub />}
-        />
-
-        <Route path="/lessons" element={<Lessons />} />
-
         <Route path="/admin" element={<Admin />} />
 
         <Route
@@ -131,29 +150,17 @@ function App() {
           }
         />
 
-        <Route
-          path="/system-status"
-          element={<SystemStatus />}
-        />
+        <Route path="/system-status" element={<SystemStatus />} />
 
         <Route path="/login" element={<Login />} />
 
         <Route path="/signup" element={<SignUp />} />
 
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/privacy-policy"
-          element={<PrivacyPolicy />}
-        />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-        <Route
-          path="/terms"
-          element={<TermsOfService />}
-        />
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </BrowserRouter>
   );
