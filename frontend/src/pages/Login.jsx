@@ -5,9 +5,10 @@ import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-export default function Login() {
+const Login = () => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +36,7 @@ export default function Login() {
 
   async function handleLogin(event) {
     event.preventDefault();
+
     setError("");
     setLoading(true);
     try {
@@ -81,7 +83,7 @@ export default function Login() {
     } finally {
       setGoogleLoading(false);
     }
-  }
+  };
 
   return (
     <AuthShell
@@ -166,4 +168,7 @@ export default function Login() {
       )}
     </AuthShell>
   );
-}
+};
+
+
+export default Login;
