@@ -7,24 +7,35 @@ import "./SystemStatus.css";
 
 export default function SystemStatus() {
   const { services, checkedAt } = systemStatus;
+
   const summary = getSystemStatus(services);
+
   const operationalCount = services.filter(
     (service) => service.status === "operational",
   ).length;
+
   const checkedDate = checkedAt ? new Date(checkedAt) : null;
-  const hasCheckedDate = checkedDate && !Number.isNaN(checkedDate.getTime());
+
+  const hasCheckedDate =
+    checkedDate && !Number.isNaN(checkedDate.getTime());
 
   return (
     <AppLayout>
       <header className="top">
         <div>
           <h1>System status</h1>
-          <p>Check service availability and issues affecting the platform.</p>
+          <p>
+            Check service availability and issues affecting the platform.
+          </p>
         </div>
-        <Link className="btn blue" to="/admin">
-          Back to overview
-        </Link>
+
+        <div className="top-actions">
+          <Link className="btn blue" to="/admin">
+            Back to overview
+          </Link>
+        </div>
       </header>
+
       <div className="content system-status-page">
         <section
           className={`system-summary status-${summary.status}`}
@@ -32,14 +43,17 @@ export default function SystemStatus() {
         >
           <div>
             <h2 id="system-summary-heading">{summary.title}</h2>
+
             <p>
               {services.length
                 ? `${operationalCount} of ${services.length} services are operational.`
                 : "No service checks are available yet."}
             </p>
           </div>
+
           <div className="system-last-check">
             <span>Last checked</span>
+
             {hasCheckedDate ? (
               <time dateTime={checkedAt}>
                 {checkedDate.toLocaleString("en-GB", {
@@ -56,11 +70,14 @@ export default function SystemStatus() {
             )}
           </div>
         </section>
+
         <section className="card" aria-labelledby="services-heading">
           <h2 id="services-heading">Services</h2>
+
           <p className="sub">
             Availability and the latest reported condition of each service.
           </p>
+
           {services.length > 0 ? (
             <table className="service-table">
               <thead>
@@ -70,19 +87,23 @@ export default function SystemStatus() {
                   <th scope="col">Details</th>
                 </tr>
               </thead>
+
               <tbody>
                 {services.map((service) => {
                   const status = Object.hasOwn(statusLabels, service.status)
                     ? service.status
                     : "unknown";
+
                   return (
                     <tr key={service.id}>
                       <th scope="row">{service.name}</th>
+
                       <td>
                         <span className={`service-badge status-${status}`}>
                           {statusLabels[status]}
                         </span>
                       </td>
+
                       <td>{service.message || "No details reported."}</td>
                     </tr>
                   );

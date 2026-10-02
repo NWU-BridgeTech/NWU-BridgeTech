@@ -1,6 +1,7 @@
 using BridgeTech.Api.Services.Exercises;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -33,7 +34,12 @@ public class ExercisesController(IExerciseService service) : ControllerBase
         SubmitExerciseRequest request,
         CancellationToken cancellationToken)
     {
-        var submission = await service.CreateSubmissionAsync(exerciseId, request.UserId, request.GithubRepoUrl, cancellationToken);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var submission = await service.CreateSubmissionAsync(exerciseId, userId, request.GithubRepoUrl, cancellationToken);
         if (submission is null)
         {
             return NotFound();
