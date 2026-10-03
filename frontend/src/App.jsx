@@ -4,6 +4,7 @@ import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RootRoute from "./components/RootRoute";
+import PublicHomepage from "./pages/PublicHomepage";
 import Home from "./pages/Home";
 import StudentCourses from "./pages/StudentCourses";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
