@@ -8,7 +8,7 @@ import { PHOTOS } from "../components/authPhotos";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-const Login = () => {
+const Login = ({ team = false }) => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +29,13 @@ const Login = () => {
         role: data.role,
       }),
     );
-    navigate(
-      data.role === "Admin" || data.role === "SuperAdmin" ? "/admin" : "/home",
-    );
+    const destinations = {
+      Student: "/home",
+      Instructor: "/instructor",
+      Admin: "/admin",
+      SuperAdmin: "/admin/administrators",
+    };
+    navigate(destinations[data.role] || "/login");
   }
 
   async function handleLogin(event) {
@@ -40,11 +44,14 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(
+        `${API_URL}/api/auth/${team ? "team-login" : "login"}`,
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: identifier.trim(), password }),
-      });
+        },
+      );
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
@@ -88,11 +95,19 @@ const Login = () => {
   return (
     <AuthShell
       photo={PHOTOS.signin}
-      title="Welcome back."
-      text="Pick up your tracks where you left off."
+      title={team ? "Team access." : "Welcome back."}
+      text={
+        team
+          ? "Sign in with the staff account provided by your administrator."
+          : "Pick up your tracks where you left off."
+      }
     >
-      <h1>Sign in</h1>
-      <p className="au-lede">Sign in to continue to your BridgeTech account.</p>
+      <h1>{team ? "Team Login" : "Sign in"}</h1>
+      <p className="au-lede">
+        {team
+          ? "Use your instructor or administrator account."
+          : "Sign in to continue to your BridgeTech account."}
+      </p>
       {error && <div className="au-alert error" role="alert">{error}</div>}
 
       <form onSubmit={handleLogin}>
@@ -114,7 +129,9 @@ const Login = () => {
         <div className="au-field">
           <div className="au-label-row">
             <label htmlFor="password">Password</label>
-            <Link to="/forgot-password">Forgot password?</Link>
+            <Link to={team ? "/forgot-password?team=1" : "/forgot-password"}>
+              Forgot password?
+            </Link>
           </div>
           <PasswordInput
             id="password"
@@ -136,34 +153,42 @@ const Login = () => {
           {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
         </button>
 
-        <div className="au-divider"><span>or</span></div>
-        <div className="au-google">
-          {googleLoading ? (
-            <div className="au-google-loading">
-              <span className="au-spinner" aria-hidden="true" />
-              Signing in with Google...
+        {!team && (
+          <>
+            <div className="au-divider"><span>or</span></div>
+            <div className="au-google">
+              {googleLoading ? (
+                <div className="au-google-loading">
+                  <span className="au-spinner" aria-hidden="true" />
+                  Signing in with Google...
+                </div>
+              ) : (
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => setError("Google login was cancelled or failed.")}
+                  text="signin_with"
+                  shape="pill"
+                />
+              )}
             </div>
-          ) : (
-            <GoogleLogin
-              onSuccess={handleGoogleLogin}
-              onError={() => setError("Google login was cancelled or failed.")}
-              text="signin_with"
-              shape="pill"
-            />
-          )}
-        </div>
+          </>
+        )}
       </form>
 
-      <p className="au-switch">
-        Don&apos;t have an account? <Link to="/signup">Create an account</Link>
-      </p>
+      {team ? (
+        <p className="au-switch"><Link to="/">Back to BridgeTech</Link></p>
+      ) : (
+        <p className="au-switch">
+          Don&apos;t have an account? <Link to="/signup">Create an account</Link>
+        </p>
+      )}
 
       {verification && (
         <VerificationModal
           email={verification.email}
           initialExpiresAt={verification.expiresAt}
           onClose={() => setVerification(null)}
-          onVerified={() => navigate("/home")}
+          onVerified={() => navigate(team ? "/team-login" : "/home")}
         />
       )}
     </AuthShell>

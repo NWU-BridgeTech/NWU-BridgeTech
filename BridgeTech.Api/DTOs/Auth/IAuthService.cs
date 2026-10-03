@@ -7,6 +7,12 @@ public interface IAuthService
 
     Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
 
+    Task<AuthResponse> LoginTeamAsync(LoginRequest request, CancellationToken cancellationToken = default);
+
+    Task<string> CreateStaffInvitationTokenAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task AcceptStaffInvitationAsync(AcceptStaffInvitationRequest request, CancellationToken cancellationToken = default);
+
     Task<AuthResponse> GoogleSignupAsync(GoogleSignupRequest request, CancellationToken cancellationToken = default);
 
     Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default);
