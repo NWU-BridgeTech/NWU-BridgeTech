@@ -12,9 +12,24 @@ export async function apiFetch(path, options = {}) {
     },
   });
 
+  const text = await res.text();
+
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+    const body = parseJson(text);
+    const error = new Error(
+      body?.message ?? body?.title ?? `Request failed: ${res.status}`,
+    );
+    error.status = res.status;
+    throw error;
   }
 
-  return res.json();
+  return text ? JSON.parse(text) : null;
+}
+
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

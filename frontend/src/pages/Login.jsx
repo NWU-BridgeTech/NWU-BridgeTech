@@ -5,8 +5,7 @@ import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 const Login = ({ team = false }) => {
   const navigate = useNavigate();
@@ -47,9 +46,9 @@ const Login = ({ team = false }) => {
       const response = await fetch(
         `${API_URL}/api/auth/${team ? "team-login" : "login"}`,
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), password }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: identifier.trim(), password }),
         },
       );
       const data = await response.json().catch(() => ({}));
@@ -90,7 +89,7 @@ const Login = ({ team = false }) => {
     } finally {
       setGoogleLoading(false);
     }
-  };
+  }
 
   return (
     <AuthShell
@@ -108,7 +107,11 @@ const Login = ({ team = false }) => {
           ? "Use your instructor or administrator account."
           : "Sign in to continue to your BridgeTech account."}
       </p>
-      {error && <div className="au-alert error" role="alert">{error}</div>}
+      {error && (
+        <div className="au-alert error" role="alert">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleLogin}>
         <div className="au-field">
@@ -150,12 +153,18 @@ const Login = ({ team = false }) => {
           disabled={loading}
           aria-busy={loading}
         >
-          {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
+          {loading ? (
+            <span className="au-spinner" aria-hidden="true" />
+          ) : (
+            "Sign in"
+          )}
         </button>
 
         {!team && (
           <>
-            <div className="au-divider"><span>or</span></div>
+            <div className="au-divider">
+              <span>or</span>
+            </div>
             <div className="au-google">
               {googleLoading ? (
                 <div className="au-google-loading">
@@ -165,7 +174,9 @@ const Login = ({ team = false }) => {
               ) : (
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
-                  onError={() => setError("Google login was cancelled or failed.")}
+                  onError={() =>
+                    setError("Google login was cancelled or failed.")
+                  }
                   text="signin_with"
                   shape="pill"
                 />
@@ -176,10 +187,13 @@ const Login = ({ team = false }) => {
       </form>
 
       {team ? (
-        <p className="au-switch"><Link to="/">Back to BridgeTech</Link></p>
+        <p className="au-switch">
+          <Link to="/">Back to BridgeTech</Link>
+        </p>
       ) : (
         <p className="au-switch">
-          Don&apos;t have an account? <Link to="/signup">Create an account</Link>
+          Don&apos;t have an account?{" "}
+          <Link to="/signup">Create an account</Link>
         </p>
       )}
 
@@ -194,6 +208,5 @@ const Login = ({ team = false }) => {
     </AuthShell>
   );
 };
-
 
 export default Login;
