@@ -20,11 +20,7 @@ export default function ProtectedRoute({ requiredRole }) {
     payload?.role ||
     payload?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-  const roleAllowed = Array.isArray(requiredRole)
-    ? requiredRole.includes(role)
-    : !requiredRole || role === requiredRole;
-
-  if (!payload || !roleAllowed) {
+  if (!payload || (requiredRole && role !== requiredRole)) {
     return <Navigate to="/login" replace />;
   }
 

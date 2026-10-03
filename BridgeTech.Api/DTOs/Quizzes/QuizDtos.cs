@@ -100,7 +100,7 @@ public class UpdateQuizQuestionRequest
     public short? OrderIndex { get; set; }
 }
 
-public class QuizOptionResponse
+public class QuizOptionResponse 
 {
     public Guid OptionId { get; set; }
     public Guid QuestionId { get; set; }

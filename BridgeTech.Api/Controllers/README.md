@@ -4,7 +4,7 @@ WHAT THIS IS: The entry point for every API request. When the frontend calls an 
 
 WHY IT EXISTS SEPARATELY: We keep controllers "thin" on purpose - they should NOT contain business logic (like checking rules, talking to the database, etc). Their only job is: receive the request, call a Service to do the actual work, and return the result. This makes the code easier to test and means multiple people aren't fighting over the same file for different reasons.
 
-One controller per resource: AuthController, UsersController, ModulesController, QuizzesController, ExercisesController, CertificatesController, AiSummariesController.
+One controller per resource: AuthController, UsersController, ModulesController, QuizzesController, ExercisesController, CertificatesController, AiSummariesController, AdminStudentsController, AdministratorsController (see docs/admin-students-administrators.md).
 
 RULES:
 - No business logic here. If you're writing an if-statement that checks a business rule, it belongs in a Service, not here.
