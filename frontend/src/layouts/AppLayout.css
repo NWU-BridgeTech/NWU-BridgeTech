@@ -3,6 +3,7 @@
 }
 
 .app-layout {
+  --bt-footer-height: 65px;
   margin: 0;
   font-family:
     Inter,
@@ -23,11 +24,20 @@
   display: none;
 }
 
-.admin-notification-anchor {
-  position: fixed;
-  top: 20px;
-  right: 32px;
+.app-layout .admin-notification-anchor {
+  position: relative;
   z-index: 30;
+  background: transparent;
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 42px 0;
+}
+
+@media (max-width: 950px) {
+  .app-layout .admin-notification-anchor {
+    margin-right: 22px;
+    margin-left: 22px;
+  }
 }
 
 @media (max-width: 767px) {
@@ -52,8 +62,10 @@
     border: 0;
   }
 
-  .admin-notification-anchor {
+  .app-layout .admin-notification-anchor {
+    position: fixed;
     top: 10px;
     right: 12px;
+    margin: 0;
   }
 }

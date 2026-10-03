@@ -113,11 +113,11 @@ export default function LessonView() {
             <div className="lesson-progress-bar">
               <div
                 className="lesson-progress-fill"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${Math.max(0, progressPercent)}%` }}
               />
             </div>
             <span className="lesson-progress-label">
-              Lesson {lesson.lessonNumber} of {lesson.lessonTotal}
+              Lesson {displayedLesson.lessonNumber || "-"} of {displayedLesson.lessonTotal}
             </span>
           </div>
         </section>
@@ -177,6 +177,7 @@ export default function LessonView() {
                   ? "Take the Quiz"
                   : "Retake the Quiz"}
               </Link>
+              
             </div>
           ) : (
             <span />

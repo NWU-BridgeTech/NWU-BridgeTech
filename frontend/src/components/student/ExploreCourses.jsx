@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../utils/apiClient";
 
-export default function ExploreCourses({onEnrolled}) {
+export default function ExploreCourses({ onEnrolled }) {
   const [availableModules, setAvailableModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,8 +37,9 @@ export default function ExploreCourses({onEnrolled}) {
     return courseText.toLowerCase().includes(query);
   });
 
-  const visibleCourses = showAll ? matchingCourses : matchingCourses.slice(0, 3);
- 
+  const visibleCourses = showAll
+    ? matchingCourses
+    : matchingCourses.slice(0, 3);
 
   let resultsText = "No courses found";
   if (matchingCourses.length > 0) {
@@ -69,7 +70,6 @@ export default function ExploreCourses({onEnrolled}) {
         prev.filter((m) => m.moduleId !== moduleId),
       );
       courseDetailsDialog.current?.close();
-      window.dispatchEvent(new Event("notifications-changed"));
       onEnrolled?.();
     } catch (err) {
       alert("Could not enroll: " + err.message);
@@ -85,7 +85,8 @@ export default function ExploreCourses({onEnrolled}) {
           <h2 id="explore-courses">Explore courses</h2>
         </div>
         <p className="explore-intro">
-          Build your next skill. Find a course that fits your interests and experience.
+          Build your next skill. Find a course that fits your interests and
+          experience.
         </p>
 
         <div className="explore-tools">

@@ -1,25 +1,204 @@
 using BridgeTech.Api.Data;
+using BridgeTech.Api.Domain.Entities;
+using BridgeTech.Api.Domain.Enums;
+using BridgeTech.Api.DTOs.Users;
+using BridgeTech.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using BridgeTech.Api.Services.Notifications;
-using BridgeTech.Api.DTOs.Auth;
-using BridgeTech.Api.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
 [Authorize]
-[Authorize]
 // Provides safe, read-only user profiles for administrative and learning views.
 public class UsersController(
     AppDbContext dbContext,
-    INotificationService notificationService,
-    IPasswordHasher<User> passwordHasher) : ControllerBase
+    IPasswordHasher<User> passwordHasher,
+    IEmailService emailService,
+    IAuthService authService,
+    IConfiguration configuration,
+    ILogger<UsersController> logger) : ControllerBase
 {
+    [HttpGet("staff")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> GetStaff(CancellationToken cancellationToken)
+    {
+        var staff = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.Role != UserRole.Student)
+            .OrderBy(user => user.LastName)
+            .ThenBy(user => user.FirstName)
+            .Select(user => new
+            {
+                user.UserId,
+                user.Username,
+                user.FirstName,
+                user.LastName,
+                user.Email,
+                Role = user.Role.ToString(),
+                user.AccountSetupRequired
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(staff);
+    }
+
+    [HttpPost("staff")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateStaff(
+        CreateStaffUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var role = request.Role.Trim() switch
+        {
+            "Instructor" => UserRole.Instructor,
+            "Admin" => UserRole.Admin,
+            "SuperAdmin" => UserRole.SuperAdmin,
+            _ => (UserRole?)null
+        };
+
+        if (role is null)
+        {
+            return BadRequest(new { message = "Choose a valid staff role." });
+        }
+
+        if (role == UserRole.SuperAdmin && !User.IsInRole(nameof(UserRole.SuperAdmin)))
+        {
+            return Forbid();
+        }
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        if (await dbContext.Users.AnyAsync(
+                user => user.Email.ToLower() == email,
+                cancellationToken))
+        {
+            return Conflict(new { message = "An account with this email already exists." });
+        }
+
+        var emailName = email.Split('@')[0];
+        var usernameBase = new string(emailName
+            .ToLowerInvariant()
+            .Where(char.IsLetterOrDigit)
+            .ToArray());
+        if (usernameBase.Length < 3)
+        {
+            usernameBase = new string($"{request.FirstName}{request.LastName}"
+                .ToLowerInvariant()
+                .Where(char.IsLetterOrDigit)
+                .ToArray());
+        }
+        usernameBase = usernameBase[..Math.Min(usernameBase.Length, 40)];
+        if (usernameBase.Length < 3)
+        {
+            usernameBase = $"staff{Guid.NewGuid():N}"[..15];
+        }
+
+        var username = usernameBase;
+        var suffix = 1;
+        while (await dbContext.Users.AnyAsync(
+                   user => user.Username.ToLower() == username.ToLower(),
+                   cancellationToken))
+        {
+            var suffixText = (suffix++).ToString();
+            username = $"{usernameBase[..Math.Min(usernameBase.Length, 50 - suffixText.Length)]}{suffixText}";
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var user = new User
+        {
+            UserId = Guid.NewGuid(),
+            Username = username,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Email = email,
+            PasswordHash = string.Empty,
+            Role = role.Value,
+            CreatedAt = now,
+            UpdatedAt = now,
+            EmailVerified = false,
+            AccountSetupRequired = true
+        };
+        var initialPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+        user.PasswordHash = passwordHasher.HashPassword(user, initialPassword);
+
+        dbContext.Users.Add(user);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "An account with this email or username already exists." });
+        }
+
+        var invitationSent = await SendStaffInvitationAsync(user, cancellationToken);
+
+        return CreatedAtAction(nameof(GetUser), new { userId = user.UserId }, new
+        {
+            user.UserId,
+            user.Username,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            Role = user.Role.ToString(),
+            user.AccountSetupRequired,
+            InvitationSent = invitationSent
+        });
+    }
+
+    [HttpPost("staff/{userId:guid}/invitation")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> ResendStaffInvitation(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var user = await dbContext.Users.FirstOrDefaultAsync(
+            candidate => candidate.UserId == userId && candidate.Role != UserRole.Student,
+            cancellationToken);
+        if (user is null) return NotFound();
+        if (!user.AccountSetupRequired)
+        {
+            return Conflict(new { message = "This team account is already active." });
+        }
+
+        var invitationSent = await SendStaffInvitationAsync(user, cancellationToken);
+        return Ok(new { invitationSent });
+    }
+
+    private async Task<bool> SendStaffInvitationAsync(
+        User user,
+        CancellationToken cancellationToken)
+    {
+        var invitationToken = await authService.CreateStaffInvitationTokenAsync(
+            user.UserId,
+            cancellationToken);
+        var frontendUrl = configuration["FrontendUrl"]
+            ?? configuration["GitHub:FrontendUrl"]
+            ?? "http://localhost:5173";
+        var invitationUrl =
+            $"{frontendUrl.TrimEnd('/')}/accept-invitation?token={Uri.EscapeDataString(invitationToken)}";
+
+        try
+        {
+            await emailService.SendStaffInvitationAsync(
+                user.Email,
+                user.FirstName,
+                invitationUrl,
+                cancellationToken);
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogError(exception, "Staff invitation could not be sent to {Email}.", user.Email);
+            return false;
+        }
+    }
+
     [HttpGet("me"), Authorize]
     public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
     {
@@ -31,11 +210,7 @@ public class UsersController(
             candidate.FirstName,
             candidate.LastName,
             candidate.Email,
-            candidate.PhoneNumber,
-            candidate.Address,
-            candidate.University,
             candidate.GithubUsername,
-            candidate.AccountSetupRequired,
             candidate.Role,
             candidate.EmailVerified,
             UnreadNotificationCount = candidate.Notifications.Count(notification => !notification.IsRead),
@@ -43,82 +218,6 @@ public class UsersController(
             CertificatesEarned = candidate.Certificates.Count()
         }).SingleOrDefaultAsync(cancellationToken);
         return user is null ? NotFound() : Ok(user);
-    }
-
-    [HttpPut("me")]
-    public async Task<IActionResult> UpdateCurrentUser(
-        UpdateProfileRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
-
-        var user = await dbContext.Users.SingleOrDefaultAsync(
-            candidate => candidate.UserId == userId,
-            cancellationToken);
-        if (user is null) return NotFound();
-
-        var email = request.Email.Trim();
-        var emailInUse = await dbContext.Users.AnyAsync(
-            candidate => candidate.UserId != userId && candidate.Email == email,
-            cancellationToken);
-        if (emailInUse) return Conflict(new { message = "Email is already in use." });
-
-        user.FirstName = request.FirstName.Trim();
-        user.LastName = request.LastName.Trim();
-        user.Email = email;
-        user.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
-        user.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
-        user.University = string.IsNullOrWhiteSpace(request.University) ? null : request.University.Trim();
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return NoContent();
-    }
-
-    [HttpPost("me/password")]
-    public async Task<IActionResult> ChangePassword(
-        ChangePasswordRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
-
-        var user = await dbContext.Users.SingleOrDefaultAsync(
-            candidate => candidate.UserId == userId,
-            cancellationToken);
-        if (user is null) return NotFound();
-
-        var passwordResult = passwordHasher.VerifyHashedPassword(
-            user,
-            user.PasswordHash,
-            request.CurrentPassword);
-        if (passwordResult == PasswordVerificationResult.Failed)
-            return BadRequest(new { message = "Current password is incorrect." });
-
-        user.PasswordHash = passwordHasher.HashPassword(user, request.NewPassword);
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return NoContent();
-    }
-
-    [HttpPost("me/setup/complete")]
-    public async Task<IActionResult> CompleteAccountSetup(CancellationToken cancellationToken)
-    {
-        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Unauthorized();
-
-        var user = await dbContext.Users.SingleOrDefaultAsync(candidate => candidate.UserId == userId, cancellationToken);
-        if (user is null) return NotFound();
-
-        user.AccountSetupRequired = false;
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await notificationService.NotifyAsync(
-            user.UserId,
-            "account_setup_completed",
-            "Account setup complete",
-            "Your BridgeTech workspace is ready.",
-            cancellationToken: cancellationToken);
-        return NoContent();
     }
 
     [HttpGet]

@@ -266,6 +266,15 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<short>("DurationMinutes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("duration_minutes");
+
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
@@ -275,6 +284,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("smallint")
                         .HasDefaultValue((short)0)
                         .HasColumnName("order_index");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
+                        .HasColumnName("status");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -354,11 +367,19 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<short>("Level")
+                        .HasColumnType("smallint")
+                        .HasColumnName("level");
+
                     b.Property<short>("OrderIndex")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("smallint")
                         .HasDefaultValue((short)0)
                         .HasColumnName("order_index");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
+                        .HasColumnName("status");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -536,6 +557,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<Guid?>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
@@ -552,6 +577,9 @@ namespace BridgeTech.Api.Migrations
 
                     b.HasKey("QuizId")
                         .HasName("pk_quizzes");
+
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_quizzes_lesson_id");
 
                     b.HasIndex("ModuleId")
                         .HasDatabaseName("ix_quizzes_module_id");
@@ -1045,12 +1073,19 @@ namespace BridgeTech.Api.Migrations
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Quiz", b =>
                 {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .HasConstraintName("fk_quizzes_lessons_lesson_id");
+
                     b.HasOne("BridgeTech.Api.Domain.Entities.Module", "Module")
                         .WithMany("Quizzes")
                         .HasForeignKey("ModuleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_quizzes_modules_module_id");
+
+                    b.Navigation("Lesson");
 
                     b.Navigation("Module");
                 });

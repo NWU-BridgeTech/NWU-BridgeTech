@@ -1,119 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
-import "./SignUp.css";
-
-function BridgeMark() {
-  return (
-    <svg
-      viewBox="0 0 520 300"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="0"
-        y1="230"
-        x2="520"
-        y2="230"
-        stroke="#f3f1ea"
-        strokeWidth="2"
-        style={{ animationDelay: "0s" }}
-      />
-
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="90"
-        y1="230"
-        x2="90"
-        y2="10"
-        stroke="#f3f1ea"
-        strokeWidth="3"
-        style={{ animationDelay: ".25s" }}
-      />
-
-      <line
-        className="bm-line"
-        pathLength="1"
-        x1="330"
-        y1="230"
-        x2="330"
-        y2="10"
-        stroke="#f3f1ea"
-        strokeWidth="3"
-        style={{ animationDelay: ".35s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M0 230 C 90 60, 90 60, 210 230"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".5s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M210 230 C 330 30, 330 30, 450 230"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".6s" }}
-      />
-
-      <path
-        className="bm-line"
-        pathLength="1"
-        d="M450 230 C 470 150, 500 120, 520 100"
-        stroke="#f3f1ea"
-        strokeWidth="1.4"
-        style={{ animationDelay: ".7s" }}
-      />
-
-      {Array.from({ length: 11 }).map((_, i) => {
-        const x = 20 + i * 19;
-
-        return (
-          <line
-            className="bm-line"
-            pathLength="1"
-            key={`a${x}`}
-            x1={x}
-            y1="230"
-            x2={x}
-            y2={230 - Math.max(6, 150 - Math.abs(x - 90) * 1.35)}
-            stroke="#f3f1ea"
-            strokeWidth="1"
-            style={{ animationDelay: `${0.85 + i * 0.03}s` }}
-          />
-        );
-      })}
-
-      {Array.from({ length: 12 }).map((_, i) => {
-        const x = 240 + i * 19;
-
-        return (
-          <line
-            className="bm-line"
-            pathLength="1"
-            key={`b${x}`}
-            x1={x}
-            y1="230"
-            x2={x}
-            y2={230 - Math.max(6, 200 - Math.abs(x - 330) * 1.35)}
-            stroke="#f3f1ea"
-            strokeWidth="1"
-            style={{ animationDelay: `${1.2 + i * 0.03}s` }}
-          />
-        );
-      })}
-    </svg>
-  );
-}
+import AuthShell, { PasswordInput } from "../components/AuthShell";
+import { PHOTOS } from "../components/authPhotos";
 
 const initialForm = {
   name: "",
@@ -124,38 +14,75 @@ const initialForm = {
 };
 
 const signupDraftKey = "bridgetech-signup-draft";
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const OFFLINE_MSG =
+  "Unable to connect to the server. Please make sure the backend is running.";
+
+async function post(path, body) {
+  const response = await fetch(`${API_URL}/api/auth/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  let data = {};
+  try {
+    const type = response.headers.get("content-type") || "";
+    if (type.toLowerCase().includes("application/json")) {
+      data = await response.json();
+    }
+  } catch (error) {
+    console.error("Failed to parse server response:", error);
+  }
+
+  return { response, data };
+}
+
+function Field({ id, label, error, hint, children }) {
+  return (
+    <div className="au-field">
+      <label htmlFor={id}>{label}</label>
+      {children}
+      {error ? (
+        <p className="au-error" id={`${id}-error`}>
+          {error}
+        </p>
+      ) : (
+        hint && (
+          <p className="au-hint" id={`${id}-hint`}>
+            {hint}
+          </p>
+        )
+      )}
+    </div>
+  );
+}
 
 export default function SignUpPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(() => {
     try {
-      const savedForm = sessionStorage.getItem(signupDraftKey);
-
-      return savedForm
-        ? { ...initialForm, ...JSON.parse(savedForm) }
-        : initialForm;
+      const saved = sessionStorage.getItem(signupDraftKey);
+      return saved ? { ...initialForm, ...JSON.parse(saved) } : initialForm;
     } catch {
       return initialForm;
     }
   });
-
   const [errors, setErrors] = useState({});
-  const [showPw, setShowPw] = useState(false);
-  const [submitted] = useState(false);
-  const [photoFailed, setPhotoFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [verification, setVerification] = useState(null);
+  const [showPw, setShowPw] = useState(false);
 
   useEffect(() => {
-    const safeDraft = {
-      name: form.name,
-      email: form.email,
-      agree: form.agree,
-    };
-
     try {
-      sessionStorage.setItem(signupDraftKey, JSON.stringify(safeDraft));
+      sessionStorage.setItem(
+        signupDraftKey,
+        JSON.stringify({
+          name: form.name,
+          email: form.email,
+          agree: form.agree,
+        }),
+      );
     } catch (error) {
       console.error("Failed to save signup draft:", error);
     }
@@ -165,69 +92,85 @@ export default function SignUpPage() {
     form.confirmPassword.length > 0 && form.confirmPassword !== form.password;
 
   function update(field, value) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }));
-
+    setForm((current) => ({ ...current, [field]: value }));
     if (errors[field] || errors.submit) {
-      setErrors((currentErrors) => {
-        const nextErrors = { ...currentErrors };
-
-        delete nextErrors[field];
-        delete nextErrors.submit;
-
-        return nextErrors;
+      setErrors((current) => {
+        const next = { ...current };
+        delete next[field];
+        delete next.submit;
+        return next;
       });
     }
   }
 
   function validate() {
     const next = {};
-
-    if (!form.name.trim()) {
-      next.name = "Enter your full name.";
-    }
-
+    if (!form.name.trim()) next.name = "Enter your full name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       next.email = "Enter a valid email address.";
     }
-
-    if (form.password.length < 8) {
-      next.password = "Use at least 8 characters.";
-    }
-
+    if (form.password.length < 8) next.password = "Use at least 8 characters.";
     if (form.confirmPassword !== form.password) {
       next.confirmPassword = "Passwords don't match.";
     }
-
-    if (!form.agree) {
-      next.agree = "You need to agree to continue.";
-    }
-
+    if (!form.agree) next.agree = "You need to agree to continue.";
     return next;
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  function saveUser(data) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        userId: data.userId,
+        username: data.username,
+        email: data.email,
+        role: data.role,
+      }),
+    );
+  }
 
-    if (isLoading) {
+  async function handleGoogleSignup(credentialResponse) {
+    if (!credentialResponse?.credential) {
+      setErrors({ submit: "Google signup could not be completed." });
       return;
     }
+    if (isLoading) return;
+
+    setIsLoading(true);
+    setErrors({});
+    try {
+      const { response, data } = await post("google-signup", {
+        credential: credentialResponse.credential,
+      });
+      if (!response.ok) {
+        setErrors({ submit: data.message || "Unable to sign up with Google." });
+        return;
+      }
+
+      saveUser(data);
+      sessionStorage.removeItem(signupDraftKey);
+      navigate("/home");
+    } catch (error) {
+      console.error("Google signup error:", error);
+      setErrors({ submit: OFFLINE_MSG });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (isLoading) return;
 
     const next = validate();
-
     setErrors(next);
-
-    if (Object.keys(next).length !== 0) {
-      return;
-    }
+    if (Object.keys(next).length !== 0) return;
 
     const nameParts = form.name.trim().split(/\s+/);
-
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(" ") || firstName;
-
     const username = form.email
       .split("@")[0]
       .replace(/[^a-zA-Z0-9._-]/g, "")
@@ -244,71 +187,49 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     setErrors({});
-
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          firstName,
-          lastName,
-          email: form.email,
-          password: form.password,
-        }),
+      const { response, data } = await post("register", {
+        username,
+        firstName,
+        lastName,
+        email: form.email.trim(),
+        password: form.password,
       });
 
-      let data = {};
-
-      try {
-        const contentType = response.headers.get("content-type");
-
-        if (
-          contentType &&
-          contentType.toLowerCase().includes("application/json")
-        ) {
-          data = await response.json();
-        }
-      } catch (error) {
-        console.error("Failed to parse server response:", error);
-      }
-
       if (!response.ok) {
-        setErrors({
-          submit: data.message || "Unable to create your account.",
-        });
-
+        setErrors({ submit: data.message || "Unable to create your account." });
         return;
       }
-
       if (!data.verificationExpiresAt) {
         setErrors({
           submit:
             "The server did not return a verification expiry. Please try again.",
         });
-
         return;
       }
+
       setVerification({
-        email: form.email,
+        email: form.email.trim(),
         expiresAt: data.verificationExpiresAt,
       });
     } catch (error) {
       console.error("Signup error:", error);
-
-      setErrors({
-        submit:
-          "Unable to connect to the server. Please make sure the backend is running.",
-      });
+      setErrors({ submit: OFFLINE_MSG });
     } finally {
       setIsLoading(false);
     }
   }
 
+  const describe = (id, hasError, hasHint) =>
+    hasError ? `${id}-error` : hasHint ? `${id}-hint` : undefined;
+
   return (
-    <div className="bt">
+    <AuthShell
+      wide
+      photo={PHOTOS.signup}
+      title="Build skills for the work ahead."
+      text="Work through tracks and keep a record of what you've practised."
+    >
       {verification && (
         <VerificationModal
           email={verification.email}
@@ -316,7 +237,7 @@ export default function SignUpPage() {
           onClose={() => setVerification(null)}
           onVerified={() => {
             sessionStorage.removeItem(signupDraftKey);
-            window.location.href = "/home";
+            navigate("/home");
           }}
         />
       )}
@@ -501,30 +422,24 @@ export default function SignUpPage() {
           </form>
         </div>
 
-        <figure className="su-photo">
-          {!photoFailed ? (
-            <img
-              src="https://images.unsplash.com/photo-1478191696214-796b65712719?auto=format&fit=crop&w=1200&q=85"
-              alt="A steel arch bridge over calm water under a blue sky"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              onError={() => setPhotoFailed(true)}
-            />
-          ) : (
-            <div className="su-photo-fallback" aria-hidden="true" />
-          )}
+        <div className="au-google">
+          <GoogleLogin
+            onSuccess={handleGoogleSignup}
+            onError={() => {
+              if (!isLoading) {
+                setErrors({ submit: "Google signup was cancelled or failed." });
+              }
+            }}
+            useOneTap={false}
+            text="signup_with"
+            shape="pill"
+          />
+        </div>
 
-          <div className="su-mark" aria-hidden="true">
-            <BridgeMark />
-          </div>
-
-          <div className="su-photo-copy">
-            <p className="eyebrow">BridgeTech</p>
-
-            <h2>Build Skills for the work ahead</h2>
-          </div>
-        </figure>
+        <p className="au-switch">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
       </main>
-    </div>
+    </AuthShell>
   );
 }
