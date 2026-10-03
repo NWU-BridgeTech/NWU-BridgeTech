@@ -58,7 +58,7 @@ public class QuizService : IQuizService
             .OrderBy(_ => Random.Shared.Next())
             .ToList();
 
-
+       
         for (short i = 0; i < question.Options.Count; i++)
         {
             question.Options[i].OrderIndex = i;
@@ -166,7 +166,7 @@ public class QuizService : IQuizService
     var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
     if (quiz is null) return null;
 
-
+    
     var existing = await _context.QuizAttempts
         .Where(a => a.UserId == userId && a.QuizId == quiz.QuizId && a.CompletedAt == null)
         .OrderByDescending(a => a.StartedAt)
@@ -213,7 +213,7 @@ public class QuizService : IQuizService
         .FirstOrDefaultAsync(a => a.AttemptId == request.AttemptId.Value && a.UserId == userId, cancellationToken);
 
     if (attempt is null) return null;
-    if (attempt.CompletedAt is not null) return null;
+    if (attempt.CompletedAt is not null) return null; 
 
     int correct = 0;
     var answeredQuestions = new HashSet<Guid>();
@@ -222,7 +222,7 @@ public class QuizService : IQuizService
     foreach (var answerReq in request.Answers)
     {
         if (answerReq.QuestionId is null || answerReq.OptionId is null) continue;
-        if (!answeredQuestions.Add(answerReq.QuestionId.Value)) continue;
+        if (!answeredQuestions.Add(answerReq.QuestionId.Value)) continue; 
 
         var question = attempt.Quiz.Questions.FirstOrDefault(q => q.QuestionId == answerReq.QuestionId.Value);
         if (question is null) continue;
@@ -242,7 +242,7 @@ public class QuizService : IQuizService
         });
     }
 
-
+    
     int totalQuestions = attempt.Quiz.Questions.Count;
     int percent = totalQuestions == 0 ? 0 : (int)Math.Round(correct * 100.0 / totalQuestions);
 

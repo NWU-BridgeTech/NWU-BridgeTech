@@ -38,6 +38,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.GithubRepository).HasMaxLength(200);
         builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Role).HasConversion<short>().IsRequired();
+        builder.Property(x => x.IsActive).IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasIndex(x => x.Email).IsUnique();
@@ -65,8 +66,6 @@ internal sealed class ModuleConfiguration : IEntityTypeConfiguration<Module>
         EntityConfigurationHelpers.ConfigureId(builder, "modules", nameof(Module.ModuleId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
-        builder.Property(x => x.Level).HasConversion<short>().IsRequired();
-        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasIndex(x => x.OrderIndex);
@@ -81,9 +80,6 @@ internal sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         EntityConfigurationHelpers.ConfigureId(builder, "lessons", nameof(Lesson.LessonId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
-        builder.Property(x => x.Description).HasMaxLength(500);
-        builder.Property(x => x.DurationMinutes).IsRequired();
-        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasOne(x => x.Module).WithMany(x => x.Lessons).HasForeignKey(x => x.ModuleId).OnDelete(DeleteBehavior.Cascade);

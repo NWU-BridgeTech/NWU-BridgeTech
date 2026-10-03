@@ -23,16 +23,16 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         foreach (var e in enrollments)
         {
             var lessonsTotal = await context.Lessons
-                .CountAsync(l => l.ModuleId == e.ModuleId && l.Status == ContentStatus.Published, cancellationToken);
+                .CountAsync(l => l.ModuleId == e.ModuleId, cancellationToken);
 
             var completedLessonIds = await context.LessonProgress
                 .Include(p => p.Lesson)
-                .Where(p => p.UserId == userId && p.Completed && p.Lesson.ModuleId == e.ModuleId && p.Lesson.Status == ContentStatus.Published)
+                .Where(p => p.UserId == userId && p.Completed && p.Lesson.ModuleId == e.ModuleId)
                 .Select(p => p.LessonId)
                 .ToListAsync(cancellationToken);
 
             var nextLesson = await context.Lessons
-                .Where(l => l.ModuleId == e.ModuleId && !completedLessonIds.Contains(l.LessonId) && l.Status == ContentStatus.Published)
+                .Where(l => l.ModuleId == e.ModuleId && !completedLessonIds.Contains(l.LessonId))
                 .OrderBy(l => l.OrderIndex)
                 .Select(l => new { l.LessonId, l.Title })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -60,7 +60,7 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         Guid userId, Guid moduleId, CancellationToken cancellationToken)
     {
         var moduleExists = await context.Modules
-            .AnyAsync(m => m.ModuleId == moduleId && m.Status == ContentStatus.Published, cancellationToken);
+            .AnyAsync(m => m.ModuleId == moduleId, cancellationToken);
 
         if (!moduleExists)
         {
@@ -89,9 +89,9 @@ public class EnrollmentService(AppDbContext context) : IEnrollmentService
         await context.SaveChangesAsync(cancellationToken);
 
         var module = await context.Modules.FirstAsync(m => m.ModuleId == moduleId, cancellationToken);
-        var lessonsTotal = await context.Lessons.CountAsync(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published, cancellationToken);
+        var lessonsTotal = await context.Lessons.CountAsync(l => l.ModuleId == moduleId, cancellationToken);
         var firstLesson = await context.Lessons
-            .Where(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published)
+            .Where(l => l.ModuleId == moduleId)
             .OrderBy(l => l.OrderIndex)
             .Select(l => new { l.LessonId, l.Title })
             .FirstOrDefaultAsync(cancellationToken);

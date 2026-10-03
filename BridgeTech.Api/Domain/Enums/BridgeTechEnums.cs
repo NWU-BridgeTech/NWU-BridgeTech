@@ -6,7 +6,8 @@ public enum UserRole : short
     Student = 0,
     Instructor = 1,
     Admin = 2,
-    SuperAdmin = 3
+    SuperAdmin = 3,
+    Reviewer = 4
 }
 
 // Identifies how a quiz question expects students to answer.
@@ -39,20 +40,4 @@ public enum EnrollmentStatus : short
     Active = 0,
     Completed = 1,
     Dropped = 2
-}
-
-
-//Controls whether a module or lesson is visible to students.
-public enum ContentStatus : short
-{
-    Draft = 0,
-    Published = 1
-}
-
-//Difficulty level shown on the admin Modules page.
-public enum ModuleLevel : short
-{
-    Beginner = 0,
-    Intermediate = 1,
-    Advanced = 2
 }

@@ -19,6 +19,12 @@ public class User
     public string? GithubRepository { get; set; }
     public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
+
+    // Deactivated accounts keep their history but can no longer sign in.
+    public bool IsActive { get; set; } = true;
+
+    // Updated on every successful sign-in or token refresh; drives "last active" in the admin area.
+    public DateTimeOffset? LastLoginAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool EmailVerified { get; set; }

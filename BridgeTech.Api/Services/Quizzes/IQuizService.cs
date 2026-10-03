@@ -14,5 +14,5 @@ public interface IQuizService
     Task<QuizAttemptResponse?> SubmitAttemptAsync(Guid userId, SubmitQuizAttemptRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<QuizAttemptSummaryResponse>> GetMyAttemptsAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<QuizRetakeResponse>> GetQuizzesToRetakeAsync(Guid userId, CancellationToken cancellationToken = default);
-
+    
 }
