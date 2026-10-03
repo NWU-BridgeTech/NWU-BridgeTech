@@ -33,7 +33,12 @@ public sealed class CertificateService(
 
         var user = await db.Users.AsNoTracking().SingleAsync(x => x.UserId == userId, ct);
         var module = await db.Modules.AsNoTracking().SingleAsync(x => x.ModuleId == moduleId, ct);
-        var issuedAt = DateTimeOffset.UtcNow;
+        var completedAt = await db.Enrollments
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.ModuleId == moduleId)
+            .Select(x => x.CompletedAt)
+            .SingleOrDefaultAsync(ct);
+        var issuedAt = completedAt ?? DateTimeOffset.UtcNow;
         var certificate = new Certificate
         {
             CertificateId = Guid.NewGuid(),

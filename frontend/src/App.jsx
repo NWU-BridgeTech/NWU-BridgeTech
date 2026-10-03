@@ -11,6 +11,8 @@ import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
 import StudentNotifications from "./pages/StudentNotifications";
+import StudentBadges from "./pages/StudentBadges";
+<Route path="/student/badges" element={<StudentBadges />} />;
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -24,6 +26,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import SignOut from "./pages/SignOut";
 import Quizzes from "./pages/Quizzes";
 import QuizzRunner from "./pages/QuizzRunner";
 import TeamArea from "./pages/TeamArea";
@@ -44,6 +47,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/accept-invitation" element={<AcceptInvitation />} />
+        <Route path="/signout" element={<SignOut />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
 

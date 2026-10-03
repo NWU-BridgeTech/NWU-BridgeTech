@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BridgeTech.Api.Common.Options;
+using BridgeTech.Api.DTOs.GitHub;
 using BridgeTech.Api.Services.GitHub;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,28 @@ public sealed class GitHubController : ControllerBase
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             return Unauthorized();
 
-        return Ok(new { username = await _githubService.GetUsernameAsync(userId, cancellationToken) });
+        return Ok(new
+        {
+            username = await _githubService.GetUsernameAsync(userId, cancellationToken),
+            repository = await _githubService.GetRepositoryAsync(userId, cancellationToken),
+            repositories = await _githubService.GetRepositoriesAsync(userId, cancellationToken)
+        });
+    }
+
+    [Authorize]
+    [HttpPut("repository")]
+    public async Task<IActionResult> LinkRepository(
+        [FromBody] LinkGitHubRepositoryRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        var repository = await _githubService.LinkRepositoryAsync(
+            userId, request.FullName, cancellationToken);
+        return repository is null
+            ? NotFound(new { message = "That repository is not available to your connected GitHub account." })
+            : Ok(new { repository });
     }
 
     [AllowAnonymous]
