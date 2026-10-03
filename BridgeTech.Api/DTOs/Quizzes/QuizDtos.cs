@@ -100,7 +100,7 @@ public class UpdateQuizQuestionRequest
     public short? OrderIndex { get; set; }
 }
 
-public class QuizOptionResponse //for student view
+public class QuizOptionResponse
 {
     public Guid OptionId { get; set; }
     public Guid QuestionId { get; set; }
@@ -190,4 +190,25 @@ public class QuizAnswerResponse
     public Guid QuestionId { get; set; }
     public Guid OptionId { get; set; }
     public bool IsCorrect { get; set; }
+}
+public class QuizAttemptSummaryResponse
+{
+    public Guid AttemptId { get; set; }
+    public Guid QuizId { get; set; }
+    public string QuizTitle { get; set; } = string.Empty;
+    public short Score { get; set; }
+    public short PassingScore { get; set; }
+    public bool Passed { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+    public DateTimeOffset CompletedAt { get; set; }
+}
+
+public class QuizRetakeResponse
+{
+    public Guid QuizId { get; set; }
+    public Guid ModuleId { get; set; }
+    public string ModuleTitle { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public short LastScore { get; set; }
+    public short PassingScore { get; set; }
 }

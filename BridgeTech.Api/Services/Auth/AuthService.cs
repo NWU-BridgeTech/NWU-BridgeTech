@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -9,7 +10,6 @@ using BridgeTech.Api.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
-using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Auth;
 
@@ -20,22 +20,19 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
-    private readonly INotificationService _notificationService;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IPasswordHasher<User> passwordHasher,
         IEmailService emailService,
-        ILogger<AuthService> logger,
-        INotificationService notificationService)
+        ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
-        _notificationService = notificationService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -81,7 +78,6 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
-            AccountSetupRequired = false,
             CreatedAt = DateTimeOffset.UtcNow,
             VerificationCode = GenerateCode(),
             VerificationCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
@@ -103,8 +99,169 @@ public class AuthService : IAuthService
             VerificationExpiresAt = pendingRegistration.VerificationCodeExpiresAt
         };
     }
+    public async Task<AuthResponse> GoogleSignupAsync(GoogleSignupRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google signup credential is required.");
+        }
+        string? googleClientId =
+            _configuration["Google:ClientId"];
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload =
+                await GoogleJsonWebSignature.ValidateAsync(
+                    request.Credential,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { googleClientId }
+                    });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException("Invalid Google signup credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException("The Google account email could not be verified.");
+        }
+
+        string email = payload.Email.Trim();
+
+        bool emailExists = await _context.Users
+            .AnyAsync(
+                u => u.Email == email,
+                cancellationToken);
+
+        if (emailExists)
+        {
+            throw new InvalidOperationException(
+                "An account with this Google email already exists. Please log in instead.");
+        }
+
+        bool pendingEmailExists =
+            await _context.PendingRegistrations
+                .AnyAsync(
+                    x => x.Email == email,
+                    cancellationToken);
+
+        if (pendingEmailExists)
+        {
+            throw new InvalidOperationException("A signup for this Google email is already waiting for verification. Check your email for the verification code.");
+        }
+
+        string firstName =
+            !string.IsNullOrWhiteSpace(payload.GivenName)
+                ? payload.GivenName
+                : "BridgeTech";
+
+        string lastName =
+            !string.IsNullOrWhiteSpace(payload.FamilyName)
+                ? payload.FamilyName
+                : "User";
+
+        string baseUsername =
+            email
+                .Split('@')[0]
+                .Replace(".", "")
+                .Replace("+", "")
+                .Replace("-", "")
+                .Replace("_", "");
+
+        baseUsername = new string(baseUsername.Where(char.IsLetterOrDigit).ToArray());
+
+        if (baseUsername.Length < 3)
+        {
+            baseUsername = "user";
+        }
+
+        if (baseUsername.Length > 50)
+        {
+            baseUsername = baseUsername[..50];
+        }
+
+        string username = baseUsername;
+        int usernameNumber = 1;
+
+        while (
+            await _context.Users.AnyAsync(u => u.Username == username, cancellationToken)
+            ||
+            await _context.PendingRegistrations.AnyAsync(x => x.Username == username, cancellationToken))
+        {
+            string suffix = usernameNumber.ToString();
+
+            int maxBaseLength = 50 - suffix.Length;
+
+            string shortenedBase =
+                baseUsername.Length > maxBaseLength
+                    ? baseUsername[..maxBaseLength]
+                    : baseUsername;
+
+            username =
+                $"{shortenedBase}{suffix}";
+
+            usernameNumber++;
+        }
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string temporaryPassword =
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        var user = new User
+        {
+            UserId = Guid.NewGuid(),
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            PasswordHash = _passwordHasher.HashPassword(null!, temporaryPassword),
+            GithubUsername = null,
+            Role = UserRole.Student,
+            CreatedAt = now,
+            UpdatedAt = now,
+            EmailVerified = true
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = now.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
+
+    public Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+        => AuthenticateAsync(request, teamLogin: false, cancellationToken);
+
+    public Task<AuthResponse> LoginTeamAsync(LoginRequest request, CancellationToken cancellationToken = default)
+        => AuthenticateAsync(request, teamLogin: true, cancellationToken);
+
+    private async Task<AuthResponse> AuthenticateAsync(
+        LoginRequest request,
+        bool teamLogin,
+        CancellationToken cancellationToken)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
@@ -113,36 +270,44 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            var pendingRegistration = await _context.PendingRegistrations
-                .FirstOrDefaultAsync(registration =>
-                    registration.Username == request.Identifier ||
-                    registration.Email == request.Identifier, cancellationToken);
-
-            if (pendingRegistration is null ||
-                !VerifyPassword(request.Password, pendingRegistration.PasswordHash))
-            {
-                throw InvalidCredentials();
-            }
-
-            var pendingException = new UnauthorizedAccessException(
-                "Email verification is required.");
-            pendingException.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            pendingException.Data["Email"] = pendingRegistration.Email;
-            pendingException.Data["VerificationExpiresAt"] = pendingRegistration.VerificationCodeExpiresAt;
-            throw pendingException;
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
         }
 
         if (!VerifyPassword(request.Password, user.PasswordHash))
         {
-            throw InvalidCredentials();
+            throw new UnauthorizedAccessException(
+                "Invalid username/email or password.");
+        }
+
+        if (teamLogin && user.AccountSetupRequired)
+        {
+            var exception = new UnauthorizedAccessException(
+                "Accept the invitation sent to your email and set a password before signing in.");
+            exception.Data["Code"] = "ACCOUNT_SETUP_REQUIRED";
+            throw exception;
+        }
+
+        if (!teamLogin && user.Role != UserRole.Student)
+        {
+            var exception = new UnauthorizedAccessException(
+                "Staff accounts must sign in through Team Login.");
+            exception.Data["Code"] = "TEAM_LOGIN_REQUIRED";
+            throw exception;
         }
 
         if (!user.EmailVerified)
         {
-            var exception = new UnauthorizedAccessException("Email verification is required.");
-            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
-            exception.Data["Email"] = user.Email;
-            exception.Data["VerificationExpiresAt"] = user.VerificationCodeExpiresAt;
+            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
+            throw exception;
+        }
+
+        if (teamLogin && user.Role is not (
+            UserRole.Instructor or UserRole.Admin or UserRole.SuperAdmin))
+        {
+            var exception = new UnauthorizedAccessException(
+                "Team Login is available to authorized staff accounts.");
+            exception.Data["Code"] = "TEAM_ACCESS_DENIED";
             throw exception;
         }
 
@@ -158,6 +323,90 @@ public class AuthService : IAuthService
             Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
+        };
+    }
+    public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request,CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Credential))
+        {
+            throw new UnauthorizedAccessException(
+                "Google login credential is required.");
+        }
+
+        string? googleClientId = _configuration["Google:ClientId"];
+
+        if (string.IsNullOrWhiteSpace(googleClientId))
+        {
+            throw new InvalidOperationException(
+                "Google Client ID is not configured.");
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { googleClientId }
+                });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException(
+                "Invalid Google login credential.");
+        }
+
+        if (string.IsNullOrWhiteSpace(payload.Email) ||
+            payload.EmailVerified != true)
+        {
+            throw new UnauthorizedAccessException(
+                "The Google account email could not be verified.");
+        }
+
+        var user = await _context.Users
+            .FirstOrDefaultAsync(
+                u => u.Email == payload.Email,
+                cancellationToken);
+
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException(
+                "Unable to sign you in with this Google account. Please try again or sign up for BridgeTech.");
+        }
+
+        if (user.Role != UserRole.Student)
+        {
+            var exception = new UnauthorizedAccessException(
+                "Staff accounts must sign in through Team Login.");
+            exception.Data["Code"] = "TEAM_LOGIN_REQUIRED";
+            throw exception;
+        }
+
+        if (!user.EmailVerified)
+        {
+            var exception = new InvalidOperationException(
+                "Email verification is required.");
+
+            exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
+
+            throw exception;
+        }
+
+        string accessToken = GenerateAccessToken(user);
+        string refreshToken = GenerateRefreshToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.UserId,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Token = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(
+                GetAccessTokenMinutes())
         };
     }
 
@@ -195,7 +444,6 @@ public class AuthService : IAuthService
             Email = pendingRegistration.Email,
             PasswordHash = pendingRegistration.PasswordHash,
             GithubUsername = pendingRegistration.GithubUsername,
-            AccountSetupRequired = false,
             Role = UserRole.Student,
             CreatedAt = pendingRegistration.CreatedAt,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -205,14 +453,6 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         _context.PendingRegistrations.Remove(pendingRegistration);
         await _context.SaveChangesAsync(cancellationToken);
-
-        await _notificationService.NotifyAsync(
-            user.UserId,
-            "account_registered",
-            "Welcome to BridgeTech",
-            "Your account is ready. Welcome aboard!",
-            cancellationToken: cancellationToken);
-
         await transaction.CommitAsync(cancellationToken);
 
         try
@@ -265,7 +505,7 @@ public class AuthService : IAuthService
     public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-        if (user is null) return;
+        if (user is null || user.AccountSetupRequired) return;
         user.PasswordResetCode = GenerateCode();
         user.PasswordResetCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
         user.PasswordResetAttempts = 0;
@@ -278,6 +518,8 @@ public class AuthService : IAuthService
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken)
             ?? throw new InvalidOperationException("Invalid or expired reset code.");
+        if (user.AccountSetupRequired)
+            throw new InvalidOperationException("Accept your staff invitation to set your password.");
         if (user.PasswordResetCodeExpiresAt is null || user.PasswordResetCodeExpiresAt <= DateTimeOffset.UtcNow || user.PasswordResetCode is null)
             throw new InvalidOperationException("Reset code expired.");
         if (user.PasswordResetCode != request.Code)
@@ -294,10 +536,104 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+    public async Task<string> CreateStaffInvitationTokenAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(
+            candidate => candidate.UserId == userId,
+            cancellationToken)
+            ?? throw new InvalidOperationException("Staff account was not found.");
+        if (!user.AccountSetupRequired || user.Role == UserRole.Student)
+            throw new InvalidOperationException("This account does not have a pending staff invitation.");
 
-    private static UnauthorizedAccessException InvalidCredentials() =>
-        new("Invalid username/email or password.");
+        var invitationCode = GenerateCode();
+        var expiresAt = DateTimeOffset.UtcNow.AddDays(7);
+        user.EmailVerified = false;
+        user.VerificationCode = invitationCode;
+        user.VerificationCodeExpiresAt = expiresAt;
+        user.VerificationAttempts = 0;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim("token_type", "staff_invitation"),
+            new Claim("invitation_code", invitationCode),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetJwtKey())),
+            SecurityAlgorithms.HmacSha256);
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: expiresAt.UtcDateTime,
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task AcceptStaffInvitationAsync(
+        AcceptStaffInvitationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ClaimsPrincipal principal;
+        try
+        {
+            principal = new JwtSecurityTokenHandler().ValidateToken(
+                request.Token,
+                new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(GetJwtKey())),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                },
+                out _);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            throw new InvalidOperationException("This invitation link is invalid or has expired.");
+        }
+
+        if (principal.FindFirst("token_type")?.Value != "staff_invitation" ||
+            !Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            throw new InvalidOperationException("This invitation link is invalid or has expired.");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(
+            candidate => candidate.UserId == userId,
+            cancellationToken);
+        var invitationCode = principal.FindFirst("invitation_code")?.Value;
+        if (user is null ||
+            !user.AccountSetupRequired ||
+            user.Role == UserRole.Student ||
+            string.IsNullOrEmpty(invitationCode) ||
+            user.VerificationCode != invitationCode ||
+            user.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
+        {
+            throw new InvalidOperationException("This invitation has already been accepted or is no longer valid.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+        user.EmailVerified = true;
+        user.AccountSetupRequired = false;
+        user.VerificationCode = null;
+        user.VerificationCodeExpiresAt = null;
+        user.VerificationAttempts = 0;
+        user.PasswordResetCode = null;
+        user.PasswordResetCodeExpiresAt = null;
+        user.PasswordResetAttempts = 0;
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string GenerateCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 
     private static InvalidOperationException VerificationError(string message, string code)
     {
@@ -425,10 +761,6 @@ public class AuthService : IAuthService
             new Claim(
                 ClaimTypes.Role,
                 user.Role.ToString()),
-
-            new Claim(
-                "account_setup_required",
-                user.AccountSetupRequired.ToString().ToLowerInvariant()),
 
             new Claim(
                 "token_type",

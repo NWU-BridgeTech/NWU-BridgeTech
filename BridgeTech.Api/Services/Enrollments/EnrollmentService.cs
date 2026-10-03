@@ -3,11 +3,10 @@ using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Enrollments;
 using Microsoft.EntityFrameworkCore;
-using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Enrollments;
 
-public class EnrollmentService(AppDbContext context, INotificationService notificationService) : IEnrollmentService
+public class EnrollmentService(AppDbContext context) : IEnrollmentService
 {
     public async Task<IEnumerable<EnrollmentResponse>> GetMyEnrollmentsAsync(
         Guid userId, CancellationToken cancellationToken)
@@ -24,16 +23,16 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         foreach (var e in enrollments)
         {
             var lessonsTotal = await context.Lessons
-                .CountAsync(l => l.ModuleId == e.ModuleId, cancellationToken);
+                .CountAsync(l => l.ModuleId == e.ModuleId && l.Status == ContentStatus.Published, cancellationToken);
 
             var completedLessonIds = await context.LessonProgress
                 .Include(p => p.Lesson)
-                .Where(p => p.UserId == userId && p.Completed && p.Lesson.ModuleId == e.ModuleId)
+                .Where(p => p.UserId == userId && p.Completed && p.Lesson.ModuleId == e.ModuleId && p.Lesson.Status == ContentStatus.Published)
                 .Select(p => p.LessonId)
                 .ToListAsync(cancellationToken);
 
             var nextLesson = await context.Lessons
-                .Where(l => l.ModuleId == e.ModuleId && !completedLessonIds.Contains(l.LessonId))
+                .Where(l => l.ModuleId == e.ModuleId && !completedLessonIds.Contains(l.LessonId) && l.Status == ContentStatus.Published)
                 .OrderBy(l => l.OrderIndex)
                 .Select(l => new { l.LessonId, l.Title })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -61,7 +60,7 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         Guid userId, Guid moduleId, CancellationToken cancellationToken)
     {
         var moduleExists = await context.Modules
-            .AnyAsync(m => m.ModuleId == moduleId, cancellationToken);
+            .AnyAsync(m => m.ModuleId == moduleId && m.Status == ContentStatus.Published, cancellationToken);
 
         if (!moduleExists)
         {
@@ -90,20 +89,12 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         await context.SaveChangesAsync(cancellationToken);
 
         var module = await context.Modules.FirstAsync(m => m.ModuleId == moduleId, cancellationToken);
-        var lessonsTotal = await context.Lessons.CountAsync(l => l.ModuleId == moduleId, cancellationToken);
+        var lessonsTotal = await context.Lessons.CountAsync(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published, cancellationToken);
         var firstLesson = await context.Lessons
-            .Where(l => l.ModuleId == moduleId)
+            .Where(l => l.ModuleId == moduleId && l.Status == ContentStatus.Published)
             .OrderBy(l => l.OrderIndex)
             .Select(l => new { l.LessonId, l.Title })
             .FirstOrDefaultAsync(cancellationToken);
-
-        await notificationService.NotifyAsync(
-            userId,
-            "course_enrolled",
-            "Course enrolled",
-            $"You are now enrolled in {module.Title}.",
-            moduleId,
-            cancellationToken);
 
         return new EnrollmentResponse
         {
@@ -120,7 +111,7 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         };
     }
 
-    public async Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken)
+   public async Task<bool> UnenrollAsync(Guid userId, Guid moduleId, CancellationToken cancellationToken)
     {
         var enrollment = await context.Enrollments
             .FirstOrDefaultAsync(e => e.UserId == userId && e.ModuleId == moduleId, cancellationToken);
@@ -129,11 +120,6 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         {
             return false;
         }
-
-        var moduleTitle = await context.Modules
-            .Where(module => module.ModuleId == moduleId)
-            .Select(module => module.Title)
-            .SingleOrDefaultAsync(cancellationToken);
 
         var progressToRemove = await context.LessonProgress
             .Include(p => p.Lesson)
@@ -144,15 +130,6 @@ public class EnrollmentService(AppDbContext context, INotificationService notifi
         context.Enrollments.Remove(enrollment);
 
         await context.SaveChangesAsync(cancellationToken);
-        await notificationService.NotifyAsync(
-            userId,
-            "course_unenrolled",
-            "Course de-registered",
-            moduleTitle is null
-                ? "You have been removed from a course."
-                : $"You have been de-registered from {moduleTitle}.",
-            moduleId,
-            cancellationToken);
         return true;
     }
 }

@@ -134,6 +134,7 @@
     border-radius: 8px;
     margin-bottom: 10px;
     border: 1px solid #e0e5ed;
+<<<<<<< HEAD
 }
 
 .lesson-ai-summary {
@@ -152,6 +153,8 @@
 
 .lesson-ai-summary [role="alert"] {
     color: #a33131;
+=======
+>>>>>>> origin/Development
 }
 
 .lesson-quiz-btn {

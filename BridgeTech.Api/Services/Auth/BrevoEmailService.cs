@@ -36,6 +36,17 @@ public sealed class BrevoEmailService(
             $"Hi {firstName},\n\nWelcome to BridgeTech! Your email has been verified and your account is ready.\n\nStart learning at http://localhost:5173/home\n\nThe BridgeTech team",
             cancellationToken: cancellationToken);
 
+    public Task SendStaffInvitationAsync(
+        string email,
+        string firstName,
+        string invitationUrl,
+        CancellationToken cancellationToken = default) =>
+        SendAsync(
+            email,
+            "You're invited to the BridgeTech team",
+            $"Hi {firstName},\n\nYou've been invited to join the BridgeTech team. Accept your invitation and set your password here:\n{invitationUrl}\n\nThis link expires in 7 days and can only be used once.\n\nThe BridgeTech team",
+            cancellationToken: cancellationToken);
+
     public Task SendCertificateEmailAsync(
         string email,
         string firstName,
@@ -98,6 +109,13 @@ public sealed class BrevoEmailService(
         if (!response.IsSuccessStatusCode)
         {
             string details = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                throw new InvalidOperationException(
+                    "Brevo rejected the email because the API key is disabled. Create or enable a Brevo API key and update Email:BrevoApiKey.");
+            }
+
             throw new InvalidOperationException(
                 $"Brevo rejected the email request with status {(int)response.StatusCode}: {details}");
         }
