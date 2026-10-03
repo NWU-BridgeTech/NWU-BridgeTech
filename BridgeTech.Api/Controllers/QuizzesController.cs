@@ -8,6 +8,7 @@ namespace BridgeTech.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/quizzes")]
+
 public class QuizzesController(IQuizService service) : ControllerBase
 {
     [HttpGet("{quizId:guid}")]

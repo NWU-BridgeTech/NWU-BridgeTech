@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using System.Text;
 using BridgeTech.Api.Data;
+using BridgeTech.Api.Services.Admin;
 using BridgeTech.Api.Services.Auth;
 using BridgeTech.Api.Services.Ai;
 using BridgeTech.Api.Services.Certificates;
@@ -45,6 +47,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
+builder.Services.AddScoped<IAdministratorService, AdministratorService>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -99,6 +103,39 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+
+        // Access tokens live for up to an hour, so re-check the account on every request.
+        // Without this, deactivating or demoting someone would not take effect until their
+        // token expires. One primary-key lookup per authenticated request.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                if (!Guid.TryParse(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                {
+                    return;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                var account = await db.Users.AsNoTracking()
+                    .Where(u => u.UserId == userId)
+                    .Select(u => new { u.IsActive, u.Role })
+                    .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
+
+                if (account is null || !account.IsActive)
+                {
+                    context.Fail("The account is deactivated or no longer exists.");
+                    return;
+                }
+
+                // A token minted before a role change must not keep the old privileges.
+                var roleClaim = context.Principal?.FindFirstValue(ClaimTypes.Role);
+                if (roleClaim is not null && !string.Equals(roleClaim, account.Role.ToString(), StringComparison.Ordinal))
+                {
+                    context.Fail("The account role has changed. Sign in again.");
+                }
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -108,7 +145,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

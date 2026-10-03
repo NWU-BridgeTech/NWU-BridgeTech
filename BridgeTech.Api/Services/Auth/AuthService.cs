@@ -106,6 +106,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException(
                 "Google signup credential is required.");
         }
+
         string? googleClientId =
             _configuration["Google:ClientId"];
 
@@ -252,16 +253,7 @@ public class AuthService : IAuthService
         };
     }
 
-    public Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
-        => AuthenticateAsync(request, teamLogin: false, cancellationToken);
-
-    public Task<AuthResponse> LoginTeamAsync(LoginRequest request, CancellationToken cancellationToken = default)
-        => AuthenticateAsync(request, teamLogin: true, cancellationToken);
-
-    private async Task<AuthResponse> AuthenticateAsync(
-        LoginRequest request,
-        bool teamLogin,
-        CancellationToken cancellationToken)
+    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
@@ -280,20 +272,9 @@ public class AuthService : IAuthService
                 "Invalid username/email or password.");
         }
 
-        if (teamLogin && user.AccountSetupRequired)
+        if (!user.IsActive)
         {
-            var exception = new UnauthorizedAccessException(
-                "Accept the invitation sent to your email and set a password before signing in.");
-            exception.Data["Code"] = "ACCOUNT_SETUP_REQUIRED";
-            throw exception;
-        }
-
-        if (!teamLogin && user.Role != UserRole.Student)
-        {
-            var exception = new UnauthorizedAccessException(
-                "Staff accounts must sign in through Team Login.");
-            exception.Data["Code"] = "TEAM_LOGIN_REQUIRED";
-            throw exception;
+            throw AccountDeactivated();
         }
 
         if (!user.EmailVerified)
@@ -302,14 +283,7 @@ public class AuthService : IAuthService
             throw exception;
         }
 
-        if (teamLogin && user.Role is not (
-            UserRole.Instructor or UserRole.Admin or UserRole.SuperAdmin))
-        {
-            var exception = new UnauthorizedAccessException(
-                "Team Login is available to authorized staff accounts.");
-            exception.Data["Code"] = "TEAM_ACCESS_DENIED";
-            throw exception;
-        }
+        await RecordSignInAsync(user, cancellationToken);
 
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
@@ -376,12 +350,9 @@ public class AuthService : IAuthService
                 "Unable to sign you in with this Google account. Please try again or sign up for BridgeTech.");
         }
 
-        if (user.Role != UserRole.Student)
+        if (!user.IsActive)
         {
-            var exception = new UnauthorizedAccessException(
-                "Staff accounts must sign in through Team Login.");
-            exception.Data["Code"] = "TEAM_LOGIN_REQUIRED";
-            throw exception;
+            throw AccountDeactivated();
         }
 
         if (!user.EmailVerified)
@@ -393,6 +364,8 @@ public class AuthService : IAuthService
 
             throw exception;
         }
+
+        await RecordSignInAsync(user, cancellationToken);
 
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
@@ -505,7 +478,7 @@ public class AuthService : IAuthService
     public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-        if (user is null || user.AccountSetupRequired) return;
+        if (user is null) return;
         user.PasswordResetCode = GenerateCode();
         user.PasswordResetCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
         user.PasswordResetAttempts = 0;
@@ -518,8 +491,6 @@ public class AuthService : IAuthService
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken)
             ?? throw new InvalidOperationException("Invalid or expired reset code.");
-        if (user.AccountSetupRequired)
-            throw new InvalidOperationException("Accept your staff invitation to set your password.");
         if (user.PasswordResetCodeExpiresAt is null || user.PasswordResetCodeExpiresAt <= DateTimeOffset.UtcNow || user.PasswordResetCode is null)
             throw new InvalidOperationException("Reset code expired.");
         if (user.PasswordResetCode != request.Code)
@@ -533,103 +504,6 @@ public class AuthService : IAuthService
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiresAt = null;
         user.PasswordResetAttempts = 0;
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<string> CreateStaffInvitationTokenAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var user = await _context.Users.FirstOrDefaultAsync(
-            candidate => candidate.UserId == userId,
-            cancellationToken)
-            ?? throw new InvalidOperationException("Staff account was not found.");
-        if (!user.AccountSetupRequired || user.Role == UserRole.Student)
-            throw new InvalidOperationException("This account does not have a pending staff invitation.");
-
-        var invitationCode = GenerateCode();
-        var expiresAt = DateTimeOffset.UtcNow.AddDays(7);
-        user.EmailVerified = false;
-        user.VerificationCode = invitationCode;
-        user.VerificationCodeExpiresAt = expiresAt;
-        user.VerificationAttempts = 0;
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-        await _context.SaveChangesAsync(cancellationToken);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim("token_type", "staff_invitation"),
-            new Claim("invitation_code", invitationCode),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-        var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetJwtKey())),
-            SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(
-            claims: claims,
-            expires: expiresAt.UtcDateTime,
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public async Task AcceptStaffInvitationAsync(
-        AcceptStaffInvitationRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        ClaimsPrincipal principal;
-        try
-        {
-            principal = new JwtSecurityTokenHandler().ValidateToken(
-                request.Token,
-                new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(GetJwtKey())),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                },
-                out _);
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            throw new InvalidOperationException("This invitation link is invalid or has expired.");
-        }
-
-        if (principal.FindFirst("token_type")?.Value != "staff_invitation" ||
-            !Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-        {
-            throw new InvalidOperationException("This invitation link is invalid or has expired.");
-        }
-
-        var user = await _context.Users.FirstOrDefaultAsync(
-            candidate => candidate.UserId == userId,
-            cancellationToken);
-        var invitationCode = principal.FindFirst("invitation_code")?.Value;
-        if (user is null ||
-            !user.AccountSetupRequired ||
-            user.Role == UserRole.Student ||
-            string.IsNullOrEmpty(invitationCode) ||
-            user.VerificationCode != invitationCode ||
-            user.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
-        {
-            throw new InvalidOperationException("This invitation has already been accepted or is no longer valid.");
-        }
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
-        user.EmailVerified = true;
-        user.AccountSetupRequired = false;
-        user.VerificationCode = null;
-        user.VerificationCodeExpiresAt = null;
-        user.VerificationAttempts = 0;
-        user.PasswordResetCode = null;
-        user.PasswordResetCodeExpiresAt = null;
-        user.PasswordResetAttempts = 0;
-        user.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -669,6 +543,13 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException(
                 "User no longer exists.");
         }
+
+        if (!user.IsActive)
+        {
+            throw AccountDeactivated();
+        }
+
+        await RecordSignInAsync(user, cancellationToken);
 
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
@@ -738,6 +619,21 @@ public class AuthService : IAuthService
         return CryptographicOperations.FixedTimeEquals(
             actualHash,
             expectedHash);
+    }
+
+    private static UnauthorizedAccessException AccountDeactivated()
+    {
+        var exception = new UnauthorizedAccessException(
+            "This account has been deactivated. Contact an administrator.");
+        exception.Data["Code"] = "ACCOUNT_DEACTIVATED";
+        return exception;
+    }
+
+    // Feeds the "last active" column on the admin pages.
+    private async Task RecordSignInAsync(User user, CancellationToken cancellationToken)
+    {
+        user.LastLoginAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private string GenerateAccessToken(User user)

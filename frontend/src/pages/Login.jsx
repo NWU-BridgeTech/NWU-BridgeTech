@@ -5,10 +5,9 @@ import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
-const Login = ({ team = false }) => {
+export default function Login() {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -29,29 +28,21 @@ const Login = ({ team = false }) => {
         role: data.role,
       }),
     );
-    const destinations = {
-      Student: "/home",
-      Instructor: "/instructor",
-      Admin: "/admin",
-      SuperAdmin: "/admin/administrators",
-    };
-    navigate(destinations[data.role] || "/login");
+    navigate(
+      data.role === "Admin" || data.role === "SuperAdmin" ? "/admin" : "/home",
+    );
   }
 
   async function handleLogin(event) {
     event.preventDefault();
-
     setError("");
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/auth/${team ? "team-login" : "login"}`,
-        {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: identifier.trim(), password }),
-        },
-      );
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
@@ -90,24 +81,16 @@ const Login = ({ team = false }) => {
     } finally {
       setGoogleLoading(false);
     }
-  };
+  }
 
   return (
     <AuthShell
       photo={PHOTOS.signin}
-      title={team ? "Team access." : "Welcome back."}
-      text={
-        team
-          ? "Sign in with the staff account provided by your administrator."
-          : "Pick up your tracks where you left off."
-      }
+      title="Welcome back."
+      text="Pick up your tracks where you left off."
     >
-      <h1>{team ? "Team Login" : "Sign in"}</h1>
-      <p className="au-lede">
-        {team
-          ? "Use your instructor or administrator account."
-          : "Sign in to continue to your BridgeTech account."}
-      </p>
+      <h1>Sign in</h1>
+      <p className="au-lede">Sign in to continue to your BridgeTech account.</p>
       {error && <div className="au-alert error" role="alert">{error}</div>}
 
       <form onSubmit={handleLogin}>
@@ -129,9 +112,7 @@ const Login = ({ team = false }) => {
         <div className="au-field">
           <div className="au-label-row">
             <label htmlFor="password">Password</label>
-            <Link to={team ? "/forgot-password?team=1" : "/forgot-password"}>
-              Forgot password?
-            </Link>
+            <Link to="/forgot-password">Forgot password?</Link>
           </div>
           <PasswordInput
             id="password"
@@ -153,47 +134,36 @@ const Login = ({ team = false }) => {
           {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
         </button>
 
-        {!team && (
-          <>
-            <div className="au-divider"><span>or</span></div>
-            <div className="au-google">
-              {googleLoading ? (
-                <div className="au-google-loading">
-                  <span className="au-spinner" aria-hidden="true" />
-                  Signing in with Google...
-                </div>
-              ) : (
-                <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() => setError("Google login was cancelled or failed.")}
-                  text="signin_with"
-                  shape="pill"
-                />
-              )}
+        <div className="au-divider"><span>or</span></div>
+        <div className="au-google">
+          {googleLoading ? (
+            <div className="au-google-loading">
+              <span className="au-spinner" aria-hidden="true" />
+              Signing in with Google...
             </div>
-          </>
-        )}
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setError("Google login was cancelled or failed.")}
+              text="signin_with"
+              shape="pill"
+            />
+          )}
+        </div>
       </form>
 
-      {team ? (
-        <p className="au-switch"><Link to="/">Back to BridgeTech</Link></p>
-      ) : (
-        <p className="au-switch">
-          Don&apos;t have an account? <Link to="/signup">Create an account</Link>
-        </p>
-      )}
+      <p className="au-switch">
+        Don&apos;t have an account? <Link to="/signup">Create an account</Link>
+      </p>
 
       {verification && (
         <VerificationModal
           email={verification.email}
           initialExpiresAt={verification.expiresAt}
           onClose={() => setVerification(null)}
-          onVerified={() => navigate(team ? "/team-login" : "/home")}
+          onVerified={() => navigate("/home")}
         />
       )}
     </AuthShell>
   );
-};
-
-
-export default Login;
+}

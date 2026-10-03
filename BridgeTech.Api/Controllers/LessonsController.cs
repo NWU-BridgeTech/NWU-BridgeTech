@@ -43,45 +43,13 @@ public class LessonsController(ILessonService service) : ControllerBase
         }
     }
 
-    // Admin: every lesson in every module (drafts included).
-    [HttpGet("lessons/admin")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<IActionResult> GetLessonsForAdmin(CancellationToken cancellationToken)
-    {
-        return Ok(await service.GetAllForAdminAsync(cancellationToken));
-    }
-
     [HttpPost("modules/{moduleId:guid}/lessons")]
     [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> CreateLesson(
         Guid moduleId, [FromBody] CreateLessonRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var lesson = await service.CreateAsync(moduleId, request, cancellationToken);
-            return CreatedAtAction(nameof(GetLesson), new { lessonId = lesson.LessonId }, lesson);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    // Admin: update a lesson. Only the fields that are sent are changed.
-    [HttpPut("lessons/{lessonId:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<IActionResult> UpdateLesson(
-        Guid lessonId, [FromBody] UpdateLessonRequest request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var lesson = await service.UpdateAsync(lessonId, request, cancellationToken);
-            return lesson is null ? NotFound() : Ok(lesson);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var lesson = await service.CreateAsync(moduleId, request, cancellationToken);
+        return CreatedAtAction(nameof(GetLesson), new { lessonId = lesson.LessonId }, lesson);
     }
 
     private Guid GetUserId()

@@ -179,55 +179,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("team-login")]
-    public async Task<IActionResult> TeamLogin(
-        LoginRequest request)
-    {
-        try
-        {
-            var response =
-                await _authService.LoginTeamAsync(request);
-
-            return Ok(response);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new
-            {
-                code = ex.Data["Code"] ?? "UNAUTHORIZED",
-                message = ex.Message
-            });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Unauthorized(new
-            {
-                code = ex.Data["Code"] ?? "UNAUTHORIZED",
-                message = ex.Message
-            });
-        }
-    }
-
-    [HttpPost("accept-invitation")]
-    public async Task<IActionResult> AcceptInvitation(
-        AcceptStaffInvitationRequest request,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _authService.AcceptStaffInvitationAsync(request, cancellationToken);
-            return Ok(new { message = "Invitation accepted. You can now sign in to Team Login." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
-    }
-
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin(
         GoogleLoginRequest request)
