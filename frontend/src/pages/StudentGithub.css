@@ -292,6 +292,31 @@
 .student-github .github-card-footer {
   margin-top: auto;
 }
+.student-github .github-repository-select {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--github-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.student-github .github-repository-select select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--github-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--github-ink);
+  font: inherit;
+}
+
+.student-github .github-repository-empty {
+  margin-top: 14px;
+  color: var(--github-muted);
+  font-size: 12px;
+}
 
 .student-github .github-repository-link,
 .student-github .github-practical-section .text-action {

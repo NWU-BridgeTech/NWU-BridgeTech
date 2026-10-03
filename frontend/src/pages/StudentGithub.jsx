@@ -11,6 +11,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 export default function StudentGithub() {
   const [username, setUsername] = useState(null);
   const [repository, setRepository] = useState(null);
+  const [repositories, setRepositories] = useState([]);
+  const [savingRepository, setSavingRepository] = useState(false);
   const [error, setError] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("github") === "error"
@@ -69,6 +71,9 @@ export default function StudentGithub() {
       .then((data) => {
         setUsername(data.username);
         setRepository(data.repository || null);
+        setRepositories(
+          Array.isArray(data.repositories) ? data.repositories : [],
+        );
       })
       .catch(() => setError("Unable to load your GitHub connection."));
   }, []);
@@ -92,6 +97,32 @@ export default function StudentGithub() {
     } catch (connectionError) {
       setError(connectionError.message);
       setConnecting(false);
+    }
+  }
+
+  async function linkRepository(event) {
+    const fullName = event.target.value;
+    if (!fullName) return;
+
+    setError("");
+    setSavingRepository(true);
+    try {
+      const response = await fetch(`${API_URL}/api/github/repository`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({ fullName }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(data.message || "Unable to link repository.");
+      setRepository(data.repository);
+    } catch (linkError) {
+      setError(linkError.message);
+    } finally {
+      setSavingRepository(false);
     }
   }
 
@@ -235,6 +266,33 @@ export default function StudentGithub() {
                       ? "Link the repository you use for practical work."
                       : "Connect your account to begin demonstrating GitHub skills."}
                   </p>
+                  {connected && repositories.length > 0 && (
+                    <label className="github-repository-select">
+                      <span>Practical repository</span>
+                      <select
+                        value=""
+                        onChange={linkRepository}
+                        disabled={savingRepository}
+                      >
+                        <option value="">
+                          {savingRepository
+                            ? "Linking..."
+                            : "Choose a repository"}
+                        </option>
+                        {repositories.map((item) => (
+                          <option key={item.fullName} value={item.fullName}>
+                            {item.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {connected && repositories.length === 0 && (
+                    <p className="github-repository-empty">
+                      No repositories were returned. Reconnect GitHub to grant
+                      repository access.
+                    </p>
+                  )}
                 </>
               )}
               <div className="github-card-footer">

@@ -49,7 +49,7 @@ export default function LessonView() {
     if (lesson.completed) {
       lesson.nextLessonId
         ? goToLesson(lesson.nextLessonId)
-        : navigate("/courses"); // adjust to your courses route
+        : navigate("/student/courses");
       return;
     }
 
@@ -61,7 +61,7 @@ export default function LessonView() {
       });
       lesson.nextLessonId
         ? goToLesson(lesson.nextLessonId)
-        : navigate("/courses");
+        : navigate("/student/courses");
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -117,7 +117,7 @@ export default function LessonView() {
               />
             </div>
             <span className="lesson-progress-label">
-              Lesson {displayedLesson.lessonNumber || "-"} of {displayedLesson.lessonTotal}
+              Lesson {lesson.lessonNumber || "-"} of {lesson.lessonTotal}
             </span>
           </div>
         </section>
@@ -177,7 +177,6 @@ export default function LessonView() {
                   ? "Take the Quiz"
                   : "Retake the Quiz"}
               </Link>
-              
             </div>
           ) : (
             <span />
