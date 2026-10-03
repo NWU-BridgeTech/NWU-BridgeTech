@@ -2,13 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import VerificationModal from "../components/VerificationModal";
-<<<<<<< HEAD
-import { setAuthTokens } from "../utils/authStorage";
-import "./Login.css";
-=======
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
->>>>>>> origin/Development
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
