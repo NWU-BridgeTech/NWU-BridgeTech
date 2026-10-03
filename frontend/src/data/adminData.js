@@ -526,4 +526,3 @@ export const adminNotificationOptions = [
     description: "A summary of learning activity and outstanding work.",
   },
 ];
-
