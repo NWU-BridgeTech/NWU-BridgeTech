@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import "./Sidebar.css";
@@ -96,6 +97,22 @@ export default function NavigationSidebar({ groups, homePath, title }) {
           ))}
         </nav>
       </SidebarContent>
+      <SidebarFooter className="bt-sidebar-footer">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Sign out"
+              className="bt-nav-link"
+            >
+              <Link to="/signout" onClick={closeMobile} aria-label="Sign out">
+                <LogOut aria-hidden="true" strokeWidth={1.7} />
+                <span>Sign out</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </SidebarRoot>
   );
 }

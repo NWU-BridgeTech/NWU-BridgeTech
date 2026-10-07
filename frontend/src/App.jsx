@@ -12,6 +12,8 @@ import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
 import StudentNotifications from "./pages/StudentNotifications";
+import StudentBadges from "./pages/StudentBadges";
+<Route path="/student/badges" element={<StudentBadges />} />;
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -25,8 +27,12 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import "./pages/Admin.css";
+import AcceptInvitation from "./pages/AcceptInvitation";
+import SignOut from "./pages/SignOut";
 import Quizzes from "./pages/Quizzes";
 import QuizzRunner from "./pages/QuizzRunner";
+import TeamArea from "./pages/TeamArea";
+import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
 
 function AdminSection({ children }) {
@@ -47,6 +53,14 @@ function App() {
           path="/student/practical-work"
           element={<StudentPracticalWork />}
         />
+        <Route path="/login" element={<Login />} />
+        <Route path="/team-login" element={<Login team />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
+        <Route path="/signout" element={<SignOut />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
@@ -70,7 +84,17 @@ function App() {
             path="/student/notifications"
             element={<StudentNotifications />}
           />
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute
+              requiredRole={["Student", "Instructor", "Admin", "SuperAdmin"]}
+            />
+          }
+        >
           <Route path="/lessons" element={<Lessons />} />
+          <Route path="/lessons/:lessonId" element={<Lessons />} />
           <Route path="/modules/:moduleId/lessons" element={<Lessons />} />
           <Route
             path="/modules/:moduleId/lessons/:lessonId"
@@ -161,6 +185,89 @@ function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
         <Route path="/terms" element={<TermsOfService />} />
+        </Route>
+
+        <Route element={<ProtectedRoute requiredRole="Instructor" />}>
+          <Route path="/instructor" element={<TeamArea role="Instructor" />} />
+        </Route>
+
+        <Route element={<ProtectedRoute requiredRole="SuperAdmin" />}>
+          <Route
+            path="/super-admin"
+            element={<TeamArea role="Super Admin" />}
+          />
+        </Route>
+
+        <Route
+          element={<ProtectedRoute requiredRole={["Admin", "SuperAdmin"]} />}
+        >
+          <Route path="/admin" element={<Admin />} />
+
+          <Route
+            path="/admin/modules"
+            element={
+              <AdminSection>
+                <AdminModules />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/lessons"
+            element={
+              <AdminSection>
+                <AdminLessons />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/assessments"
+            element={
+              <AdminSection>
+                <AdminAssessments />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/practical-exercises"
+            element={
+              <AdminSection>
+                <AdminPracticalExercises />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/students"
+            element={
+              <AdminSection>
+                <AdminStudents />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/administrators"
+            element={
+              <AdminSection>
+                <AdminAdministrators />
+              </AdminSection>
+            }
+          />
+
+          <Route
+            path="/admin/settings"
+            element={
+              <AdminSection>
+                <AdminSettings />
+              </AdminSection>
+            }
+          />
+
+          <Route path="/system-status" element={<SystemStatus />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

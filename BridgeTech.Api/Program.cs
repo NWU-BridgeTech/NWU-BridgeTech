@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using BridgeTech.Api.Services.Enrollments;
 using BridgeTech.Api.Services.Lessons;
+using BridgeTech.Api.Services.Badges;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,7 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
 builder.Services.AddScoped<IAdministratorService, AdministratorService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
 
 builder.Services.AddRateLimiter(options =>
 {

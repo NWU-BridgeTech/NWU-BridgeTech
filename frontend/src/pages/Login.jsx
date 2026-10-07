@@ -38,11 +38,14 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier.trim(), password }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/auth/${team ? "team-login" : "login"}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: identifier.trim(), password }),
+        },
+      );
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (data.code === "EMAIL_NOT_VERIFIED") {
@@ -89,9 +92,17 @@ export default function Login() {
       title="Welcome back."
       text="Pick up your tracks where you left off."
     >
-      <h1>Sign in</h1>
-      <p className="au-lede">Sign in to continue to your BridgeTech account.</p>
-      {error && <div className="au-alert error" role="alert">{error}</div>}
+      <h1>{team ? "Team Login" : "Sign in"}</h1>
+      <p className="au-lede">
+        {team
+          ? "Use your instructor or administrator account."
+          : "Sign in to continue to your BridgeTech account."}
+      </p>
+      {error && (
+        <div className="au-alert error" role="alert">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleLogin}>
         <div className="au-field">
@@ -131,15 +142,34 @@ export default function Login() {
           disabled={loading}
           aria-busy={loading}
         >
-          {loading ? <span className="au-spinner" aria-hidden="true" /> : "Sign in"}
+          {loading ? (
+            <span className="au-spinner" aria-hidden="true" />
+          ) : (
+            "Sign in"
+          )}
         </button>
 
-        <div className="au-divider"><span>or</span></div>
-        <div className="au-google">
-          {googleLoading ? (
-            <div className="au-google-loading">
-              <span className="au-spinner" aria-hidden="true" />
-              Signing in with Google...
+        {!team && (
+          <>
+            <div className="au-divider">
+              <span>or</span>
+            </div>
+            <div className="au-google">
+              {googleLoading ? (
+                <div className="au-google-loading">
+                  <span className="au-spinner" aria-hidden="true" />
+                  Signing in with Google...
+                </div>
+              ) : (
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() =>
+                    setError("Google login was cancelled or failed.")
+                  }
+                  text="signin_with"
+                  shape="pill"
+                />
+              )}
             </div>
           ) : (
             <GoogleLogin
@@ -152,9 +182,16 @@ export default function Login() {
         </div>
       </form>
 
-      <p className="au-switch">
-        Don&apos;t have an account? <Link to="/signup">Create an account</Link>
-      </p>
+      {team ? (
+        <p className="au-switch">
+          <Link to="/">Back to BridgeTech</Link>
+        </p>
+      ) : (
+        <p className="au-switch">
+          Don&apos;t have an account?{" "}
+          <Link to="/signup">Create an account</Link>
+        </p>
+      )}
 
       {verification && (
         <VerificationModal
@@ -166,4 +203,6 @@ export default function Login() {
       )}
     </AuthShell>
   );
-}
+};
+
+export default Login;

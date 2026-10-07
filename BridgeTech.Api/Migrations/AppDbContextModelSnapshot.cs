@@ -24,6 +24,44 @@ namespace BridgeTech.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Badge", b =>
+                {
+                    b.Property<Guid>("BadgeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("badge_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("AwardedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("awarded_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("BadgeId")
+                        .HasName("pk_badges");
+
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_badges_lesson_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_badges_user_id");
+
+                    b.HasIndex("UserId", "LessonId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_badges_user_id_lesson_id");
+
+                    b.ToTable("badges", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Certificate", b =>
                 {
                     b.Property<Guid>("CertificateId")
@@ -931,6 +969,27 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("video_summaries", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Badge", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
+                        .WithMany("Badges")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_badges_lessons_lesson_id");
+
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany("Badges")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_badges_users_user_id");
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Certificate", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.Module", "Module")
@@ -1166,6 +1225,8 @@ namespace BridgeTech.Api.Migrations
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Lesson", b =>
                 {
+                    b.Navigation("Badges");
+
                     b.Navigation("VideoSummaries");
                 });
 
@@ -1208,6 +1269,8 @@ namespace BridgeTech.Api.Migrations
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Badges");
+
                     b.Navigation("Certificates");
 
                     b.Navigation("Enrollments");

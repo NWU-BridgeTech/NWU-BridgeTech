@@ -45,10 +45,14 @@ export default function ForgotPassword() {
         { email: email.trim() },
         "Unable to send reset code.",
       );
-      setSuccess("If an account exists for that email, we've sent a password reset code.");
+      setSuccess(
+        "If an account exists for that email, we've sent a password reset code.",
+      );
       setStep(2);
     } catch (requestError) {
-      setError(requestError.message || "Unable to send reset code. Please try again.");
+      setError(
+        requestError.message || "Unable to send reset code. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -89,7 +93,8 @@ export default function ForgotPassword() {
       setTimeout(() => navigate("/login"), 1500);
     } catch (requestError) {
       setError(
-        requestError.message || "Unable to reset your password. Please try again.",
+        requestError.message ||
+          "Unable to reset your password. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -98,8 +103,16 @@ export default function ForgotPassword() {
 
   const messages = (
     <>
-      {error && <div className="au-alert error" role="alert">{error}</div>}
-      {success && <div className="au-alert ok" role="status">{success}</div>}
+      {error && (
+        <div className="au-alert error" role="alert">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="au-alert ok" role="status">
+          {success}
+        </div>
+      )}
     </>
   );
 

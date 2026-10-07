@@ -4,10 +4,15 @@ using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Lessons;
 using Microsoft.EntityFrameworkCore;
 using BridgeTech.Api.Common.Exceptions;
+using BridgeTech.Api.Services.Certificates;
+using BridgeTech.Api.Services.Badges;
 
 namespace BridgeTech.Api.Services.Lessons;
 
-public class LessonService(AppDbContext context) : ILessonService
+public class LessonService(
+    AppDbContext context,
+    ICertificateService certificateService,
+    IBadgeService badgeService) : ILessonService
 {
     public async Task<IEnumerable<LessonListItemResponse>> GetLessonsForModuleAsync(
         Guid moduleId, Guid userId, CancellationToken cancellationToken)
@@ -152,6 +157,15 @@ public class LessonService(AppDbContext context) : ILessonService
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        await badgeService.AwardForLessonCompletionAsync(
+            userId, lessonId, cancellationToken);
+
+        if (enrollment.Status == EnrollmentStatus.Completed)
+        {
+            await certificateService.IssueForCompletionAsync(
+                userId, lesson.ModuleId, cancellationToken);
+        }
 
         return new LessonProgressResponse
         {
