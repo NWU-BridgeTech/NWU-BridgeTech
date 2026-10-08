@@ -16,6 +16,7 @@ public class QuizContentResponse
 {
     public Guid QuizId { get; set; }
     public Guid ModuleId { get; set; }
+    public Guid? LessonId { get; set; }
     public string Title { get; set; } = string.Empty;
     public short PassingScore { get; set; }
     public List<QuizQuestionResponse> Questions { get; set; } = new();

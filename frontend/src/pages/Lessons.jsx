@@ -174,6 +174,10 @@ export default function LessonView() {
               ) : (
                 <Link
                   to={`/quizzes/${lesson.quiz.quizId}`}
+                  state={{
+                    moduleId: moduleId ?? lesson.moduleId,
+                    lessonId: lesson.lessonId ?? lessonId,
+                  }}
                   className="lesson-quiz-btn"
                 >
                   {lesson.quiz.bestScore == null
