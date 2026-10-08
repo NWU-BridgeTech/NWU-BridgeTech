@@ -48,7 +48,7 @@ public sealed class CertificateRenderer(IConfiguration configuration) : ICertifi
 
         DrawText(canvas, "Programme director", 300, 820, 22, Cream, false, SKTextAlign.Center, "Georgia");
         canvas.DrawLine(150, 785, 450, 785, underline);
-        DrawText(canvas, "Date issued", 1300, 820, 22, Cream, false, SKTextAlign.Center, "Georgia");
+        DrawText(canvas, "Date completed", 1300, 820, 22, Cream, false, SKTextAlign.Center, "Georgia");
         canvas.DrawLine(1150, 785, 1450, 785, underline);
         DrawText(canvas, certificate.IssuedAt.ToString("dd MMMM yyyy"), 1300, 855, 20, Gold, true, SKTextAlign.Center, "Georgia");
         DrawText(canvas, certificate.CertificateNumber, 800, 920, 20, Cream, false, SKTextAlign.Center, "Georgia");

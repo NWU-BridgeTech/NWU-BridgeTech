@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using BridgeTech.Api.Services.Enrollments;
 using BridgeTech.Api.Services.Lessons;
+using BridgeTech.Api.Services.Badges;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -108,7 +110,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

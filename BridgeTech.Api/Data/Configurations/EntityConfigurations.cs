@@ -65,6 +65,8 @@ internal sealed class ModuleConfiguration : IEntityTypeConfiguration<Module>
         EntityConfigurationHelpers.ConfigureId(builder, "modules", nameof(Module.ModuleId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
+        builder.Property(x => x.Level).HasConversion<short>().IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasIndex(x => x.OrderIndex);
@@ -79,6 +81,9 @@ internal sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         EntityConfigurationHelpers.ConfigureId(builder, "lessons", nameof(Lesson.LessonId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
+        builder.Property(x => x.DurationMinutes).IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasOne(x => x.Module).WithMany(x => x.Lessons).HasForeignKey(x => x.ModuleId).OnDelete(DeleteBehavior.Cascade);
@@ -250,6 +255,19 @@ internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notif
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
         builder.HasOne(x => x.User).WithMany(x => x.Notifications).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(x => new { x.UserId, x.IsRead }).HasDatabaseName("idx_notifications_user_unread");
+    }
+}
+
+internal sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
+{
+    public void Configure(EntityTypeBuilder<Badge> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "badges", nameof(Badge.BadgeId));
+        builder.Property(x => x.AwardedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany(x => x.Badges).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany(x => x.Badges).HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.UserId);
     }
 }
 

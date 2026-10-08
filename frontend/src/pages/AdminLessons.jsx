@@ -1,16 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
-import { initialLessons, initialModules } from "../data/adminData";
+import {
+  createLesson,
+  getAdminLessons,
+  getAdminModules,
+  updateLesson,
+} from "../utils/adminApi";
 import "./Admin.css";
 import "./AdminModules.css";
 
+// Converts a module from the API into the shape this page uses.
+function toModuleOption(module) {
+  return { id: module.moduleId, title: module.title, status: module.status };
+}
+
+// Converts a lesson from the API into the shape this page displays.
+function toLessonRow(lesson) {
+  return {
+    id: lesson.lessonId,
+    moduleId: lesson.moduleId,
+    title: lesson.title,
+    description: lesson.description ?? "",
+    content: lesson.content ?? "",
+    duration: lesson.durationMinutes,
+    status: lesson.status,
+  };
+}
+
 export default function AdminLessons() {
-  const [lessons, setLessons] = useState(initialLessons);
+  const [modules, setModules] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("All");
   const [status, setStatus] = useState("All");
   const [editingLesson, setEditingLesson] = useState(null);
   const [message, setMessage] = useState("");
+
+  // Load every module and lesson (drafts included) when the page opens.
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([getAdminModules(), getAdminLessons()])
+      .then(([moduleData, lessonData]) => {
+        if (cancelled) return;
+        setModules(moduleData.map(toModuleOption));
+        setLessons(lessonData.map(toLessonRow));
+      })
+      .catch((error) => {
+        if (!cancelled) setMessage(`Could not load lessons: ${error.message}`);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const publishedCount = lessons.filter(
     (lesson) => lesson.status === "Published",
@@ -22,7 +70,7 @@ export default function AdminLessons() {
       .toLowerCase()
       .includes(search.trim().toLowerCase());
     const matchesModule =
-      moduleFilter === "All" || lesson.moduleId === Number(moduleFilter);
+      moduleFilter === "All" || lesson.moduleId === moduleFilter;
     return (
       matchesSearch &&
       matchesModule &&
@@ -36,54 +84,62 @@ export default function AdminLessons() {
     setStatus("All");
   }
 
-  function saveLesson(event) {
+  async function saveLesson(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const title = form.get("title").trim();
     const description = form.get("description").trim();
     const content = form.get("content").trim();
     const lessonStatus = form.get("status");
-    const moduleId = Number(form.get("moduleId"));
-    const parentModule = initialModules.find(
-      (module) => module.id === moduleId,
-    );
+    const moduleId = form.get("moduleId");
+    const parentModule = modules.find((module) => module.id === moduleId);
     if (!title || !description) {
       setMessage("Enter a lesson title and description.");
       return;
     }
     if (
       lessonStatus === "Published" &&
-      (!content || parentModule.status !== "Published")
+      (!content || parentModule?.status !== "Published")
     ) {
       setMessage(
         "Add lesson content and choose a published module before publishing.",
       );
       return;
     }
-    const savedLesson = {
-      ...editingLesson,
-      id: editingLesson.id ?? Date.now(),
+
+    const details = {
       title,
       description,
       content,
-      moduleId,
-      duration: Number(form.get("duration")),
+      durationMinutes: Number(form.get("duration")),
       status: lessonStatus,
     };
-    if (editingLesson.id) {
-      setLessons(
-        lessons.map((lesson) =>
-          lesson.id === savedLesson.id ? savedLesson : lesson,
-        ),
-      );
-    } else {
-      setLessons([...lessons, savedLesson]);
+
+    setSaving(true);
+    setMessage("");
+    try {
+      if (editingLesson.id) {
+        const updated = toLessonRow(
+          await updateLesson(editingLesson.id, { ...details, moduleId }),
+        );
+        setLessons((current) =>
+          current.map((lesson) =>
+            lesson.id === updated.id ? updated : lesson,
+          ),
+        );
+      } else {
+        const created = toLessonRow(await createLesson(moduleId, details));
+        setLessons((current) => [...current, created]);
+      }
+      clearFilters();
+      setEditingLesson(null);
+      setMessage(`${title} saved.`);
+    } catch (error) {
+      // Keep the form open so the admin can fix the problem and try again.
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
     }
-    clearFilters();
-    setEditingLesson(null);
-    setMessage(
-      `${title} saved. Changes reset when you leave this page or reload.`,
-    );
   }
 
   return (
@@ -96,17 +152,14 @@ export default function AdminLessons() {
         <button
           className="btn blue"
           type="button"
-          disabled={!!editingLesson}
+          disabled={!!editingLesson || loading || modules.length === 0}
           onClick={() => {
             setMessage("");
             setEditingLesson({
               title: "",
               description: "",
               content: "",
-              moduleId:
-                moduleFilter === "All"
-                  ? initialModules[0].id
-                  : Number(moduleFilter),
+              moduleId: moduleFilter === "All" ? modules[0].id : moduleFilter,
               duration: 20,
               status: "Draft",
             });
@@ -117,8 +170,11 @@ export default function AdminLessons() {
       </header>
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {!editingLesson && message}
+          {loading ? "Loading lessons..." : !editingLesson && message}
         </p>
+        {!loading && modules.length === 0 && (
+          <p className="sub">Create a module before adding lessons.</p>
+        )}
         {editingLesson && (
           <section
             className="card module-editor"
@@ -127,13 +183,14 @@ export default function AdminLessons() {
             <h2 id="lesson-editor-heading">
               {editingLesson.id ? "Edit lesson" : "Create lesson"}
             </h2>
-            <p className="sub">Changes are kept while this page is open.</p>
+            <p className="sub">Changes are saved to the database.</p>
             <form key={editingLesson.id ?? "new"} onSubmit={saveLesson}>
               <label htmlFor="lesson-title">Lesson title</label>
               <input
                 id="lesson-title"
                 name="title"
                 required
+                minLength={3}
                 maxLength={100}
                 defaultValue={editingLesson.title}
                 autoFocus
@@ -155,7 +212,7 @@ export default function AdminLessons() {
                     name="moduleId"
                     defaultValue={editingLesson.moduleId}
                   >
-                    {initialModules.map((module) => (
+                    {modules.map((module) => (
                       <option key={module.id} value={module.id}>
                         {module.title}
                         {module.status === "Draft" ? " (Draft)" : ""}
@@ -202,12 +259,13 @@ export default function AdminLessons() {
                 {message}
               </p>
               <div className="module-form-actions">
-                <button className="btn blue" type="submit">
-                  Save lesson
+                <button className="btn blue" type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save lesson"}
                 </button>
                 <button
                   className="btn"
                   type="button"
+                  disabled={saving}
                   onClick={() => {
                     setEditingLesson(null);
                     setMessage("");
@@ -247,7 +305,7 @@ export default function AdminLessons() {
                 onChange={(event) => setModuleFilter(event.target.value)}
               >
                 <option value="All">All modules</option>
-                {initialModules.map((module) => (
+                {modules.map((module) => (
                   <option key={module.id} value={module.id}>
                     {module.title}
                   </option>
@@ -286,9 +344,8 @@ export default function AdminLessons() {
                   </td>
                   <td>
                     {
-                      initialModules.find(
-                        (module) => module.id === lesson.moduleId,
-                      )?.title
+                      modules.find((module) => module.id === lesson.moduleId)
+                        ?.title
                     }
                   </td>
                   <td>{lesson.duration} min</td>
@@ -317,7 +374,7 @@ export default function AdminLessons() {
               ))}
             </tbody>
           </table>
-          {visibleLessons.length === 0 && (
+          {!loading && visibleLessons.length === 0 && (
             <div className="modules-empty">
               <h3>No lessons found</h3>
               <p>Try a different search, module or status.</p>

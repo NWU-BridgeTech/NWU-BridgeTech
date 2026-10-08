@@ -40,3 +40,19 @@ public enum EnrollmentStatus : short
     Completed = 1,
     Dropped = 2
 }
+
+
+//Controls whether a module or lesson is visible to students.
+public enum ContentStatus : short
+{
+    Draft = 0,
+    Published = 1
+}
+
+//Difficulty level shown on the admin Modules page.
+public enum ModuleLevel : short
+{
+    Beginner = 0,
+    Intermediate = 1,
+    Advanced = 2
+}
