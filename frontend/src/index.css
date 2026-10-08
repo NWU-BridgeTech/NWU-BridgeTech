@@ -288,6 +288,23 @@ body {
   color: #f8fafc;
 }
 
+:root[data-theme="dark"] .home-page .stat dt {
+  color: #d6d6d6;
+}
+
+:root[data-theme="dark"] .home-page .stat dt svg {
+  color: #aeb8c6;
+}
+
+:root[data-theme="dark"] .home-page .stat dd {
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .home-page .stat dd small,
+:root[data-theme="dark"] .home-page .stat > span {
+  color: #b8b8b8;
+}
+
 :root[data-theme="dark"] .home-page .home-next-icon {
   background: #263b5d;
   color: #c5d8ff;
