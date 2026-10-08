@@ -6,7 +6,8 @@ public enum UserRole : short
     Student = 0,
     Instructor = 1,
     Admin = 2,
-    SuperAdmin = 3
+    SuperAdmin = 3,
+    Reviewer = 4
 }
 
 // Identifies how a quiz question expects students to answer.

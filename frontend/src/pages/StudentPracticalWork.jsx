@@ -1,14 +1,33 @@
 import formatDeadline from "../utils/formatDeadline";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { apiFetch } from "../utils/apiClient";
 import StudentLayout from "../layouts/StudentLayout";
-import { practicalWork, githubConnection } from "../data/studentDashboard";
+import { practicalWork } from "../data/studentDashboard";
 import "./StudentPracticalWork.css";
 
 export default function StudentPracticalWork() {
   const feedbackDialog = useRef(null);
   const [selectedPractical, setSelectedPractical] = useState(null);
   const [showAllPractical, setShowAllPractical] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    apiFetch("/github/me")
+      .then((data) => {
+        if (!cancelled) setGithubConnected(Boolean(data?.username));
+      })
+      .catch(() => {
+        if (!cancelled) setGithubConnected(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const changesRequested = practicalWork.filter(
     (work) => work.status === "Changes requested",
   ).length;
@@ -54,10 +73,13 @@ export default function StudentPracticalWork() {
                 Review feedback, check your progress, and see what’s due next.
               </p>
             </div>
-            <Link className="github-indicator" to="/student/github">
+            <Link
+              className={`github-indicator ${githubConnected ? "is-connected" : "is-disconnected"}`}
+              to="/student/github"
+            >
               <span className="connection-dot" aria-hidden="true" />
               GitHub ·{" "}
-              {githubConnection.username ? "Connected" : "Not connected"}
+              {githubConnected ? "Connected" : "Not connected"}
             </Link>
           </div>
           <div className="practical-summary">

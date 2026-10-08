@@ -140,8 +140,27 @@ const QuizRunner = () => {
         );
       }
 
-      await response.json();
-      navigate("/quizzes");
+      const result = await response.json();
+      const passed =
+        result.passed === true ||
+        Number(result.score) >= Number(quiz.passingScore);
+
+      if (passed) {
+        const passedQuizIds = JSON.parse(
+          sessionStorage.getItem("passedQuizIds") || "[]",
+        );
+        if (!passedQuizIds.includes(quizId)) {
+          sessionStorage.setItem(
+            "passedQuizIds",
+            JSON.stringify([...passedQuizIds, quizId]),
+          );
+        }
+      }
+
+      navigate("/student/assessments", {
+        replace: true,
+        state: { quizSubmitted: true, quizId, passed },
+      });
     } catch (err) {
       alert(`Submission Error: ${err.message}`);
     } finally {

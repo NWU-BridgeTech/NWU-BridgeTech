@@ -55,6 +55,23 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.VerificationCode).HasMaxLength(6);
         builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
     }
+
+    internal sealed class UserPreferenceConfiguration : IEntityTypeConfiguration<UserPreference>
+    {
+        public void Configure(EntityTypeBuilder<UserPreference> builder)
+        {
+            builder.ToTable("user_preferences");
+            builder.HasKey(x => x.UserId);
+            builder.Property(x => x.Theme).HasMaxLength(10).HasDefaultValue("light").IsRequired();
+            builder.Property(x => x.ProfilePicture).HasColumnType("bytea");
+            builder.Property(x => x.ProfilePictureContentType).HasMaxLength(100);
+            builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()").IsRequired();
+            builder.HasOne(x => x.User)
+                .WithOne(x => x.Preferences)
+                .HasForeignKey<UserPreference>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 }
 
 internal sealed class ModuleConfiguration : IEntityTypeConfiguration<Module>

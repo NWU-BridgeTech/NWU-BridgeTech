@@ -169,14 +169,18 @@ export default function LessonView() {
         <div className="lesson-footer-card">
           {lesson.quiz ? (
             <div className="lesson-quiz-group">
-              <Link
-                to={`/quizzes/${lesson.quiz.quizId}`}
-                className="lesson-quiz-btn"
-              >
-                {lesson.quiz.bestScore == null
-                  ? "Take the Quiz"
-                  : "Retake the Quiz"}
-              </Link>
+              {lesson.quiz.passed ? (
+                <span className="lesson-quiz-passed">Quiz passed</span>
+              ) : (
+                <Link
+                  to={`/quizzes/${lesson.quiz.quizId}`}
+                  className="lesson-quiz-btn"
+                >
+                  {lesson.quiz.bestScore == null
+                    ? "Take the Quiz"
+                    : "Retake the Quiz"}
+                </Link>
+              )}
             </div>
           ) : (
             <span />

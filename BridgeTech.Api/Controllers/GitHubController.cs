@@ -32,6 +32,17 @@ public sealed class GitHubController : ControllerBase
     }
 
     [Authorize]
+    [HttpDelete("connection")]
+    public async Task<IActionResult> Disconnect(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.DisconnectUserAsync(userId, cancellationToken);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
@@ -60,6 +71,17 @@ public sealed class GitHubController : ControllerBase
         return repository is null
             ? NotFound(new { message = "That repository is not available to your connected GitHub account." })
             : Ok(new { repository });
+    }
+
+    [Authorize]
+    [HttpDelete("repository")]
+    public async Task<IActionResult> UnlinkRepository(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.UnlinkRepositoryAsync(userId, cancellationToken);
+        return NoContent();
     }
 
     [AllowAnonymous]

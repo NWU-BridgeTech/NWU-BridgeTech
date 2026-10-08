@@ -119,12 +119,6 @@ export default function StudentCertificates() {
                   >
                     View details <span aria-hidden="true">→</span>
                   </button>
-                  <button
-                    className="btn"
-                    onClick={() => downloadCertificate("pdf")}
-                  >
-                    Download PDF
-                  </button>
                 </li>
               ))}
             </ul>
@@ -203,19 +197,13 @@ export default function StudentCertificates() {
                 </p>
                 <div className="certificate-download-actions">
                   <button
-                    className="btn blue"
+                    className="btn certificate-download-button certificate-download-primary"
                     onClick={() => downloadCertificate("png")}
                   >
                     Download PNG
                   </button>
                   <button
-                    className="btn"
-                    onClick={() => downloadCertificate("jpeg")}
-                  >
-                    Download JPEG
-                  </button>
-                  <button
-                    className="btn"
+                    className="btn certificate-download-button certificate-download-secondary"
                     onClick={() => downloadCertificate("pdf")}
                   >
                     Download PDF

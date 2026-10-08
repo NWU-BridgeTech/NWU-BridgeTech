@@ -289,13 +289,25 @@ public async Task<IReadOnlyList<QuizRetakeResponse>> GetQuizzesToRetakeAsync(Gui
     var attempts = await _context.QuizAttempts
         .AsNoTracking()
         .Where(a => a.UserId == userId && a.CompletedAt != null)
-        .Select(a => new { a.QuizId, a.Score, a.Passed, CompletedAt = a.CompletedAt!.Value })
+        .Select(a => new
+        {
+            a.QuizId,
+            a.Score,
+            a.Passed,
+            a.Quiz.PassingScore,
+            CompletedAt = a.CompletedAt!.Value
+        })
         .ToListAsync(cancellationToken);
+
+    var passedQuizIds = attempts
+        .Where(a => a.Passed == true || (a.Score ?? 0) >= a.PassingScore)
+        .Select(a => a.QuizId)
+        .ToHashSet();
 
     var lastScoreByFailedQuiz = attempts
         .GroupBy(a => a.QuizId)
         .Select(g => g.OrderByDescending(a => a.CompletedAt).First())
-        .Where(a => a.Passed != true)
+        .Where(a => !passedQuizIds.Contains(a.QuizId))
         .ToDictionary(a => a.QuizId, a => a.Score ?? 0);
 
     if (lastScoreByFailedQuiz.Count == 0) return Array.Empty<QuizRetakeResponse>();
