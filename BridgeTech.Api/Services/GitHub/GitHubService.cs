@@ -8,6 +8,7 @@ using BridgeTech.Api.DTOs.GitHub;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.GitHub;
 
@@ -17,17 +18,20 @@ public sealed class GitHubService : IGitHubService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly GitHubApiOptions _options;
     private readonly IDataProtector _stateProtector;
+    private readonly INotificationService _notificationService;
 
     public GitHubService(
         AppDbContext dbContext,
         IHttpClientFactory httpClientFactory,
         IOptions<GitHubApiOptions> options,
-        IDataProtectionProvider dataProtectionProvider)
+        IDataProtectionProvider dataProtectionProvider,
+        INotificationService notificationService)
     {
         _dbContext = dbContext;
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _stateProtector = dataProtectionProvider.CreateProtector("BridgeTech.GitHubOAuthState");
+        _notificationService = notificationService;
     }
 
     public string CreateAuthorizationUrl(Guid userId)
@@ -102,6 +106,21 @@ public sealed class GitHubService : IGitHubService
             .Select(x => x.GithubRepository)
             .SingleOrDefaultAsync(cancellationToken);
 
+    public async Task DisconnectUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var updated = await _dbContext.Users
+            .Where(x => x.UserId == userId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.GithubUsername, (string?)null)
+                .SetProperty(x => x.GithubAccessToken, (string?)null)
+                .SetProperty(x => x.GithubRepository, (string?)null)
+                .SetProperty(x => x.UpdatedAt, DateTimeOffset.UtcNow), cancellationToken);
+        if (updated == 0)
+            throw new InvalidOperationException("User account was not found.");
+    }
+
     public async Task<IReadOnlyList<GitHubRepositoryResponse>> GetRepositoriesAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -142,10 +161,39 @@ public sealed class GitHubService : IGitHubService
         if (user is null)
             return null;
 
+        var wasAlreadyLinked = string.Equals(
+            user.GithubRepository,
+            repository.FullName,
+            StringComparison.OrdinalIgnoreCase);
         user.GithubRepository = repository.FullName;
         user.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!wasAlreadyLinked)
+        {
+            await _notificationService.NotifyAsync(
+                userId,
+                "github_repository_linked",
+                "GitHub repository linked",
+                $"Your repository {repository.FullName} is now linked for practical work.",
+                cancellationToken: cancellationToken);
+        }
+
         return repository.FullName;
+    }
+
+    public async Task UnlinkRepositoryAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var updated = await _dbContext.Users
+            .Where(x => x.UserId == userId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.GithubRepository, (string?)null)
+                .SetProperty(x => x.UpdatedAt, DateTimeOffset.UtcNow), cancellationToken);
+
+        if (updated == 0)
+            throw new InvalidOperationException("User account was not found.");
     }
 
     private HttpClient CreateGitHubClient(string? token)

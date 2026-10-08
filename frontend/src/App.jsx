@@ -12,7 +12,6 @@ import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
 import StudentNotifications from "./pages/StudentNotifications";
 import StudentBadges from "./pages/StudentBadges";
-<Route path="/student/badges" element={<StudentBadges />} />;
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -32,6 +31,7 @@ import QuizzRunner from "./pages/QuizzRunner";
 import TeamArea from "./pages/TeamArea";
 import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AdminSection({ children }) {
   return <AppLayout>{children}</AppLayout>;
@@ -40,7 +40,8 @@ function AdminSection({ children }) {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <ThemeProvider>
+        <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/team-login" element={<Login team />} />
@@ -66,6 +67,7 @@ function App() {
             path="/student/certificates"
             element={<StudentCertificates />}
           />
+          <Route path="/student/badges" element={<StudentBadges />} />
           <Route path="/student/github" element={<StudentGithub />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route
@@ -171,7 +173,8 @@ function App() {
 
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
-      </Routes>
+        </Routes>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

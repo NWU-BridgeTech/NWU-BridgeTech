@@ -6,13 +6,15 @@ using Microsoft.EntityFrameworkCore;
 using BridgeTech.Api.Common.Exceptions;
 using BridgeTech.Api.Services.Certificates;
 using BridgeTech.Api.Services.Badges;
+using BridgeTech.Api.Services.Notifications;
 
 namespace BridgeTech.Api.Services.Lessons;
 
 public class LessonService(
     AppDbContext context,
     ICertificateService certificateService,
-    IBadgeService badgeService) : ILessonService
+    IBadgeService badgeService,
+    INotificationService notificationService) : ILessonService
 {
     public async Task<IEnumerable<LessonListItemResponse>> GetLessonsForModuleAsync(
         Guid moduleId, Guid userId, CancellationToken cancellationToken)
@@ -163,6 +165,21 @@ public class LessonService(
 
         if (enrollment.Status == EnrollmentStatus.Completed)
         {
+            var module = await context.Modules
+                .AsNoTracking()
+                .SingleAsync(m => m.ModuleId == lesson.ModuleId, cancellationToken);
+
+            if (!wasAlreadyCompleted)
+            {
+                await notificationService.NotifyAsync(
+                    userId,
+                    "module_completed",
+                    "Module completed",
+                    $"You completed the {module.Title} module. Your certificate is ready to view in the Certificates tab.",
+                    module.ModuleId,
+                    cancellationToken);
+            }
+
             await certificateService.IssueForCompletionAsync(
                 userId, lesson.ModuleId, cancellationToken);
         }

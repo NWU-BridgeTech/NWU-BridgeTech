@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 28px;
 }
 
 .student-practical .practical-heading h2 {
@@ -22,8 +22,9 @@
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 20px;
-  margin-bottom: 12px;
+  gap: 10px 24px;
+  margin-bottom: 16px;
+  padding: 0 2px;
   font-size: 12px;
   color: var(--text-secondary);
 }
@@ -34,10 +35,47 @@
 
 .student-practical .exercise-course {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 12px;
   font-weight: 400;
   color: var(--text-secondary);
+}
+
+.student-practical .practical-table {
+  table-layout: fixed;
+}
+
+.student-practical .practical-table th,
+.student-practical .practical-table td {
+  padding: 20px 24px;
+  vertical-align: middle;
+}
+
+.student-practical .practical-table thead th {
+  padding-top: 17px;
+  padding-bottom: 17px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.student-practical .practical-table th:nth-child(1) {
+  width: 34%;
+}
+
+.student-practical .practical-table th:nth-child(2) {
+  width: 22%;
+}
+
+.student-practical .practical-table th:nth-child(3) {
+  width: 22%;
+}
+
+.student-practical .practical-table th:nth-child(4) {
+  width: 22%;
+}
+
+.student-practical .practical-table tbody tr {
+  min-height: 94px;
 }
 
 .student-practical .exercise-deadline time {
@@ -72,13 +110,18 @@
 }
 
 .student-practical .practical-note {
-  margin: 16px 0 0;
+  margin: 20px 0 0;
 }
 
 @media (max-width: 700px) {
   .student-practical .practical-table tbody tr {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
+  }
+
+  .student-practical .practical-table th,
+  .student-practical .practical-table td {
+    padding: 14px 16px;
   }
 
   .student-practical .practical-table td:last-child {

@@ -152,6 +152,26 @@
   font-weight: 600;
 }
 
+.student-certificates .certificate-download-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.student-certificates .certificate-download-button {
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 700;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.student-certificates .certificate-download-button:hover {
+  transform: translateY(-1px);
+}
+
 @media (max-width: 700px) {
   .student-certificates .certificate-card {
     flex-wrap: wrap;
@@ -164,5 +184,9 @@
 
   .student-certificates .certificate-card button {
     width: 100%;
+  }
+
+  .student-certificates .certificate-download-actions {
+    grid-template-columns: 1fr;
   }
 }

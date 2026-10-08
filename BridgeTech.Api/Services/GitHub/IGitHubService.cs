@@ -10,4 +10,6 @@ public interface IGitHubService
     Task<string?> GetRepositoryAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<GitHubRepositoryResponse>> GetRepositoriesAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<string?> LinkRepositoryAsync(Guid userId, string fullName, CancellationToken cancellationToken = default);
+    Task UnlinkRepositoryAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task DisconnectUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

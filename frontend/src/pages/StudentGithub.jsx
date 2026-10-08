@@ -1,17 +1,39 @@
-import { useEffect, useState } from "react";
-import { clearAuthTokens, getToken } from "../utils/authStorage";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Check, GitBranch, LockKeyhole } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck, GitBranch, LockKeyhole } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
-import { practicalWork } from "../data/studentDashboard";
+import { clearAuthTokens, getToken } from "../utils/authStorage";
 import "./StudentGithub.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+
+function normalizeRepository(item) {
+  const name = item.name || item.Name || "";
+  const fullName = item.fullName || item.full_name || item.FullName || name;
+  return {
+    name,
+    fullName,
+    htmlUrl: item.htmlUrl || item.html_url || item.HtmlUrl || "",
+    isPrivate:
+      item.isPrivate ?? item.private ?? item.IsPrivate ?? false,
+  };
+}
+
+function authHeaders() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export default function StudentGithub() {
   const [username, setUsername] = useState(null);
   const [repository, setRepository] = useState(null);
   const [repositories, setRepositories] = useState([]);
+  const [selectedRepository, setSelectedRepository] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   const [savingRepository, setSavingRepository] = useState(false);
   const [error, setError] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -19,63 +41,40 @@ export default function StudentGithub() {
       ? params.get("message") || "Unable to connect your GitHub account."
       : "";
   });
-  const [connecting, setConnecting] = useState(false);
-  const connected = Boolean(username);
 
-  const skills = [
-    {
-      label: "Connect a GitHub account",
-      complete: connected,
-      detail: connected
-        ? `Connected as @${username}`
-        : "Connect your account to begin",
-    },
-    {
-      label: "Link a practical repository",
-      complete: Boolean(repository),
-      detail: repository || "Choose the repository used for practical work",
-    },
-    {
-      label: "Make your first commit",
-      complete: false,
-      detail: "Activity tracking will appear when repository sync is available",
-    },
-    {
-      label: "Work with branches and pull requests",
-      complete: false,
-      detail: "Activity tracking will appear when repository sync is available",
-    },
-  ];
-  const completedSkills = skills.filter((skill) => skill.complete).length;
-  const nextSkill = skills.find((skill) => !skill.complete);
-  const progressPercent = Math.round((completedSkills / skills.length) * 100);
-  const skillLevel =
-    completedSkills >= 4
-      ? "Confident"
-      : completedSkills >= 3
-        ? "Practicing"
-        : completedSkills >= 1
-          ? "Developing"
-          : "Foundations";
+  const connected = Boolean(username);
+  const selectedRepositoryData = useMemo(
+    () => repositories.find((item) => item.fullName === selectedRepository),
+    [repositories, selectedRepository],
+  );
 
   useEffect(() => {
     window.history.replaceState({}, document.title, window.location.pathname);
 
-    fetch(`${API_URL}/api/github/me`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
+    fetch(`${API_URL}/api/github/me`, { headers: authHeaders() })
       .then((response) => {
         if (!response.ok) throw new Error("Unable to load GitHub connection.");
         return response.json();
       })
       .then((data) => {
-        setUsername(data.username);
+        setUsername(data.username || null);
         setRepository(data.repository || null);
+        setSelectedRepository("");
+        const normalizedRepositories = Array.isArray(data.repositories)
+          ? data.repositories
+              .map(normalizeRepository)
+              .filter((item) => item.fullName)
+          : [];
         setRepositories(
-          Array.isArray(data.repositories) ? data.repositories : [],
+          Array.from(
+            new Map(
+              normalizedRepositories.map((item) => [item.fullName, item]),
+            ).values(),
+          ),
         );
       })
-      .catch(() => setError("Unable to load your GitHub connection."));
+      .catch((loadError) => setError(loadError.message))
+      .finally(() => setLoading(false));
   }, []);
 
   async function connectGithub() {
@@ -83,7 +82,7 @@ export default function StudentGithub() {
     setConnecting(true);
     try {
       const response = await fetch(`${API_URL}/api/github/connect`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: authHeaders(),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -100,264 +99,308 @@ export default function StudentGithub() {
     }
   }
 
-  async function linkRepository(event) {
-    const fullName = event.target.value;
-    if (!fullName) return;
+  async function disconnectGithub() {
+    setError("");
+    setDisconnecting(true);
+    try {
+      const response = await fetch(`${API_URL}/api/github/connection`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Unable to disconnect GitHub.");
+      const verificationResponse = await fetch(`${API_URL}/api/github/me`, {
+        headers: authHeaders(),
+      });
+      if (!verificationResponse.ok) {
+        throw new Error("GitHub disconnected, but the connection could not be verified.");
+      }
+      const verification = await verificationResponse.json();
+      if (verification.username || verification.repository) {
+        throw new Error("GitHub is still connected. Please try disconnecting again.");
+      }
+      setUsername(null);
+      setRepository(null);
+      setRepositories([]);
+      setSelectedRepository("");
+    } catch (disconnectError) {
+      setError(disconnectError.message);
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  async function linkRepository() {
+    if (!selectedRepository) return;
 
     setError("");
     setSavingRepository(true);
     try {
       const response = await fetch(`${API_URL}/api/github/repository`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({ fullName }),
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ fullName: selectedRepository }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(data.message || "Unable to link repository.");
+      if (!response.ok) throw new Error(data.message || "Unable to link repository.");
       setRepository(data.repository);
+      window.dispatchEvent(new Event("notifications-changed"));
     } catch (linkError) {
       setError(linkError.message);
     } finally {
       setSavingRepository(false);
     }
+
+    async function unlinkRepository() {
+      if (!window.confirm("Unlink this repository from your practical work?")) return;
+
+      setError("");
+      setUnlinking(true);
+      try {
+        const response = await fetch(`${API_URL}/api/github/repository`, {
+          method: "DELETE",
+          headers: authHeaders(),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Unable to unlink repository.");
+
+        const verificationResponse = await fetch(`${API_URL}/api/github/me`, {
+          headers: authHeaders(),
+        });
+        if (!verificationResponse.ok) {
+          throw new Error("Repository unlinked, but the connection could not be verified.");
+        }
+        const verification = await verificationResponse.json();
+        if (verification.repository) {
+          throw new Error("The repository is still linked. Please try again.");
+        }
+
+        setRepository(null);
+        setSelectedRepository("");
+        window.dispatchEvent(new Event("notifications-changed"));
+      } catch (unlinkError) {
+        setError(unlinkError.message);
+      } finally {
+        setUnlinking(false);
+      }
+    }
   }
+
+  const steps = [
+    { label: "Connect GitHub", detail: "Link your account", complete: connected },
+    {
+      label: "Select Repository",
+      detail: "Choose a repository to link",
+      complete: Boolean(selectedRepository),
+    },
+    {
+      label: "Link Repository",
+      detail: "Confirm and connect",
+      complete: Boolean(repository),
+    },
+    {
+      label: "Complete Skills",
+      detail: "Track your progress",
+      complete: false,
+    },
+  ];
 
   return (
     <StudentLayout title="GitHub">
-      <div className="content student-github">
-        <div className="github-intro">
-          <div className="github-title-row">
-            <div className="github-title-icon" aria-hidden="true">
-              <GitBranch size={28} strokeWidth={1.7} />
-            </div>
-            <div>
-              <span className="github-eyebrow">PRACTICAL SKILLS / GITHUB</span>
-              <h2>GitHub</h2>
-              <p>
-                Track your GitHub activity and see your progress as you build
-                your practical skills.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="github-overview-grid">
-          <section
-            className="github-learning-focus"
-            aria-labelledby="github-learning-heading"
-          >
-            <div className="github-section-heading">
-              <div className="github-section-icon" aria-hidden="true">
-                <BadgeCheck size={24} strokeWidth={1.7} />
-              </div>
-              <div>
-                <h2 id="github-learning-heading">GitHub Learning Progress</h2>
-                <p>
-                  Build your Git and GitHub skills by completing real
-                  development tasks.
-                </p>
-              </div>
-            </div>
-            <div className="github-progress-summary">
-              <div>
-                <strong>
-                  {completedSkills} of {skills.length} skills demonstrated
-                </strong>
-                <span>
-                  Based only on activity currently verified by PracticalWork.
-                </span>
-              </div>
-              <div className="github-progress-score">
-                <strong>{progressPercent}%</strong>
-                <span>{skillLevel}</span>
-              </div>
-            </div>
-            <div
-              className="github-progress-track"
-              aria-label={`${progressPercent}% of GitHub skills demonstrated`}
-            >
-              <span style={{ width: `${progressPercent}%` }} />
-            </div>
-            <ol className="github-skill-list">
-              {skills.map((skill) => (
-                <li
-                  className={skill.complete ? "complete" : "pending"}
-                  key={skill.label}
-                >
-                  <span className="github-skill-marker" aria-hidden="true">
-                    {skill.complete ? "✓" : "○"}
-                  </span>
-                  <span>
-                    <strong>{skill.label}</strong>
-                    <small>{skill.detail}</small>
-                  </span>
-                  <span className="github-skill-status">
-                    {skill.complete ? "Demonstrated" : "Not tracked"}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <div className="github-side-stack">
-            <section
-              className="github-card github-next-skill"
-              aria-labelledby="next-skill-heading"
-            >
-              <div className="github-card-heading">
-                <h3 id="next-skill-heading">Next skill</h3>
-                <span className="github-step-label">Keep learning</span>
-              </div>
-              <h4>
-                {nextSkill?.label || "Keep practising your GitHub workflow"}
-              </h4>
-              <p>
-                {nextSkill?.complete
-                  ? "You have demonstrated every currently tracked skill."
-                  : "Learn the workflow, then demonstrate it through your practical repository."}
-              </p>
-              <Link className="btn blue" to="/student/practical-work">
-                View practical work <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            </section>
-
-            <section
-              className="github-card github-repository-card"
-              aria-labelledby="repository-heading"
-            >
-              <div className="github-card-heading">
-                <h3 id="repository-heading">Repository connection</h3>
-                <span
-                  className={`activity-status ${repository ? "success" : "neutral"}`}
-                >
-                  {repository
-                    ? "Linked"
-                    : connected
-                      ? "Choose one"
-                      : "Not connected"}
-                </span>
-              </div>
-              {repository ? (
-                <>
-                  <h4>{repository}</h4>
-                  <p>Your practical work is connected to this repository.</p>
-                  <a
-                    className="github-repository-link"
-                    href={`https://github.com/${repository}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open repository <ArrowRight size={15} aria-hidden="true" />
-                  </a>
-                </>
+      <main className="content student-github">
+        <section className="github-hero">
+          <div>
+            <span className="github-eyebrow">PRACTICAL SKILLS</span>
+            <h1>Connect Your GitHub Account</h1>
+            <p>
+              Link your GitHub account, select a repository and start working
+              on your practical skills.
+            </p>
+            <div className="github-hero-actions">
+              {!connected ? (
+              <button
+                className="github-primary-button"
+                type="button"
+                onClick={connectGithub}
+                disabled={connecting || loading}
+              >
+                <GitBranch size={18} aria-hidden="true" />
+                {connecting ? "Opening GitHub..." : "Connect GitHub"}
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
               ) : (
-                <>
-                  <h4>
-                    {connected
-                      ? "Select your practical repository"
-                      : "Connect GitHub to get started"}
-                  </h4>
-                  <p>
-                    {connected
-                      ? "Link the repository you use for practical work."
-                      : "Connect your account to begin demonstrating GitHub skills."}
-                  </p>
-                  {connected && repositories.length > 0 && (
-                    <label className="github-repository-select">
-                      <span>Practical repository</span>
-                      <select
-                        value=""
-                        onChange={linkRepository}
-                        disabled={savingRepository}
-                      >
-                        <option value="">
-                          {savingRepository
-                            ? "Linking..."
-                            : "Choose a repository"}
-                        </option>
-                        {repositories.map((item) => (
-                          <option key={item.fullName} value={item.fullName}>
-                            {item.fullName}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  {connected && repositories.length === 0 && (
-                    <p className="github-repository-empty">
-                      No repositories were returned. Reconnect GitHub to grant
-                      repository access.
-                    </p>
-                  )}
-                </>
-              )}
-              <div className="github-card-footer">
                 <button
-                  className="btn"
-                  onClick={connectGithub}
-                  disabled={connecting}
+                  className="github-secondary-button"
+                  type="button"
+                  onClick={() => setDisconnectConfirmOpen(true)}
+                  disabled={disconnecting}
                 >
-                  {connecting
-                    ? "Connecting..."
-                    : connected
-                      ? "Reconnect GitHub"
-                      : "Connect GitHub"}
+                  {disconnecting ? "Disconnecting..." : "Disconnect GitHub"}
                 </button>
-                {error ? (
-                  <p className="error-message visible" role="alert">
-                    {error}
-                  </p>
-                ) : null}
-              </div>
-            </section>
-          </div>
-        </div>
-
-        <section
-          className="github-practical-section"
-          aria-labelledby="github-practical-heading"
-        >
-          <div className="github-section-heading">
-            <div className="github-section-icon" aria-hidden="true">
-              <GitBranch size={22} strokeWidth={1.7} />
+              )}
+              <Link className="github-practical-button" to="/student/practical-work">
+                View your practical work
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </div>
-            <div>
-              <h2 id="github-practical-heading">Practical Work</h2>
-              <p>
-                Your GitHub activity is connected to your practical exercises.
-              </p>
-            </div>
-            <Link className="text-action" to="/student/practical-work">
-              View all <ArrowRight size={15} aria-hidden="true" />
-            </Link>
           </div>
-          <div className="github-practical-list">
-            {practicalWork.slice(0, 3).map((work) => (
-              <div className="github-practical-item" key={work.id}>
-                <div>
-                  <strong>{work.title}</strong>
-                  <span>{work.course}</span>
-                </div>
-                <span className={`activity-status ${work.tone}`}>
-                  {work.status}
-                </span>
-              </div>
-            ))}
+          <div className="github-hero-art" aria-hidden="true">
+            <GitBranch size={74} strokeWidth={1.2} />
           </div>
         </section>
 
-        <div className="github-data-note">
+        <nav className="github-steps" aria-label="GitHub connection progress">
+          {steps.map((step, index) => (
+            <div className="github-step" key={step.label}>
+              <span className={`github-step-number ${step.complete || index === 0 && connected ? "complete" : ""}`}>
+                {step.complete ? <Check size={15} /> : index + 1}
+              </span>
+              <span>
+                <strong>{step.label}</strong>
+                <small>{step.detail}</small>
+              </span>
+            </div>
+          ))}
+        </nav>
+
+        {connected ? (
+          <section className="github-repository-section" aria-labelledby="repository-heading">
+            <div className="github-section-title">
+              <GitBranch size={24} aria-hidden="true" />
+              <div>
+                <h2 id="repository-heading">Select Repository</h2>
+                <p>Choose a repository from your GitHub account to link with your practical skills.</p>
+                {repository && (
+                  <div className="github-persisted-link">
+                    <p>Linked repository: <strong>{repository}</strong></p>
+                    <button type="button" onClick={unlinkRepository} disabled={unlinking}>
+                      {unlinking ? "Unlinking..." : "Unlink repository"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="github-repository-layout">
+              <div className="github-repository-list">
+                <div className="github-list-heading">
+                  <strong>Your Repositories</strong>
+                  <button type="button" onClick={() => window.location.reload()}>
+                    Refresh
+                  </button>
+                </div>
+                {repositories.length ? (
+                  repositories.map((item) => (
+                    <button
+                      className={`github-repository-row ${selectedRepository === item.fullName ? "selected" : ""}`}
+                      type="button"
+                      key={`github-repository-${item.fullName}`}
+                      onClick={() => setSelectedRepository(item.fullName)}
+                    >
+                      <span className="github-radio" aria-hidden="true">
+                        {selectedRepository === item.fullName && <span />}
+                      </span>
+                      <span className="github-repository-row-copy">
+                        <strong>{item.name}</strong>
+                        <small>{item.fullName}</small>
+                      </span>
+                      <span className="github-visibility">
+                        {item.fullName === repository ? "Linked" : item.isPrivate ? "Private" : "Public"}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="github-empty">No repositories were returned from GitHub.</p>
+                )}
+              </div>
+
+              <aside className="github-selected-repository">
+                {selectedRepositoryData ? (
+                  <>
+                    <div className="github-selected-icon">
+                      <GitBranch size={27} aria-hidden="true" />
+                    </div>
+                    <h3>{selectedRepositoryData.name}</h3>
+                    <p>{selectedRepositoryData.fullName}</p>
+                    <span className="github-repository-badge">
+                      {selectedRepositoryData.isPrivate ? "Private repository" : "Public repository"}
+                    </span>
+                    <a href={selectedRepositoryData.htmlUrl} target="_blank" rel="noopener noreferrer">
+                      Open on GitHub <ArrowRight size={15} aria-hidden="true" />
+                    </a>
+                    <button className="github-primary-button github-link-button" type="button" onClick={linkRepository} disabled={savingRepository}>
+                      {savingRepository ? "Linking..." : "Link Repository"}
+                      <ArrowRight size={16} aria-hidden="true" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="github-selected-icon">
+                      <GitBranch size={27} aria-hidden="true" />
+                    </div>
+                    <h3>Choose a repository</h3>
+                    <p>Select a repository from the list to see its details.</p>
+                  </>
+                )}
+              </aside>
+            </div>
+          </section>
+        ) : (
+          <section className="github-connect-empty">
+            <h2>Connect GitHub to choose a repository</h2>
+            <p>Your repositories will appear here after you authorize BridgeTech.</p>
+          </section>
+        )}
+
+        {connected && <p className="github-connected-account">Connected as @{username}</p>}
+        {error && <p className="github-error" role="alert">{error}</p>}
+        <p className="github-privacy-note">
           <LockKeyhole size={15} aria-hidden="true" />
-          <p>
-            Commit, branch, pull request, and review milestones will appear here
-            once GitHub activity sync is enabled.
-          </p>
-        </div>
-      </div>
+          Only repository details returned by GitHub are shown here.
+        </p>
+
+        {disconnectConfirmOpen && (
+          <div className="github-modal-backdrop" role="presentation">
+            <section
+              className="github-confirm-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="disconnect-github-heading"
+              aria-describedby="disconnect-github-description"
+            >
+              <div className="github-confirm-icon" aria-hidden="true">
+                <GitBranch size={22} />
+              </div>
+              <h2 id="disconnect-github-heading">Disconnect GitHub?</h2>
+              <p id="disconnect-github-description">
+                Your GitHub account and linked repository will be removed from
+                BridgeTech. You can reconnect it later.
+              </p>
+              <div className="github-confirm-actions">
+                <button
+                  className="github-confirm-cancel"
+                  type="button"
+                  onClick={() => setDisconnectConfirmOpen(false)}
+                  disabled={disconnecting}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="github-confirm-danger"
+                  type="button"
+                  onClick={() => {
+                    setDisconnectConfirmOpen(false);
+                    disconnectGithub();
+                  }}
+                  disabled={disconnecting}
+                >
+                  {disconnecting ? "Disconnecting..." : "Disconnect"}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+      </main>
     </StudentLayout>
   );
 }

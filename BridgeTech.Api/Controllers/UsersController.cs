@@ -1,7 +1,6 @@
 using BridgeTech.Api.Data;
 using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
-using BridgeTech.Api.DTOs.Users;
 using BridgeTech.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using BridgeTech.Api.DTOs.Users;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -218,6 +218,111 @@ public class UsersController(
             CertificatesEarned = candidate.Certificates.Count()
         }).SingleOrDefaultAsync(cancellationToken);
         return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpGet("me/preferences")]
+    public async Task<IActionResult> GetPreferences(CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var preference = await dbContext.UserPreferences
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+
+        return Ok(ToPreferenceResponse(preference));
+    }
+
+    [HttpPut("me/preferences")]
+    public async Task<IActionResult> UpdatePreferences(
+        UpdateUserPreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var theme = request.Theme.Trim().ToLowerInvariant();
+        if (theme is not ("system" or "light" or "dark"))
+        {
+            return BadRequest(new { message = "Theme must be system, light, or dark." });
+        }
+
+        var preference = await dbContext.UserPreferences
+            .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        if (preference is null)
+        {
+            preference = new UserPreference { UserId = userId };
+            dbContext.UserPreferences.Add(preference);
+        }
+
+        preference.Theme = theme;
+        preference.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ToPreferenceResponse(preference));
+    }
+
+    [HttpPut("me/preferences/profile-picture")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadProfilePicture(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+        if (file.Length is <= 0 or > 5 * 1024 * 1024)
+        {
+            return BadRequest(new { message = "Profile pictures must be between 1 byte and 5 MB." });
+        }
+
+        var contentType = file.ContentType.ToLowerInvariant();
+        if (contentType is not ("image/jpeg" or "image/png" or "image/webp"))
+        {
+            return BadRequest(new { message = "Profile pictures must be JPEG, PNG, or WebP images." });
+        }
+
+        await using var stream = new MemoryStream();
+        await file.CopyToAsync(stream, cancellationToken);
+
+        var preference = await dbContext.UserPreferences
+            .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        if (preference is null)
+        {
+            preference = new UserPreference { UserId = userId };
+            dbContext.UserPreferences.Add(preference);
+        }
+
+        preference.ProfilePicture = stream.ToArray();
+        preference.ProfilePictureContentType = contentType;
+        preference.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ToPreferenceResponse(preference));
+    }
+
+    [HttpDelete("me/preferences/profile-picture")]
+    public async Task<IActionResult> DeleteProfilePicture(CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var preference = await dbContext.UserPreferences
+            .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        if (preference is not null)
+        {
+            preference.ProfilePicture = null;
+            preference.ProfilePictureContentType = null;
+            preference.UpdatedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return Ok(ToPreferenceResponse(preference));
+    }
+
+    private bool TryGetUserId(out Guid userId) =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
+
+    private static UserPreferenceResponse ToPreferenceResponse(UserPreference? preference)
+    {
+        var pictureUrl = preference?.ProfilePicture is { Length: > 0 } picture &&
+                         preference.ProfilePictureContentType is { Length: > 0 } contentType
+            ? $"data:{contentType};base64,{Convert.ToBase64String(picture)}"
+            : null;
+        return new UserPreferenceResponse(preference?.Theme ?? "light", pictureUrl);
     }
 
     [HttpGet]

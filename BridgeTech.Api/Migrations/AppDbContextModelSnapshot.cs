@@ -851,9 +851,17 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("character varying(39)")
                         .HasColumnName("github_username");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
                     b.Property<DateTimeOffset?>("LastCodeSentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_code_sent_at");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -946,6 +954,41 @@ namespace BridgeTech.Api.Migrations
                         .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.UserPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<byte[]>("ProfilePicture")
+                        .HasColumnType("bytea")
+                        .HasColumnName("profile_picture");
+
+                    b.Property<string>("ProfilePictureContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("profile_picture_content_type");
+
+                    b.Property<string>("Theme")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("light")
+                        .HasColumnName("theme");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_user_preferences");
+
+                    b.ToTable("user_preferences", "public");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.VideoSummary", b =>
@@ -1233,6 +1276,18 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Quiz");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.UserPreference", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithOne("Preferences")
+                        .HasForeignKey("BridgeTech.Api.Domain.Entities.UserPreference", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_preferences_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.VideoSummary", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
@@ -1305,6 +1360,8 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("ExerciseSubmissions");
 
                     b.Navigation("Notifications");
+
+                    b.Navigation("Preferences");
 
                     b.Navigation("QuizAttempts");
                 });

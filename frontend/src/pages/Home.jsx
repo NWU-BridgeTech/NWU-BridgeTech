@@ -71,7 +71,7 @@ export default function Home() {
   const [pendingQuizzes, setPendingQuizzes] = useState([]);
 
   useEffect(() => {
-    apiFetch("/user/quizzes/pending")
+    apiFetch("/quizzes/pending")
       .then((data) => setPendingQuizzes(Array.isArray(data) ? data : []))
       .catch(() => setPendingQuizzes([]));
 
