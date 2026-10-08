@@ -27,6 +27,7 @@ export default function Quizzes() {
     async function loadDashboardData() {
       try {
         setLoading(true);
+        let passedQuizIds = new Set();
 
         const attemptsRes = await fetch(
           `${BACKEND_URL}/api/quizzes/my-attempts`,
@@ -37,6 +38,16 @@ export default function Quizzes() {
         if (attemptsRes.ok) {
           const attemptsData = await attemptsRes.json();
           setCompletedQuizzes(attemptsData || []);
+
+          passedQuizIds = new Set(
+            (attemptsData || [])
+              .filter(
+                (attempt) =>
+                  attempt.passed === true ||
+                  attempt.score >= attempt.passingScore,
+              )
+              .map((attempt) => attempt.quizId),
+          );
         } else {
           console.error("my-attempts failed with status", attemptsRes.status);
         }
@@ -46,7 +57,18 @@ export default function Quizzes() {
         });
         if (pendingRes.ok) {
           const pendingData = await pendingRes.json();
-          setQuizzesToRetake(pendingData || []);
+          const locallyPassedQuizIds = new Set(
+            JSON.parse(sessionStorage.getItem("passedQuizIds") || "[]").map(
+              (quizId) => String(quizId).toLowerCase(),
+            ),
+          );
+          setQuizzesToRetake(
+            (pendingData || []).filter(
+              (quiz) =>
+                !passedQuizIds.has(quiz.quizId) &&
+                !locallyPassedQuizIds.has(String(quiz.quizId).toLowerCase()),
+            ),
+          );
         } else {
           console.error("pending failed with status", pendingRes.status);
         }

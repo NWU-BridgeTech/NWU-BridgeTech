@@ -851,9 +851,17 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("character varying(39)")
                         .HasColumnName("github_username");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
                     b.Property<DateTimeOffset?>("LastCodeSentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_code_sent_at");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<string>("LastName")
                         .IsRequired()

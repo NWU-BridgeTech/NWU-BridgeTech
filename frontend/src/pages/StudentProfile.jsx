@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import useCurrentUser from "../hooks/useCurrentUser";
-import { getToken } from "../utils/authStorage";
+import { clearAuthTokens, getToken } from "../utils/authStorage";
+import { LogOut } from "lucide-react";
 import "./StudentProfile.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -15,6 +16,7 @@ function authHeaders() {
 }
 
 export default function StudentProfile() {
+  const navigate = useNavigate();
   const { user, loading, error: profileError } = useCurrentUser();
   const [profile, setProfile] = useState(null);
   const [profileMessage, setProfileMessage] = useState("");
@@ -27,6 +29,9 @@ export default function StudentProfile() {
   const [passwordError, setPasswordError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signOutClosing, setSignOutClosing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const profileValues =
     profile ??
@@ -44,6 +49,26 @@ export default function StudentProfile() {
   function updateProfileField(event) {
     setProfile({ ...profileValues, [event.target.name]: event.target.value });
   }
+
+  function closeSignOut() {
+    if (signingOut) return;
+    setSignOutClosing(true);
+    window.setTimeout(() => {
+      setSignOutOpen(false);
+      setSignOutClosing(false);
+    }, 180);
+  }
+
+  useEffect(() => {
+    if (!signOutOpen) return undefined;
+
+    function handleEscape(event) {
+      if (event.key === "Escape") closeSignOut();
+    }
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [signOutOpen, signingOut]);
 
   async function saveProfile(event) {
     event.preventDefault();
@@ -275,13 +300,65 @@ export default function StudentProfile() {
                 <h3>Sign out</h3>
                 <p>End your current BridgeTech session on this device.</p>
               </div>
-              <Link className="btn" to="/signout">
+              <button
+                className="btn"
+                type="button"
+                onClick={() => setSignOutOpen(true)}
+              >
                 Sign out
-              </Link>
+              </button>
             </section>
           </>
         ) : null}
       </div>
+      {signOutOpen ? (
+        <div
+          className={`bt-signout-backdrop${signOutClosing ? " is-closing" : ""}`}
+          role="presentation"
+        >
+          <section
+            className={`bt-signout-modal${signOutClosing ? " is-closing" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-signout-heading"
+            aria-describedby="profile-signout-description"
+          >
+            <div className="bt-signout-icon" aria-hidden="true">
+              <LogOut size={22} />
+            </div>
+            <p className="bt-signout-eyebrow">ACCOUNT</p>
+            <h2 id="profile-signout-heading">Sign out of BridgeTech?</h2>
+            <p id="profile-signout-description">
+              You will need to sign in again to access your workspace.
+            </p>
+            <div className="bt-signout-actions">
+              <button
+                type="button"
+                className="bt-signout-cancel"
+                disabled={signingOut}
+                onClick={closeSignOut}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="bt-signout-confirm"
+                disabled={signingOut}
+                onClick={() => {
+                  setSigningOut(true);
+                  setSignOutClosing(true);
+                  window.setTimeout(() => {
+                    clearAuthTokens();
+                    navigate("/", { replace: true });
+                  }, 220);
+                }}
+              >
+                {signingOut ? "Signing out..." : "Sign out"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </StudentLayout>
   );
 }

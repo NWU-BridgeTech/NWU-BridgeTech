@@ -23,8 +23,69 @@ public sealed class CertificateService(
     public async Task<IReadOnlyList<CertificateListItemResponse>> GetAllAsync(CancellationToken ct = default) =>
         (await Query().OrderByDescending(x => x.IssuedAt).ToListAsync(ct)).Select(ToList).ToList();
 
-    public async Task<IReadOnlyList<CertificateListItemResponse>> GetByUserAsync(Guid userId, CancellationToken ct = default) =>
-        (await Query().Where(x => x.UserId == userId).OrderByDescending(x => x.IssuedAt).ToListAsync(ct)).Select(ToList).ToList();
+    public async Task<IReadOnlyList<CertificateListItemResponse>> GetByUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        var completedEnrollments = await db.Enrollments
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.CompletedAt != null)
+            .Select(x => new { x.ModuleId, x.CompletedAt })
+            .ToListAsync(ct);
+
+        var existingModuleIds = await db.Certificates
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Select(x => x.ModuleId)
+            .ToListAsync(ct);
+
+        var missingEnrollments = completedEnrollments
+            .Where(x => !existingModuleIds.Contains(x.ModuleId))
+            .ToList();
+
+        if (missingEnrollments.Count > 0)
+        {
+            var user = await db.Users
+                .AsNoTracking()
+                .SingleAsync(x => x.UserId == userId, ct);
+            var moduleIds = missingEnrollments.Select(x => x.ModuleId).ToList();
+            var modules = await db.Modules
+                .AsNoTracking()
+                .Where(x => moduleIds.Contains(x.ModuleId))
+                .ToDictionaryAsync(x => x.ModuleId, ct);
+
+            foreach (var enrollment in missingEnrollments)
+            {
+                if (!modules.TryGetValue(enrollment.ModuleId, out var module))
+                {
+                    continue;
+                }
+
+                var issuedAt = enrollment.CompletedAt!.Value;
+                var certificate = new Certificate
+                {
+                    CertificateId = Guid.NewGuid(),
+                    UserId = userId,
+                    ModuleId = module.ModuleId,
+                    CertificateNumber = $"BT-{issuedAt:yyyy}-{RandomNumberGenerator.GetInt32(100000, 999999)}",
+                    IssuedAt = issuedAt,
+                    Status = "Valid"
+                };
+                certificate.CertificateHash = Sign(
+                    certificate,
+                    user.FirstName + " " + user.LastName,
+                    module.Title);
+                db.Certificates.Add(certificate);
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+
+        return (await Query()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.IssuedAt)
+            .ToListAsync(ct))
+            .Select(ToList)
+            .ToList();
+    }
 
     public async Task<CertificateResponse> IssueForCompletionAsync(Guid userId, Guid moduleId, CancellationToken ct = default)
     {

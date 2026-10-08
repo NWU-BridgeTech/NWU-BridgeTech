@@ -19,6 +19,8 @@ public class User
     public string? GithubRepository { get; set; }
     public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset? LastLoginAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool EmailVerified { get; set; }

@@ -12,7 +12,6 @@ import StudentGithub from "./pages/StudentGithub";
 import StudentProfile from "./pages/StudentProfile";
 import StudentNotifications from "./pages/StudentNotifications";
 import StudentBadges from "./pages/StudentBadges";
-<Route path="/student/badges" element={<StudentBadges />} />;
 import Admin from "./pages/Admin";
 import AdminModules from "./pages/AdminModules";
 import AdminLessons from "./pages/AdminLessons";
@@ -66,6 +65,7 @@ function App() {
             path="/student/certificates"
             element={<StudentCertificates />}
           />
+          <Route path="/student/badges" element={<StudentBadges />} />
           <Route path="/student/github" element={<StudentGithub />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route
