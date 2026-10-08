@@ -112,7 +112,7 @@ public sealed class CertificateService(
         certificate.CertificateHash = Sign(certificate, user.FirstName + " " + user.LastName, module.Title);
         db.Certificates.Add(certificate);
         await db.SaveChangesAsync(ct);
-        await notificationService.NotifyAsync(userId, "certificate_issued", "Certificate issued", $"Your certificate for {module.Title} is ready.", certificate.CertificateId, ct);
+        await notificationService.NotifyAsync(userId, "certificate_issued", "Certificate issued", $"Your certificate for {module.Title} is ready in the Certificates tab.", certificate.CertificateId, ct);
         certificate.User = user;
         certificate.Module = module;
         var response = ToResponse(certificate)!;

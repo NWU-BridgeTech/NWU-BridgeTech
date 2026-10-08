@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CheckCircle2, XCircle, Bell } from "lucide-react";
-import StudentSidebar from "../components/StudentSidebar";
-import { SidebarProvider } from "../components/ui/sidebar";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { getToken } from "../utils/authStorage";
+import StudentLayout from "../layouts/StudentLayout";
 import "./Quizzes.css";
 
 const BACKEND_URL = "http://localhost:5174";
@@ -87,23 +86,9 @@ export default function Quizzes() {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <StudentSidebar />
-
-        <main className="flex-1 w-full min-h-screen transition-all duration-300 ease-in-out">
-          <header className="page-header flex items-center justify-between px-8 py-6 bg-white border-b border-slate-200">
-            <h1 className="text-2xl font-bold text-slate-900">
-              Assessments and Quizzes
-            </h1>
-            <div className="flex items-center gap-4">
-              <div className="relative cursor-pointer">
-                <Bell size={20} className="text-slate-600" />
-              </div>
-            </div>
-          </header>
-
-          <div className="p-8">
+    <StudentLayout title="Assessments and Quizzes">
+      <div className="content quizzes-page">
+        <div className="p-8">
             {loading ? (
               <p className="text-slate-500">Loading assessments...</p>
             ) : (
@@ -222,9 +207,8 @@ export default function Quizzes() {
                 </section>
               </div>
             )}
-          </div>
-        </main>
+        </div>
       </div>
-    </SidebarProvider>
+    </StudentLayout>
   );
 }

@@ -31,6 +31,7 @@ import QuizzRunner from "./pages/QuizzRunner";
 import TeamArea from "./pages/TeamArea";
 import "./pages/Admin.css";
 import Lessons from "./pages/Lessons";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AdminSection({ children }) {
   return <AppLayout>{children}</AppLayout>;
@@ -39,7 +40,8 @@ function AdminSection({ children }) {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <ThemeProvider>
+        <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/team-login" element={<Login team />} />
@@ -171,7 +173,8 @@ function App() {
 
           <Route path="/system-status" element={<SystemStatus />} />
         </Route>
-      </Routes>
+        </Routes>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -73,7 +73,10 @@ export default function StudentPracticalWork() {
                 Review feedback, check your progress, and see what’s due next.
               </p>
             </div>
-            <Link className="github-indicator" to="/student/github">
+            <Link
+              className={`github-indicator ${githubConnected ? "is-connected" : "is-disconnected"}`}
+              to="/student/github"
+            >
               <span className="connection-dot" aria-hidden="true" />
               GitHub ·{" "}
               {githubConnected ? "Connected" : "Not connected"}

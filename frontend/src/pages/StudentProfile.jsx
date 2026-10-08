@@ -4,6 +4,7 @@ import StudentLayout from "../layouts/StudentLayout";
 import useCurrentUser from "../hooks/useCurrentUser";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
 import { LogOut } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 import "./StudentProfile.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -18,6 +19,8 @@ function authHeaders() {
 export default function StudentProfile() {
   const navigate = useNavigate();
   const { user, loading, error: profileError } = useCurrentUser();
+  const { theme, profilePictureUrl, setProfilePictureUrl, updateTheme } =
+    useTheme();
   const [profile, setProfile] = useState(null);
   const [profileMessage, setProfileMessage] = useState("");
   const [profileErrorMessage, setProfileErrorMessage] = useState("");
@@ -32,6 +35,12 @@ export default function StudentProfile() {
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [signOutClosing, setSignOutClosing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [savingTheme, setSavingTheme] = useState(false);
+  const [pictureMessage, setPictureMessage] = useState("");
+  const [pictureError, setPictureError] = useState("");
+  const [editingPicture, setEditingPicture] = useState(false);
+  const [selectedPictureFile, setSelectedPictureFile] = useState(null);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   const profileValues =
     profile ??
@@ -48,6 +57,70 @@ export default function StudentProfile() {
 
   function updateProfileField(event) {
     setProfile({ ...profileValues, [event.target.name]: event.target.value });
+  }
+
+  async function changeTheme(event) {
+    setSavingTheme(true);
+    try {
+      await updateTheme(event.target.value);
+    } catch (error) {
+      setPictureError(error.message);
+    } finally {
+      setSavingTheme(false);
+    }
+  }
+
+  function selectProfilePicture(event) {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+    setSelectedPictureFile(file);
+    setPictureMessage("");
+    setPictureError("");
+  }
+
+  async function uploadProfilePicture() {
+    if (!selectedPictureFile) return;
+
+    setPictureMessage("");
+    setPictureError("");
+    const formData = new FormData();
+    formData.append("file", selectedPictureFile);
+    setUploadingPicture(true);
+    try {
+      const response = await fetch(`${API_URL}/api/users/me/preferences/profile-picture`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message || "Unable to upload your profile picture.");
+      setProfilePictureUrl(data.profilePictureUrl ?? null);
+      setSelectedPictureFile(null);
+      setEditingPicture(false);
+      setPictureMessage("Profile picture updated.");
+    } catch (error) {
+      setPictureError(error.message);
+    } finally {
+      setUploadingPicture(false);
+    }
+  }
+
+  async function removeProfilePicture() {
+    setPictureMessage("");
+    setPictureError("");
+    try {
+      const response = await fetch(`${API_URL}/api/users/me/preferences/profile-picture`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!response.ok) throw new Error("Unable to remove your profile picture.");
+      setProfilePictureUrl(null);
+      setSelectedPictureFile(null);
+      setEditingPicture(false);
+      setPictureMessage("Profile picture removed.");
+    } catch (error) {
+      setPictureError(error.message);
+    }
   }
 
   function closeSignOut() {
@@ -143,6 +216,100 @@ export default function StudentProfile() {
 
         {profileValues ? (
           <>
+            <section className="profile-section profile-preferences-section">
+              <div className="profile-section-heading">
+                <h3>Appearance and profile picture</h3>
+                <p>Personalize your BridgeTech workspace across your devices.</p>
+              </div>
+              <div className="profile-preferences-grid">
+                <div className="profile-picture-controls">
+                  <div className="profile-picture-preview">
+                    {profilePictureUrl ? (
+                      <img src={profilePictureUrl} alt="Your profile" />
+                    ) : (
+                      `${profileValues.firstName?.[0] ?? ""}${profileValues.lastName?.[0] ?? ""}`
+                    )}
+                  </div>
+                  <div>
+                    <strong>Profile picture</strong>
+                    <p>JPEG, PNG, or WebP up to 5 MB.</p>
+                    <div className="profile-picture-actions">
+                      {!editingPicture ? (
+                        <button
+                          className="btn profile-picture-edit-button"
+                          type="button"
+                          onClick={() => {
+                            setPictureMessage("");
+                            setPictureError("");
+                            setEditingPicture(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <>
+                          <label className="btn profile-picture-choose-button">
+                            Choose picture
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={selectProfilePicture}
+                              hidden
+                            />
+                          </label>
+                          <button
+                            className="btn blue"
+                            type="button"
+                            onClick={uploadProfilePicture}
+                            disabled={!selectedPictureFile || uploadingPicture}
+                          >
+                            {uploadingPicture ? "Uploading..." : "Upload picture"}
+                          </button>
+                          {profilePictureUrl ? (
+                            <button
+                              className="btn profile-picture-remove-button"
+                              type="button"
+                              onClick={removeProfilePicture}
+                              disabled={uploadingPicture}
+                            >
+                              Remove picture
+                            </button>
+                          ) : null}
+                          <button
+                            className="btn profile-picture-cancel-button"
+                            type="button"
+                            onClick={() => {
+                              setSelectedPictureFile(null);
+                              setPictureError("");
+                              setEditingPicture(false);
+                            }}
+                            disabled={uploadingPicture}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {selectedPictureFile ? (
+                      <p className="profile-picture-selected-file">
+                        Selected: {selectedPictureFile.name}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <label className="theme-select">
+                  Theme
+                  <select value={theme} onChange={changeTheme} disabled={savingTheme}>
+                    <option value="system">System</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                  <span>System follows your device preference.</span>
+                </label>
+              </div>
+              {pictureMessage ? <p className="profile-message success">{pictureMessage}</p> : null}
+              {pictureError ? <p className="profile-message error" role="alert">{pictureError}</p> : null}
+            </section>
             <section
               className="profile-section"
               aria-labelledby="personal-details-heading"
@@ -212,7 +379,7 @@ export default function StudentProfile() {
                 </label>
                 <div className="profile-actions wide-field">
                   <button
-                    className="btn blue"
+                    className="btn blue save-profile-button"
                     type="submit"
                     disabled={savingProfile}
                   >

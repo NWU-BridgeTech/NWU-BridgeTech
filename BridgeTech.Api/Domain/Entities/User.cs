@@ -40,4 +40,5 @@ public class User
     public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
     public ICollection<Badge> Badges { get; set; } = new List<Badge>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public UserPreference? Preferences { get; set; }
 }

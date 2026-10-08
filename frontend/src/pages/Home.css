@@ -69,16 +69,80 @@
   gap: 10px;
   flex-shrink: 0;
 }
+.home-page .theme-switch {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  box-sizing: border-box;
+  color: #687385;
+  display: inline-flex;
+  flex: 0 0 78px;
+  height: 40px;
+  justify-content: space-between;
+  padding: 4px 0;
+  position: relative;
+  border-radius: 999px;
+}
+.home-page .theme-switch-track {
+  background: #d9dee7;
+  border: 1px solid #c6ceda;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: block;
+  height: 22px;
+  left: 21px;
+  padding: 1px;
+  position: absolute;
+  top: 9px;
+  transition: background-color 160ms ease, border-color 160ms ease;
+  width: 36px;
+}
+.home-page .theme-switch-thumb {
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 25%);
+  display: block;
+  height: 18px;
+  transform: translateX(0);
+  transition: transform 160ms ease;
+  width: 18px;
+}
+.home-page .theme-switch[aria-checked="true"] .theme-switch-track {
+  background: #383838;
+  border-color: #555;
+}
+.home-page .theme-switch[aria-checked="true"] .theme-switch-thumb {
+  transform: translateX(14px);
+}
+.home-page .theme-switch > svg {
+  flex: 0 0 15px;
+  position: relative;
+  z-index: 1;
+}
+.home-page .theme-switch:hover,
+.home-page .theme-switch:focus-visible {
+  background: #f1f4f8;
+  color: #303030;
+  outline: none;
+}
 .home-page .profile-link {
   align-items: center;
+  border-radius: 999px;
   color: inherit;
+  cursor: pointer;
   display: flex;
   gap: 10px;
+  padding: 4px 8px 4px 4px;
   text-decoration: none;
+}
+.home-page .profile-link:hover,
+.home-page .profile-link:focus-visible {
+  background: #f1f4f8;
+  outline: none;
 }
 .home-page .profile-link:hover .profile-name,
 .home-page .profile-link:focus-visible .profile-name {
-  color: #1d67d5;
+  color: inherit;
 }
 .home-page .profile-name {
   font-size: 13px;
@@ -221,15 +285,21 @@
   cursor: default;
 }
 .home-page .avatar {
+  flex: 0 0 36px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: #e7edf8;
   color: #315db6;
   display: grid;
+  overflow: hidden;
   place-items: center;
   font-size: 12px;
   font-weight: 800;
+}
+.home-page .profile-link .avatar,
+.home-page .profile-link .avatar img {
+  border-radius: 50%;
 }
 .home-page .btn {
   padding: 10px 16px;
@@ -1064,6 +1134,14 @@
   border-radius: 50%;
   background: #89929e;
 }
+.home-page .github-indicator.is-connected .connection-dot {
+  background: #16803c;
+  box-shadow: 0 0 0 3px #e2f4e9;
+}
+.home-page .github-indicator.is-disconnected .connection-dot {
+  background: #c53030;
+  box-shadow: 0 0 0 3px #fde8e8;
+}
 .home-page .practical-table-wrap {
   border: 1px solid #e4e8ed;
   border-radius: 10px;
@@ -1284,4 +1362,3 @@
     flex-wrap: wrap;
   }
 }
-

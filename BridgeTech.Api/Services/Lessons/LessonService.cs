@@ -175,7 +175,7 @@ public class LessonService(
                     userId,
                     "module_completed",
                     "Module completed",
-                    $"You completed the {module.Title} module.",
+                    $"You completed the {module.Title} module. Your certificate is ready to view in the Certificates tab.",
                     module.ModuleId,
                     cancellationToken);
             }
