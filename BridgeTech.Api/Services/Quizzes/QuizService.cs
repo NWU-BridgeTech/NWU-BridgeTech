@@ -24,6 +24,7 @@ public class QuizService : IQuizService
             QuizId = q.QuizId,
             Title = q.Title,
             ModuleId = q.ModuleId,
+            LessonId = q.LessonId,
             PassingScore = q.PassingScore,
             Questions = q.Questions
                 .OrderBy(quest => quest.OrderIndex)

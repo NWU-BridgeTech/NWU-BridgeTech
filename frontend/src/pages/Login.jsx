@@ -5,7 +5,8 @@ import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 const Login = ({ team = false }) => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const Login = ({ team = false }) => {
     } finally {
       setGoogleLoading(false);
     }
-  }
+  };
 
   return (
     <AuthShell
