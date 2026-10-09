@@ -7,37 +7,77 @@ namespace BridgeTech.Api.Services.Badges;
 
 public sealed class BadgeService(AppDbContext db) : IBadgeService
 {
-    public async Task<BadgeResponse> AwardForLessonCompletionAsync(
-        Guid userId, Guid lessonId, CancellationToken cancellationToken = default)
+    // public async Task<BadgeResponse> AwardForLessonCompletionAsync(
+    //     Guid userId, Guid lessonId, CancellationToken cancellationToken = default)
+    // {
+    //     var existing = await Query()
+    //         .SingleOrDefaultAsync(x => x.UserId == userId && x.LessonId == lessonId, cancellationToken);
+
+    //     if (existing is not null)
+    //     {
+    //         return ToResponse(existing);
+    //     }
+
+    //     var lesson = await db.Lessons
+    //         .AsNoTracking()
+    //         .Include(x => x.Module)
+    //         .SingleAsync(x => x.LessonId == lessonId, cancellationToken);
+
+    //     var badge = new Badge
+    //     {
+    //         BadgeId = Guid.NewGuid(),
+    //         UserId = userId,
+    //         LessonId = lessonId,
+    //         AwardedAt = DateTimeOffset.UtcNow,
+    //         Lesson = lesson
+    //     };
+
+    //     db.Badges.Add(badge);
+    //     await db.SaveChangesAsync(cancellationToken);
+    //     badge.Lesson = lesson;
+
+    //     return ToResponse(badge);
+    // }
+
+    
+public async Task<BadgeResponse> AwardForLessonCompletionAsync(
+    Guid userId,
+    Guid lessonId,
+    CancellationToken cancellationToken = default)
+{
+    var existing = await Query()
+        .SingleOrDefaultAsync(
+            x => x.UserId == userId &&
+                 x.LessonId == lessonId,
+            cancellationToken);
+
+    if (existing is not null)
     {
-        var existing = await Query()
-            .SingleOrDefaultAsync(x => x.UserId == userId && x.LessonId == lessonId, cancellationToken);
-
-        if (existing is not null)
-        {
-            return ToResponse(existing);
-        }
-
-        var lesson = await db.Lessons
-            .AsNoTracking()
-            .Include(x => x.Module)
-            .SingleAsync(x => x.LessonId == lessonId, cancellationToken);
-
-        var badge = new Badge
-        {
-            BadgeId = Guid.NewGuid(),
-            UserId = userId,
-            LessonId = lessonId,
-            AwardedAt = DateTimeOffset.UtcNow,
-            Lesson = lesson
-        };
-
-        db.Badges.Add(badge);
-        await db.SaveChangesAsync(cancellationToken);
-        badge.Lesson = lesson;
-
-        return ToResponse(badge);
+        return ToResponse(existing);
     }
+
+    var badge = new Badge
+    {
+        BadgeId = Guid.NewGuid(),
+        UserId = userId,
+        LessonId = lessonId,
+        AwardedAt = DateTimeOffset.UtcNow
+    };
+
+    db.Badges.Add(badge);
+
+    await db.SaveChangesAsync(cancellationToken);
+
+    // Fetch the newly created badge with its related
+    // lesson and module for the response.
+    var savedBadge = await Query()
+        .SingleAsync(
+            x => x.BadgeId == badge.BadgeId,
+            cancellationToken);
+
+    return ToResponse(savedBadge);
+}
+
 
     public async Task<IReadOnlyList<BadgeResponse>> GetByUserAsync(
         Guid userId, CancellationToken cancellationToken = default)

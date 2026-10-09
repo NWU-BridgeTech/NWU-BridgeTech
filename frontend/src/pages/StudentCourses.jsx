@@ -31,14 +31,24 @@ function CourseCard({ course, onChanged }) {
     }
   }
 
-  return (
-    <article className="course">
-      <div className="course-top">
-        <span className="tag">{completed ? "Completed" : "In progress"}</span>
-        <span className="de-register" onClick={handleDeregister}>
-          De-Register
-        </span>
-      </div>
+  
+    return (
+      <article className="course">
+        <div className="course-top">
+          <span className="tag">
+            {completed ? "Completed" : "In progress"}
+          </span>
+
+          {!completed && (
+            <span
+              className="de-register"
+              onClick={handleDeregister}
+            >
+              De-Register
+            </span>
+          )}
+        </div>
+
       <h3>{course.moduleTitle}</h3>
       <div className="course-progress">
         <div className="progress-label">
