@@ -4,6 +4,7 @@ import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicHomepage from "./pages/PublicHomepage";
+import VerifyCertificate from "./pages/VerifyCertificate";
 import Home from "./pages/Home";
 import StudentCourses from "./pages/StudentCourses";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
@@ -51,6 +52,10 @@ function App() {
         <Route path="/signout" element={<SignOut />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route
+          path="/verify/:certificateNumber"
+          element={<VerifyCertificate />}
+        />
 
         <Route element={<ProtectedRoute requiredRole="Student" />}>
           <Route path="/home" element={<Home />} />
