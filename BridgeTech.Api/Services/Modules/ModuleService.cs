@@ -3,10 +3,11 @@ using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Modules;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Services.Modules;
 
-public sealed class ModuleService(AppDbContext db) : IModuleService
+public sealed class ModuleService(AppDbContext db, IHttpContextAccessor httpContextAccessor) : IModuleService
 {
     public async Task<IReadOnlyList<ModuleListItemResponse>> GetAllAsync(CancellationToken ct = default) =>
         await db.Modules.AsNoTracking().Where(x => x.Status == ContentStatus.Published).OrderBy(x => x.OrderIndex)
@@ -70,6 +71,20 @@ public sealed class ModuleService(AppDbContext db) : IModuleService
         };
 
         db.Modules.Add(entity);
+        var actorClaim = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(actorClaim, out var actorId))
+        {
+            db.StaffActivities.Add(new StaffActivity
+            {
+                StaffActivityId = Guid.NewGuid(),
+                UserId = actorId,
+                ActivityType = "ModuleCreated",
+                StartedAt = now,
+                Location = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
+                ModuleId = entity.ModuleId,
+                ModuleTitle = entity.Title
+            });
+        }
         await db.SaveChangesAsync(ct);
         return ToResponse(entity, 0, 0);
     }

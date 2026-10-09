@@ -19,12 +19,15 @@ using System.Threading.RateLimiting;
 using BridgeTech.Api.Services.Enrollments;
 using BridgeTech.Api.Services.Lessons;
 using BridgeTech.Api.Services.Badges;
+using BridgeTech.Api.Services.Admin;
+using BridgeTech.Api.Services.AdminDashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<GitHubApiOptions>(builder.Configuration.GetSection("GitHub"));
 builder.Services.AddDataProtection();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -47,6 +50,9 @@ builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();
+builder.Services.AddScoped<IAdministratorService, AdministratorService>();
+builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 
 builder.Services.AddRateLimiter(options =>
 {

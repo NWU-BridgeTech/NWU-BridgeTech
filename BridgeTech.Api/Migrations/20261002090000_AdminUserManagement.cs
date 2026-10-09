@@ -12,20 +12,12 @@ namespace BridgeTech.Api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Existing accounts stay active; the default only back-fills current rows.
-            migrationBuilder.AddColumn<bool>(
-                name: "is_active",
-                schema: "public",
-                table: "users",
-                type: "boolean",
-                nullable: false,
-                defaultValue: true);
-
-            migrationBuilder.AddColumn<DateTimeOffset>(
-                name: "last_login_at",
-                schema: "public",
-                table: "users",
-                type: "timestamp with time zone",
-                nullable: true);
+            migrationBuilder.Sql("""
+                ALTER TABLE public.users
+                ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;
+                ALTER TABLE public.users
+                ADD COLUMN IF NOT EXISTS last_login_at timestamp with time zone;
+                """);
         }
 
         /// <inheritdoc />

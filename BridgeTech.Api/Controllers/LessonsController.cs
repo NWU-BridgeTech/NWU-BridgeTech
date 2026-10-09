@@ -45,7 +45,7 @@ public class LessonsController(ILessonService service) : ControllerBase
 
     // Admin: every lesson in every module (drafts included).
     [HttpGet("lessons/admin")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
     public async Task<IActionResult> GetLessonsForAdmin(CancellationToken cancellationToken)
     {
         return Ok(await service.GetAllForAdminAsync(cancellationToken));

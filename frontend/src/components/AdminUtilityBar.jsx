@@ -80,7 +80,7 @@ export default function AdminUtilityBar() {
         const currentProfile = await response.json();
         setProfile((storedProfile) => ({
           ...currentProfile,
-          role: storedProfile?.role ?? currentProfile.role,
+          role: currentProfile.role ?? storedProfile?.role,
         }));
       })
       .catch((error) => {
@@ -149,6 +149,14 @@ export default function AdminUtilityBar() {
   }
 
   function signOut() {
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      }).catch(() => {});
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");

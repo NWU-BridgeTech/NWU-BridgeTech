@@ -11,7 +11,9 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
     private const int SupportProgressThreshold = 25;
     private const int SupportEnrollmentAgeDays = 14;
 
-    public async Task<AdminDashboardResponse> GetDashboardAsync(CancellationToken cancellationToken = default)
+    public async Task<AdminDashboardResponse> GetDashboardAsync(
+        bool includeStaffActivity,
+        CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
         var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
@@ -207,7 +209,36 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
         };
 
         var recentActivity = new List<AdminDashboardActivityResponse>();
-        recentActivity.AddRange(await db.ExerciseSubmissions.AsNoTracking()
+        if (includeStaffActivity)
+        {
+            recentActivity.AddRange(await db.StaffActivities.AsNoTracking()
+                .Where(x => x.User.Role == UserRole.Admin || x.User.Role == UserRole.SuperAdmin)
+                .OrderByDescending(x => x.StartedAt)
+                .Take(RecentItemLimit)
+                .Select(x => new AdminDashboardActivityResponse
+                {
+                    Id = x.StaffActivityId,
+                    Actor = x.User.FirstName + " " + x.User.LastName,
+                    Action = x.ActivityType == "ModuleCreated"
+                        ? "created a module"
+                        : x.EndedAt == null ? "logged in" : "logged out",
+                    Subject = x.ActivityType == "ModuleCreated"
+                        ? x.ModuleTitle ?? "Untitled module"
+                        : x.EndedAt == null
+                            ? "Active session"
+                            : "Session ended",
+                    OccurredAt = x.StartedAt,
+                    EndedAt = x.EndedAt,
+                    Location = x.Location,
+                    DurationMinutes = x.EndedAt == null
+                        ? null
+                        : (x.EndedAt.Value - x.StartedAt).TotalMinutes
+                })
+                .ToListAsync(cancellationToken));
+        }
+        else
+        {
+            recentActivity.AddRange(await db.ExerciseSubmissions.AsNoTracking()
             .Where(x => x.User.Role == UserRole.Student)
             .OrderByDescending(x => x.SubmittedAt)
             .Take(RecentItemLimit)
@@ -219,8 +250,8 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
                 Subject = x.Exercise.Title,
                 OccurredAt = x.SubmittedAt
             })
-            .ToListAsync(cancellationToken));
-        recentActivity.AddRange(await db.QuizAttempts.AsNoTracking()
+                .ToListAsync(cancellationToken));
+            recentActivity.AddRange(await db.QuizAttempts.AsNoTracking()
             .Where(x => x.CompletedAt != null && x.User.Role == UserRole.Student)
             .OrderByDescending(x => x.CompletedAt)
             .Take(RecentItemLimit)
@@ -232,8 +263,8 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
                 Subject = x.Quiz.Title,
                 OccurredAt = x.CompletedAt!.Value
             })
-            .ToListAsync(cancellationToken));
-        recentActivity.AddRange(await db.LessonProgress.AsNoTracking()
+                .ToListAsync(cancellationToken));
+            recentActivity.AddRange(await db.LessonProgress.AsNoTracking()
             .Where(x => x.Completed && x.CompletedAt != null && x.User.Role == UserRole.Student)
             .OrderByDescending(x => x.CompletedAt)
             .Take(RecentItemLimit)
@@ -245,8 +276,8 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
                 Subject = x.Lesson.Title,
                 OccurredAt = x.CompletedAt!.Value
             })
-            .ToListAsync(cancellationToken));
-        recentActivity.AddRange(await db.Enrollments.AsNoTracking()
+                .ToListAsync(cancellationToken));
+            recentActivity.AddRange(await db.Enrollments.AsNoTracking()
             .Where(x => x.User.Role == UserRole.Student)
             .OrderByDescending(x => x.EnrolledAt)
             .Take(RecentItemLimit)
@@ -258,7 +289,8 @@ public sealed class AdminDashboardService(AppDbContext db) : IAdminDashboardServ
                 Subject = x.Module.Title,
                 OccurredAt = x.EnrolledAt
             })
-            .ToListAsync(cancellationToken));
+                .ToListAsync(cancellationToken));
+        }
 
         return new AdminDashboardResponse
         {

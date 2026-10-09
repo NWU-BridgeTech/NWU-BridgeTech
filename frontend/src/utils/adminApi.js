@@ -6,6 +6,7 @@ async function request(path, options = {}) {
 
   const response = await fetch(`${API_URL}/api${path}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -16,7 +17,7 @@ async function request(path, options = {}) {
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json();
+  return response.status === 204 ? null : response.json();
 }
 
 // Turns an error response from the backend into a message an admin can read.
@@ -45,7 +46,7 @@ async function readErrorMessage(response) {
 
 // Modules
 export function getAdminModules() {
-  return request("/modules/admin");
+  return request(`/modules/admin?timestamp=${Date.now()}`);
 }
 
 export function createModule(module) {
@@ -57,6 +58,10 @@ export function updateModule(moduleId, changes) {
     method: "PUT",
     body: JSON.stringify(changes),
   });
+}
+
+export function deleteModule(moduleId) {
+  return request(`/modules/${moduleId}`, { method: "DELETE" });
 }
 
 // Lessons

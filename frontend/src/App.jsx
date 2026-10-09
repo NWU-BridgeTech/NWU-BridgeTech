@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AppLayout from "./layouts/AppLayout";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicHomepage from "./pages/PublicHomepage";
@@ -21,7 +20,7 @@ import AdminPracticalExercises from "./pages/AdminPracticalExercises";
 import AdminStudents from "./pages/AdminStudents";
 import AdminAdministrators from "./pages/AdminAdministrators";
 import AdminSettings from "./pages/AdminSettings";
-import SystemStatus from "./pages/SystemStatus";
+import AdminReports from "./pages/AdminReports";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -35,7 +34,7 @@ import Lessons from "./pages/Lessons";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function AdminSection({ children }) {
-  return <AppLayout>{children}</AppLayout>;
+  return children;
 }
 
 function App() {
@@ -99,6 +98,8 @@ function App() {
 
         <Route element={<ProtectedRoute requiredRole="Instructor" />}>
           <Route path="/instructor" element={<TeamArea role="Instructor" />} />
+          <Route path="/instructor/modules" element={<AdminModules readOnly />} />
+          <Route path="/instructor/lessons" element={<AdminLessons readOnly />} />
         </Route>
 
         <Route element={<ProtectedRoute requiredRole="SuperAdmin" />}>
@@ -175,8 +176,15 @@ function App() {
               </AdminSection>
             }
           />
+          <Route
+            path="/admin/reports"
+            element={
+              <AdminSection>
+                <AdminReports />
+              </AdminSection>
+            }
+          />
 
-          <Route path="/system-status" element={<SystemStatus />} />
         </Route>
         </Routes>
       </ThemeProvider>

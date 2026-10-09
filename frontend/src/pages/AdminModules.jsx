@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
 import {
   createModule,
+  deleteModule,
   getAdminModules,
   updateModule,
 } from "../utils/adminApi";
@@ -21,13 +22,14 @@ function toModuleRow(module) {
   };
 }
 
-export default function AdminModules() {
+export default function AdminModules({ readOnly = false }) {
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [editingModule, setEditingModule] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
 
   // Load every module (drafts included) from the database when the page opens.
@@ -61,6 +63,28 @@ export default function AdminModules() {
       .includes(search.trim().toLowerCase());
     return matchesSearch && (status === "All" || module.status === status);
   });
+
+  async function removeModule(module) {
+    if (
+      !window.confirm(
+        `Remove "${module.title}"? This also removes its lessons and cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(module.id);
+    setMessage("");
+    try {
+      await deleteModule(module.id);
+      setModules((current) => current.filter((item) => item.id !== module.id));
+      setMessage(`${module.title} removed.`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function saveModule(event) {
     event.preventDefault();
@@ -114,7 +138,7 @@ export default function AdminModules() {
           <h1>Modules</h1>
           <p>Organise learning content and manage module availability.</p>
         </div>
-        <button
+        {!readOnly && <button
           className="btn blue"
           type="button"
           disabled={!!editingModule || loading}
@@ -131,14 +155,14 @@ export default function AdminModules() {
           }}
         >
           Create module
-        </button>
+        </button>}
       </header>
 
       <div className="content modules-page">
         <p className="modules-message" role="status">
           {loading ? "Loading modules..." : !editingModule && message}
         </p>
-        {editingModule && (
+        {!readOnly && editingModule && (
           <section
             className="card module-editor"
             aria-labelledby="module-editor-heading"
@@ -259,16 +283,16 @@ export default function AdminModules() {
                 <th scope="col">Lessons</th>
                 <th scope="col">Students</th>
                 <th scope="col">Status</th>
-                <th scope="col">Action</th>
+                {!readOnly && <th scope="col">Action</th>}
               </tr>
             </thead>
             <tbody>
               {visibleModules.map((module) => (
                 <tr key={module.id}>
-                  <td>
+                  {!readOnly && <td>
                     <strong>{module.title}</strong>
                     <p>{module.description}</p>
-                  </td>
+                  </td>}
                   <td>{module.level}</td>
                   <td>{module.lessons}</td>
                   <td>{module.students}</td>
@@ -283,7 +307,7 @@ export default function AdminModules() {
                     <button
                       className="module-edit"
                       type="button"
-                      disabled={!!editingModule}
+                      disabled={!!editingModule || deletingId === module.id}
                       aria-label={`Edit ${module.title}`}
                       onClick={() => {
                         setEditingModule(module);
@@ -291,6 +315,14 @@ export default function AdminModules() {
                       }}
                     >
                       Edit
+                    </button>
+                    <button
+                      className="module-edit assessment-danger"
+                      type="button"
+                      disabled={!!editingModule || deletingId === module.id}
+                      onClick={() => removeModule(module)}
+                    >
+                      {deletingId === module.id ? "Removing..." : "Remove"}
                     </button>
                   </td>
                 </tr>

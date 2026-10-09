@@ -70,9 +70,12 @@ function mapStaffUser(user) {
   };
 }
 
-async function getStaffUsers() {
+async function getStaffUsers(isSuperAdmin) {
   const users = await staffRequest("/api/users/staff");
-  return users.map(mapStaffUser);
+  const staffUsers = isSuperAdmin
+    ? users
+    : users.filter((user) => user.role?.toLowerCase() === "instructor");
+  return staffUsers.map(mapStaffUser);
 }
 
 export default function AdminAdministrators() {
@@ -87,16 +90,17 @@ export default function AdminAdministrators() {
   const [loadError, setLoadError] = useState("");
   const [message, setMessage] = useState("");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+  const isSuperAdmin = currentUser?.role === "SuperAdmin";
   const availableRoles =
-    currentUser?.role === "SuperAdmin"
+    isSuperAdmin
       ? STAFF_ROLES
-      : STAFF_ROLES.filter((staffRole) => staffRole.value !== "SuperAdmin");
+      : STAFF_ROLES.filter((staffRole) => staffRole.value === "Instructor");
 
   useEffect(() => {
     let cancelled = false;
     async function loadStaffUsers() {
       try {
-        const users = await getStaffUsers();
+        const users = await getStaffUsers(isSuperAdmin);
         if (!cancelled) {
           setAdministrators(users);
           setLoadError("");
@@ -115,7 +119,7 @@ export default function AdminAdministrators() {
       cancelled = true;
       window.removeEventListener("focus", loadStaffUsers);
     };
-  }, []);
+  }, [isSuperAdmin]);
 
   const activeCount = administrators.filter(
     (admin) => admin.status === "Active",
@@ -208,8 +212,12 @@ export default function AdminAdministrators() {
     <AppLayout>
       <header className="top dashboard-header modules-header">
         <div>
-          <h1>Team accounts</h1>
-          <p>Manage instructor and administrator access.</p>
+          <h1>{isSuperAdmin ? "Team accounts" : "Instructors"}</h1>
+          <p>
+            {isSuperAdmin
+              ? "Manage instructor and administrator access."
+              : "Invite and manage instructors for the learning area."}
+          </p>
         </div>
         <button
           className="btn blue"
@@ -220,7 +228,9 @@ export default function AdminAdministrators() {
             setFormOpen(true);
           }}
         >
-          Add team account
+          {isSuperAdmin
+            ? "Add team account"
+            : "Invite instructor"}
         </button>
       </header>
       <div className="content modules-page administrators-page">

@@ -71,6 +71,24 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
                 .HasForeignKey<UserPreference>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
+
+        internal sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
+        {
+            public void Configure(EntityTypeBuilder<Report> builder)
+            {
+                EntityConfigurationHelpers.ConfigureId(builder, "reports", nameof(Report.ReportId));
+                builder.Property(x => x.ReportType).HasMaxLength(100).IsRequired();
+                builder.Property(x => x.RowCount).IsRequired();
+                builder.Property(x => x.DataJson).HasColumnType("jsonb").IsRequired();
+                builder.Property(x => x.GeneratedAt).HasDefaultValueSql("now()").IsRequired();
+                builder.HasOne(x => x.GeneratedByUser)
+                    .WithMany(x => x.Reports)
+                    .HasForeignKey(x => x.GeneratedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                builder.HasIndex(x => x.GeneratedByUserId);
+                builder.HasIndex(x => x.GeneratedAt);
+            }
+        }
     }
 }
 
@@ -87,6 +105,21 @@ internal sealed class ModuleConfiguration : IEntityTypeConfiguration<Module>
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasIndex(x => x.OrderIndex);
+    }
+
+    internal sealed class StaffActivityConfiguration : IEntityTypeConfiguration<StaffActivity>
+    {
+        public void Configure(EntityTypeBuilder<StaffActivity> builder)
+        {
+            EntityConfigurationHelpers.ConfigureId(builder, "staff_activities", nameof(StaffActivity.StaffActivityId));
+            builder.Property(x => x.ActivityType).HasMaxLength(40).IsRequired();
+            builder.Property(x => x.Location).HasMaxLength(200);
+            builder.Property(x => x.ModuleTitle).HasMaxLength(200);
+            builder.HasIndex(x => new { x.UserId, x.StartedAt });
+            builder.HasIndex(x => x.StartedAt);
+            builder.HasOne(x => x.User).WithMany(x => x.StaffActivities)
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
 

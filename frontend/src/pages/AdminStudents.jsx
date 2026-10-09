@@ -1,11 +1,52 @@
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
-import { initialModules, initialStudents } from "../data/adminData";
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminStudents.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.message || `Request failed (${response.status}).`);
+  }
+  return response.status === 204 ? null : response.json();
+}
+
+async function loadAllStudents() {
+  const pageSize = 200;
+  const firstPage = await apiRequest(
+    `/api/admin/students?page=1&pageSize=${pageSize}`,
+  );
+  const items = firstPage.items ?? firstPage.Items ?? [];
+  const totalStudents = firstPage.totalStudents ?? firstPage.TotalStudents ?? items.length;
+  const pages = Math.ceil(totalStudents / pageSize);
+
+  if (pages <= 1) return items;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: pages - 1 }, (_, index) =>
+      apiRequest(`/api/admin/students?page=${index + 2}&pageSize=${pageSize}`),
+    ),
+  );
+  return items.concat(
+    ...remainingPages.map((page) => page.items ?? page.Items ?? []),
+  );
+}
+
 export default function AdminStudents() {
+  const [students, setStudents] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("All");
   const [status, setStatus] = useState("All");
@@ -17,12 +58,25 @@ export default function AdminStudents() {
     if (selectedStudent) detailsRef.current?.focus();
   }, [selectedStudent]);
 
-  const visibleStudents = initialStudents.filter((student) => {
+  useEffect(() => {
+    loadAllStudents()
+      .then((loadedStudents) => setStudents(loadedStudents))
+      .catch((error) => setMessage(`Could not load students: ${error.message}`))
+      .finally(() => setLoading(false));
+
+    apiRequest("/api/modules/admin")
+      .then((moduleResponse) => setModules(moduleResponse ?? []))
+      .catch(() => {
+        // Module labels are optional; student data should remain visible if this request fails.
+      });
+  }, []);
+
+  const visibleStudents = students.filter((student) => {
     const matchesSearch = `${student.name} ${student.email}`
       .toLowerCase()
       .includes(search.trim().toLowerCase());
     const matchesModule =
-      moduleFilter === "All" || student.moduleId === Number(moduleFilter);
+      moduleFilter === "All" || student.moduleId === moduleFilter;
     return (
       matchesSearch &&
       matchesModule &&
@@ -36,6 +90,18 @@ export default function AdminStudents() {
     setStatus("All");
   }
 
+  async function deleteStudent(student) {
+    if (!window.confirm(`Delete ${student.name}'s account? This cannot be undone.`)) return;
+    try {
+      await apiRequest(`/api/admin/students/${student.id}`, { method: "DELETE" });
+      setStudents((current) => current.filter((item) => item.id !== student.id));
+      setSelectedStudent(null);
+      setMessage(`${student.name} was deleted.`);
+    } catch (error) {
+      setMessage(`Could not delete student: ${error.message}`);
+    }
+  }
+
   return (
     <AppLayout>
       <header className="top dashboard-header">
@@ -47,6 +113,9 @@ export default function AdminStudents() {
         </div>
       </header>
       <div className="content modules-page students-page">
+        <p className="modules-message" role="status">
+          {loading ? "Loading students..." : message}
+        </p>
         {selectedStudent && (
           <section
             className="card student-details"
@@ -69,6 +138,13 @@ export default function AdminStudents() {
               >
                 Close details
               </button>
+              <button
+                className="btn danger"
+                type="button"
+                onClick={() => deleteStudent(selectedStudent)}
+              >
+                Delete student
+              </button>
             </div>
             <div
               className={`student-note ${selectedStudent.status === "Needs support" ? "needs-support" : ""}`}
@@ -80,11 +156,7 @@ export default function AdminStudents() {
               <div>
                 <dt>Current module</dt>
                 <dd>
-                  {
-                    initialModules.find(
-                      (module) => module.id === selectedStudent.moduleId,
-                    )?.title
-                  }
+                  {selectedStudent.moduleTitle || "Not enrolled"}
                 </dd>
               </div>
               <div>
@@ -121,9 +193,9 @@ export default function AdminStudents() {
         <section className="card" aria-labelledby="student-list-heading">
           <h2 id="student-list-heading">All students</h2>
           <p className="sub">
-            {initialStudents.length} students ·{" "}
+            {students.length} students ·{" "}
             {
-              initialStudents.filter(
+              students.filter(
                 (student) => student.status === "Needs support",
               ).length
             }{" "}
@@ -148,8 +220,8 @@ export default function AdminStudents() {
                 onChange={(event) => setModuleFilter(event.target.value)}
               >
                 <option value="All">All modules</option>
-                {initialModules.map((module) => (
-                  <option key={module.id} value={module.id}>
+                {modules.map((module) => (
+                  <option key={module.moduleId} value={module.moduleId}>
                     {module.title}
                   </option>
                 ))}
@@ -203,11 +275,7 @@ export default function AdminStudents() {
                     </div>
                   </td>
                   <td>
-                    {
-                      initialModules.find(
-                        (module) => module.id === student.moduleId,
-                      )?.title
-                    }
+                    {student.moduleTitle || "Not enrolled"}
                   </td>
                   <td>
                     <div className="student-progress">
@@ -241,6 +309,13 @@ export default function AdminStudents() {
                     >
                       View
                     </button>
+                    <button
+                      className="module-edit danger-text"
+                      type="button"
+                      onClick={() => deleteStudent(student)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -256,7 +331,7 @@ export default function AdminStudents() {
             </div>
           )}
           <p className="module-result-count" role="status">
-            Showing {visibleStudents.length} of {initialStudents.length}{" "}
+            Showing {visibleStudents.length} of {students.length}{" "}
             students
           </p>
         </section>

@@ -20,19 +20,22 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IPasswordHasher<User> passwordHasher,
         IEmailService emailService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -263,10 +266,12 @@ public class AuthService : IAuthService
         bool teamLogin,
         CancellationToken cancellationToken)
     {
+        var identifier = request.Identifier.Trim();
+        var normalizedIdentifier = identifier.ToLower();
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
-                u.Username == request.Identifier ||
-                u.Email == request.Identifier, cancellationToken);
+                u.Username.ToLower() == normalizedIdentifier ||
+                u.Email.ToLower() == normalizedIdentifier, cancellationToken);
 
         if (user == null)
         {
@@ -311,6 +316,22 @@ public class AuthService : IAuthService
             throw exception;
         }
 
+        var now = DateTimeOffset.UtcNow;
+        user.LastLoginAt = now;
+        user.UpdatedAt = now;
+        if (teamLogin && user.Role != UserRole.Student)
+        {
+            _context.StaffActivities.Add(new StaffActivity
+            {
+                StaffActivityId = Guid.NewGuid(),
+                UserId = user.UserId,
+                ActivityType = "Login",
+                StartedAt = now,
+                Location = GetRequestLocation()
+            });
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+
         string accessToken = GenerateAccessToken(user);
         string refreshToken = GenerateRefreshToken(user);
 
@@ -322,8 +343,26 @@ public class AuthService : IAuthService
             Role = user.Role.ToString(),
             Token = accessToken,
             RefreshToken = refreshToken,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(GetAccessTokenMinutes())
+            ExpiresAt = now.AddMinutes(GetAccessTokenMinutes())
         };
+    }
+
+    public async Task LogoutAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var session = await _context.StaffActivities
+            .Where(x => x.UserId == userId && x.ActivityType == "Login" && x.EndedAt == null)
+            .OrderByDescending(x => x.StartedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (session is null) return;
+
+        session.EndedAt = DateTimeOffset.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private string? GetRequestLocation()
+    {
+        var connection = _httpContextAccessor.HttpContext?.Connection;
+        return connection?.RemoteIpAddress?.ToString();
     }
     public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request,CancellationToken cancellationToken = default)
     {

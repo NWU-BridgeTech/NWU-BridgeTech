@@ -2,6 +2,8 @@ using BridgeTech.Api.DTOs.Auth;
 using BridgeTech.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -277,5 +279,18 @@ public class AuthController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userId, out var id))
+        {
+            await _authService.LogoutAsync(id, cancellationToken);
+        }
+
+        return NoContent();
     }
 }
