@@ -6,4 +6,5 @@ public interface IAdminStudentService
 {
     Task<StudentListResponse> ListAsync(StudentListQuery query, CancellationToken cancellationToken);
     Task<StudentDetailResponse> GetAsync(Guid studentId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid studentId, CancellationToken cancellationToken);
 }

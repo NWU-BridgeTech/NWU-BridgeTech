@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
-import AdminUtilityBar from "../components/AdminUtilityBar";
 import "./Admin.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -78,10 +76,61 @@ function formatRelativeTime(timestamp) {
   return relativeTime.format(Math.round(elapsedSeconds / selectedUnit.seconds), selectedUnit.unit);
 }
 
+function formatActivityDetails(activity, isSuperAdmin) {
+  if (!isSuperAdmin) return null;
+  const details = [];
+  if (activity.location) details.push(activity.location);
+  if (activity.durationMinutes != null) {
+    details.push(`${Math.round(activity.durationMinutes)} min`);
+  } else if (activity.endedAt == null && activity.action === "logged in") {
+    details.push("Currently active");
+  }
+  return details.join(" · ");
+}
+
+function normalizeDashboard(data) {
+  const metrics = data.learningOverview ?? data.LearningOverview ?? [];
+  const attention = data.needsAttention ?? data.NeedsAttention ?? [];
+  const activity = data.recentActivity ?? data.RecentActivity ?? [];
+
+  return {
+    learningOverview: metrics.map((metric) => ({
+      ...metric,
+      key: metric.key ?? metric.Key,
+      label: metric.label ?? metric.Label,
+      value: metric.value ?? metric.Value,
+      unit: metric.unit ?? metric.Unit,
+      description: metric.description ?? metric.Description,
+      trend: metric.trend ?? metric.Trend ?? [],
+    })),
+    needsAttention: attention.map((item) => ({
+      ...item,
+      key: item.key ?? item.Key,
+      label: item.label ?? item.Label,
+      count: item.count ?? item.Count ?? 0,
+      note: item.note ?? item.Note,
+      items: item.items ?? item.Items ?? [],
+    })),
+    recentActivity: activity.map((item) => ({
+      ...item,
+      id: item.id ?? item.Id,
+      actor: item.actor ?? item.Actor,
+      action: item.action ?? item.Action,
+      subject: item.subject ?? item.Subject,
+      occurredAt: item.occurredAt ?? item.OccurredAt,
+      endedAt: item.endedAt ?? item.EndedAt,
+      location: item.location ?? item.Location,
+      durationMinutes: item.durationMinutes ?? item.DurationMinutes,
+    })),
+  };
+}
+
 export default function Admin() {
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
+  const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+  const isSuperAdmin = currentUser?.role === "SuperAdmin";
   const [expandedItems, setExpandedItems] = useState({});
 
   useEffect(() => {
@@ -102,16 +151,22 @@ export default function Admin() {
         });
 
         if (!response.ok) {
+          const errorBody = await response.json().catch(() => null);
           if (response.status === 401) {
             throw new Error("Your session has expired. Sign in again to load the dashboard.");
           }
           if (response.status === 403) {
             throw new Error("This dashboard is available to administrator accounts only.");
           }
-          throw new Error("Could not load the admin dashboard. Please try again.");
+          throw new Error(
+            errorBody?.message ||
+              errorBody?.title ||
+              `Could not load the admin dashboard (HTTP ${response.status}).`,
+          );
         }
 
-        setDashboardData(await response.json());
+        setDashboardData(normalizeDashboard(await response.json()));
+        setDashboardError("");
       } catch (error) {
         if (error.name !== "AbortError") setDashboardError(error.message);
       } finally {
@@ -130,7 +185,6 @@ export default function Admin() {
           <h1>Dashboard</h1>
           <p>Student activity and performance from current platform records.</p>
         </div>
-        <AdminUtilityBar />
       </header>
 
       <section
@@ -142,9 +196,6 @@ export default function Admin() {
             <h1 id="learning-heading">Learning overview</h1>
             <p>Student activity and performance from current platform records.</p>
           </div>
-          <Link className="btn blue" to="/admin/modules">
-            Create new module +
-          </Link>
         </div>
 
         {dashboardLoading && (
@@ -272,7 +323,11 @@ export default function Admin() {
             <h2 className="attention-heading" id="recent-activity-heading">
               Recent activity
             </h2>
-            <p className="attention-intro">Latest learner and course updates.</p>
+            <p className="attention-intro">
+              {isSuperAdmin
+                ? "Admin logins, sessions, locations, and module creation."
+                : "Latest learner and course updates."}
+            </p>
 
             <ol className="recent-activity-list">
               {(dashboardData?.recentActivity ?? []).map((activity) => (
@@ -283,6 +338,9 @@ export default function Admin() {
                       <strong>{activity.actor}</strong> {activity.action}
                     </p>
                     <span>{activity.subject}</span>
+                    {formatActivityDetails(activity, isSuperAdmin) && (
+                      <small>{formatActivityDetails(activity, isSuperAdmin)}</small>
+                    )}
                   </div>
                   <span className="recent-activity-time">
                     {formatRelativeTime(activity.occurredAt)}
@@ -291,7 +349,9 @@ export default function Admin() {
               ))}
             </ol>
             {!dashboardLoading && !dashboardError && dashboardData?.recentActivity?.length === 0 && (
-              <p className="dashboard-message">No recent student activity.</p>
+              <p className="dashboard-message">
+                {isSuperAdmin ? "No recent admin activity." : "No recent student activity."}
+              </p>
             )}
           </section>
         </div>

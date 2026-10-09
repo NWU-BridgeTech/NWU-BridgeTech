@@ -4,7 +4,8 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 24px;
-  margin: 24px 42px 0;
+  width: min(1400px, calc(100% - 84px));
+  margin: 24px auto 0;
   padding: 24px 28px;
   background: #fff;
   border: 1px solid #e6e9ed;
@@ -78,6 +79,8 @@
 }
 
 .admin-page .content {
+  width: min(1400px, calc(100% - 84px));
+  margin: 0 auto;
   padding: 22px 42px;
 }
 
@@ -795,7 +798,8 @@
 }
 
 .admin-page .learning-overview {
-  margin: 24px 42px 0;
+  width: min(1400px, calc(100% - 84px));
+  margin: 24px auto 0;
 }
 
 .admin-page .learning-overview-heading {

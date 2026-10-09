@@ -26,6 +26,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<LessonProgress> LessonProgress => Set<LessonProgress>();
     public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
+    public DbSet<Report> Reports => Set<Report>();
+    public DbSet<StaffActivity> StaffActivities => Set<StaffActivity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

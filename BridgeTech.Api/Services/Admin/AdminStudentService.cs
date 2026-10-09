@@ -96,6 +96,16 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
         return detail;
     }
 
+    public async Task DeleteAsync(Guid studentId, CancellationToken cancellationToken)
+    {
+        var student = await context.Users
+            .SingleOrDefaultAsync(u => u.UserId == studentId && u.Role == UserRole.Student, cancellationToken)
+            ?? throw AdminManagementException.NotFound("STUDENT_NOT_FOUND", "Student not found.");
+
+        context.Users.Remove(student);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     private static StudentResponse ToResponse(StudentSnapshot snapshot, DateTimeOffset now)
     {
         var response = new StudentResponse();

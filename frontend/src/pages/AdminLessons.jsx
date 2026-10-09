@@ -27,7 +27,7 @@ function toLessonRow(lesson) {
   };
 }
 
-export default function AdminLessons() {
+export default function AdminLessons({ readOnly = false }) {
   const [modules, setModules] = useState([]);
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +149,7 @@ export default function AdminLessons() {
           <h1>Lessons</h1>
           <p>Create lesson content and organise it by module.</p>
         </div>
-        <button
+        {!readOnly && <button
           className="btn blue"
           type="button"
           disabled={!!editingLesson || loading || modules.length === 0}
@@ -166,7 +166,7 @@ export default function AdminLessons() {
           }}
         >
           Create lesson
-        </button>
+        </button>}
       </header>
       <div className="content modules-page">
         <p className="modules-message" role="status">
@@ -175,7 +175,7 @@ export default function AdminLessons() {
         {!loading && modules.length === 0 && (
           <p className="sub">Create a module before adding lessons.</p>
         )}
-        {editingLesson && (
+        {!readOnly && editingLesson && (
           <section
             className="card module-editor"
             aria-labelledby="lesson-editor-heading"
@@ -332,16 +332,16 @@ export default function AdminLessons() {
                 <th scope="col">Module</th>
                 <th scope="col">Duration</th>
                 <th scope="col">Status</th>
-                <th scope="col">Action</th>
+                {!readOnly && <th scope="col">Action</th>}
               </tr>
             </thead>
             <tbody>
               {visibleLessons.map((lesson) => (
                 <tr key={lesson.id}>
-                  <td>
+                  {!readOnly && <td>
                     <strong>{lesson.title}</strong>
                     <p>{lesson.description}</p>
-                  </td>
+                  </td>}
                   <td>
                     {
                       modules.find((module) => module.id === lesson.moduleId)

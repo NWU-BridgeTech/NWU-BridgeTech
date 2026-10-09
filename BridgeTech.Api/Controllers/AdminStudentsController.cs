@@ -24,4 +24,14 @@ public class AdminStudentsController(IAdminStudentService service) : ControllerB
         Guid studentId,
         CancellationToken cancellationToken) =>
         Ok(await service.GetAsync(studentId, cancellationToken));
+
+    [HttpDelete("{studentId:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Delete(
+        Guid studentId,
+        CancellationToken cancellationToken)
+    {
+        await service.DeleteAsync(studentId, cancellationToken);
+        return NoContent();
+    }
 }

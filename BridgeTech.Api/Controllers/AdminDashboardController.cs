@@ -12,7 +12,9 @@ public sealed class AdminDashboardController(IAdminDashboardService service) : C
     [HttpGet]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
-        var dashboard = await service.GetDashboardAsync(cancellationToken);
+        var dashboard = await service.GetDashboardAsync(
+            User.IsInRole(nameof(Domain.Enums.UserRole.SuperAdmin)),
+            cancellationToken);
         return Ok(dashboard);
     }
 }

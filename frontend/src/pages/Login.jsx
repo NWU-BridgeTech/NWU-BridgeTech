@@ -63,6 +63,11 @@ const Login = ({ team = false }) => {
           });
           return;
         }
+        if (data.code === "TEAM_LOGIN_REQUIRED") {
+          throw new Error(
+            "Staff accounts must sign in through Team Login. Open the Team Login page to continue.",
+          );
+        }
         throw new Error(data.message || "Invalid username/email or password.");
       }
       saveUserAndRedirect(data);

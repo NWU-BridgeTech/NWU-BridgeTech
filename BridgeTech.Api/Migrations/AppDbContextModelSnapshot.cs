@@ -793,6 +793,103 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("quiz_questions", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Report", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("report_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("DataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data_json");
+
+                    b.Property<DateTimeOffset>("GeneratedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("GeneratedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("generated_by_user_id");
+
+                    b.Property<string>("ReportType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("report_type");
+
+                    b.Property<int>("RowCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("row_count");
+
+                    b.HasKey("ReportId")
+                        .HasName("pk_reports");
+
+                    b.HasIndex("GeneratedAt")
+                        .HasDatabaseName("ix_reports_generated_at");
+
+                    b.HasIndex("GeneratedByUserId")
+                        .HasDatabaseName("ix_reports_generated_by_user_id");
+
+                    b.ToTable("reports", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.StaffActivity", b =>
+                {
+                    b.Property<Guid>("StaffActivityId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_activity_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("activity_type");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ended_at");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
+
+                    b.Property<Guid?>("ModuleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("module_id");
+
+                    b.Property<string>("ModuleTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("module_title");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("StaffActivityId")
+                        .HasName("pk_staff_activities");
+
+                    b.HasIndex("StartedAt")
+                        .HasDatabaseName("ix_staff_activities_started_at");
+
+                    b.HasIndex("UserId", "StartedAt")
+                        .HasDatabaseName("ix_staff_activities_user_id_started_at");
+
+                    b.ToTable("staff_activities", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1276,6 +1373,30 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Quiz");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Report", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "GeneratedByUser")
+                        .WithMany("Reports")
+                        .HasForeignKey("GeneratedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_users_generated_by_user_id");
+
+                    b.Navigation("GeneratedByUser");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.StaffActivity", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany("StaffActivities")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_activities_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.UserPreference", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
@@ -1364,6 +1485,10 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Preferences");
 
                     b.Navigation("QuizAttempts");
+
+                    b.Navigation("Reports");
+
+                    b.Navigation("StaffActivities");
                 });
 #pragma warning restore 612, 618
         }
