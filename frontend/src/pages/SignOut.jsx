@@ -3,10 +3,20 @@ import { clearAuthTokens } from "../utils/authStorage";
 import { LogOut } from "lucide-react";
 import "./SignOut.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+
 export default function SignOut() {
   const navigate = useNavigate();
 
   function signOut() {
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      }).catch(() => {});
+    }
     clearAuthTokens();
     navigate("/", { replace: true });
   }

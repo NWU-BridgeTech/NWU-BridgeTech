@@ -28,9 +28,12 @@ public class UsersController(
     [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> GetStaff(CancellationToken cancellationToken)
     {
-        var staff = await dbContext.Users
+        var isSuperAdmin = User.IsInRole(nameof(UserRole.SuperAdmin));
+        var staffQuery = dbContext.Users
             .AsNoTracking()
-            .Where(user => user.Role != UserRole.Student)
+            .Where(user => isSuperAdmin
+                ? user.Role != UserRole.Student
+                : user.Role == UserRole.Instructor)
             .OrderBy(user => user.LastName)
             .ThenBy(user => user.FirstName)
             .Select(user => new
@@ -45,7 +48,7 @@ public class UsersController(
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(staff);
+        return Ok(await staffQuery);
     }
 
     [HttpPost("staff")]
@@ -65,6 +68,11 @@ public class UsersController(
         if (role is null)
         {
             return BadRequest(new { message = "Choose a valid staff role." });
+        }
+
+        if (!User.IsInRole(nameof(UserRole.SuperAdmin)) && role != UserRole.Instructor)
+        {
+            return Forbid();
         }
 
         if (role == UserRole.SuperAdmin && !User.IsInRole(nameof(UserRole.SuperAdmin)))

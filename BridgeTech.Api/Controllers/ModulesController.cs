@@ -30,7 +30,7 @@ public class ModulesController(IModuleService service) : ControllerBase
 
     // Admin: every module (drafts included) with lesson and student counts.
     [HttpGet("admin")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
     public async Task<IActionResult> GetModulesForAdmin(CancellationToken cancellationToken)
     {
         return Ok(await service.GetAllForAdminAsync(cancellationToken));
@@ -77,6 +77,15 @@ public class ModulesController(IModuleService service) : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpDelete("{moduleId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> DeleteModule(
+        Guid moduleId, CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(moduleId, cancellationToken);
+        return deleted ? NoContent() : NotFound();
     }
 
     private Guid GetUserId()

@@ -4,5 +4,5 @@ namespace BridgeTech.Api.Services.AdminDashboard;
 
 public interface IAdminDashboardService
 {
-    Task<AdminDashboardResponse> GetDashboardAsync(CancellationToken cancellationToken = default);
+    Task<AdminDashboardResponse> GetDashboardAsync(bool includeStaffActivity, CancellationToken cancellationToken = default);
 }

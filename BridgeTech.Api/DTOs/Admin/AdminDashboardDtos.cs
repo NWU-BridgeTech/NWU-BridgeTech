@@ -47,4 +47,7 @@ public sealed class AdminDashboardActivityResponse
     public string Action { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;
     public DateTimeOffset OccurredAt { get; init; }
+    public DateTimeOffset? EndedAt { get; init; }
+    public string? Location { get; init; }
+    public double? DurationMinutes { get; init; }
 }

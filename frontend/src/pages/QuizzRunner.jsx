@@ -19,7 +19,6 @@ const QuizRunner = () => {
   const [quizError, setQuizError] = useState(null);
   const [attemptError, setAttemptError] = useState(null);
   const [quizResult, setQuizResult] = useState(null);
-  
 
   const getAuthHeaders = () => {
     const token = getToken();

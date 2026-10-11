@@ -8,6 +8,7 @@ public interface IAuthService
     Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
 
     Task<AuthResponse> LoginTeamAsync(LoginRequest request, CancellationToken cancellationToken = default);
+    Task LogoutAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<string> CreateStaffInvitationTokenAsync(Guid userId, CancellationToken cancellationToken = default);
 

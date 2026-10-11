@@ -12,7 +12,10 @@ export default function TeamArea({ role }) {
           <p>Welcome to your BridgeTech team workspace.</p>
         </div>
         <div className="dashboard-header-actions">
-          <Link className="btn blue" to={isInstructor ? "/lessons" : "/admin"}>
+          <Link
+            className="btn blue"
+            to={isInstructor ? "/instructor/modules" : "/admin"}
+          >
             {isInstructor ? "View learning materials" : "Open administration"}
           </Link>
         </div>
