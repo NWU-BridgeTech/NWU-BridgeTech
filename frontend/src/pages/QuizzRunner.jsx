@@ -148,9 +148,9 @@ const QuizRunner = () => {
       const score = Number(result.score ?? result.Score);
       const passingScore = Number(
         result.passingScore ??
-          result.PassingScore ??
-          quiz.passingScore ??
-          quiz.PassingScore,
+        result.PassingScore ??
+        quiz.passingScore ??
+        quiz.PassingScore
       );
 
       const passed =
@@ -160,36 +160,40 @@ const QuizRunner = () => {
 
       if (passed) {
         const passedQuizIds = JSON.parse(
-          sessionStorage.getItem("passedQuizIds") || "[]",
+          sessionStorage.getItem("passedQuizIds") || "[]"
         );
 
         if (!passedQuizIds.includes(quizId)) {
           sessionStorage.setItem(
             "passedQuizIds",
-            JSON.stringify([...passedQuizIds, quizId]),
+            JSON.stringify([...passedQuizIds, quizId])
           );
         }
       }
 
-      setQuizResult({
-        passed,
-        score,
-        passingScore,
+      
+    
+ setQuizResult({
+  passed,
+  score,
+  passingScore,
 
-        moduleId:
-          location.state?.moduleId ??
-          quiz.moduleId ??
-          quiz.ModuleId ??
-          result.moduleId ??
-          result.ModuleId,
+  moduleId:
+    location.state?.moduleId ??
+    quiz.moduleId ??
+    quiz.ModuleId ??
+    result.moduleId ??
+    result.ModuleId,
 
-        lessonId:
-          location.state?.lessonId ??
-          quiz.lessonId ??
-          quiz.LessonId ??
-          result.lessonId ??
-          result.LessonId,
-      });
+  lessonId:
+    location.state?.lessonId ??
+    quiz.lessonId ??
+    quiz.LessonId ??
+    result.lessonId ??
+    result.LessonId,
+});
+
+
     } catch (err) {
       alert(`Submission Error: ${err.message}`);
     } finally {
@@ -197,44 +201,48 @@ const QuizRunner = () => {
     }
   };
 
-  const handleQuizResultContinue = () => {
-    if (!quizResult) return;
+  
+const handleQuizResultContinue = () => {
+  if (!quizResult) return;
 
-    if (quizResult.passed) {
-      const { moduleId, lessonId } = quizResult;
+  if (quizResult.passed) {
+    const { moduleId, lessonId } = quizResult;
 
-      console.log("Quiz passed. Navigating to lesson:", {
-        moduleId,
-        lessonId,
+    console.log("Quiz passed. Navigating to lesson:", {
+      moduleId,
+      lessonId,
+    });
+
+    if (!moduleId || !lessonId) {
+      console.error("Missing lesson information:", {
+        quizResult,
+        quiz,
+        locationState: location.state,
       });
 
-      if (!moduleId || !lessonId) {
-        console.error("Missing lesson information:", {
-          quizResult,
-          quiz,
-          locationState: location.state,
-        });
-
-        alert("The quiz was passed, but its lesson could not be identified.");
-        return;
-      }
-
-      // Return to the lesson content page.
-      navigate(`/modules/${moduleId}/lessons/${lessonId}`, {
-        replace: true,
-      });
-    } else {
-      // Failed quiz: return to assessments for a retake.
-      navigate("/student/assessments", {
-        replace: true,
-        state: {
-          quizSubmitted: true,
-          quizId,
-          passed: false,
-        },
-      });
+      alert(
+        "The quiz was passed, but its lesson could not be identified."
+      );
+      return;
     }
-  };
+
+    // Return to the lesson content page.
+    navigate(`/modules/${moduleId}/lessons/${lessonId}`, {
+      replace: true,
+    });
+
+  } else {
+    // Failed quiz: return to assessments for a retake.
+    navigate("/student/assessments", {
+      replace: true,
+      state: {
+        quizSubmitted: true,
+        quizId,
+        passed: false,
+      },
+    });
+  }
+};
 
   if (loading)
     return <div className="p-6 text-center text-gray-600">Loading quiz...</div>;
@@ -307,7 +315,7 @@ const QuizRunner = () => {
           >
             {submitting ? "Submitting..." : "Submit Answers"}
           </button>
-        </div>
+        </div>  
       </form>
 
       {quizResult && (

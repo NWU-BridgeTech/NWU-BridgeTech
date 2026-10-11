@@ -59,6 +59,74 @@ public class ExercisesController(IExerciseService service) : ControllerBase
 
         return submission is null ? NotFound() : Ok(submission);
     }
+
+    private Guid? CurrentUserId()
+{
+    var value = User.FindFirstValue(
+        ClaimTypes.NameIdentifier
+    );
+
+    return Guid.TryParse(value, out var id)
+        ? id
+        : null;
+}
+
+
+[HttpGet("my")]
+public async Task<IActionResult> GetMyExercises(
+    CancellationToken cancellationToken)
+{
+    var userId = CurrentUserId();
+
+    if (userId is null)
+    {
+        return Unauthorized();
+    }
+
+    var exercises = await service.GetMyExercisesAsync(
+        userId.Value,
+        cancellationToken
+    );
+
+    return Ok(exercises);
+}
+
+
+[HttpPost("{exerciseId:guid}/complete")]
+public async Task<IActionResult> CompleteExercise(
+    Guid exerciseId,
+    CancellationToken cancellationToken)
+{
+    var userId = CurrentUserId();
+
+    if (userId is null)
+    {
+        return Unauthorized();
+    }
+
+    var completion = await service.MarkCompletedAsync(
+        userId.Value,
+        exerciseId,
+        cancellationToken
+    );
+
+    if (completion is null)
+    {
+        return NotFound(new
+        {
+            message =
+                "Exercise not found in your registered modules."
+        });
+    }
+
+    return Ok(new
+    {
+        exerciseId = completion.ExerciseId,
+        completed = true,
+        completedAt = completion.CompletedAt
+    });
+}
+
 }
 
 // Request body used when a learner submits an exercise repository.

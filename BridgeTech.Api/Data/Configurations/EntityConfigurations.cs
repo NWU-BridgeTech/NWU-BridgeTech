@@ -233,6 +233,7 @@ internal sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         // JSONB keeps verification rules flexible for different GitHub checks.
         EntityConfigurationHelpers.ConfigureId(builder, "exercises", nameof(Exercise.ExerciseId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Outcomes).HasColumnName("outcomes").HasColumnType("text");           
         builder.Property(x => x.VerificationType).HasConversion<short>().IsRequired();
         builder.Property(x => x.VerificationCriteria).HasColumnType("jsonb");
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
@@ -241,6 +242,54 @@ internal sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         builder.HasIndex(x => x.VerificationCriteria).HasMethod("gin");
     }
 }
+
+internal sealed class ExerciseCompletionConfiguration
+    : IEntityTypeConfiguration<ExerciseCompletion>
+{
+    public void Configure(
+        EntityTypeBuilder<ExerciseCompletion> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(
+            builder,
+            "exercise_completions",
+            nameof(ExerciseCompletion.CompletionId)
+        );
+
+        builder.Property(x => x.CompletionId)
+            .HasColumnName("completion_id");
+
+        builder.Property(x => x.UserId)
+            .HasColumnName("user_id")
+            .IsRequired();
+
+        builder.Property(x => x.ExerciseId)
+            .HasColumnName("exercise_id")
+            .IsRequired();
+
+        builder.Property(x => x.CompletedAt)
+            .HasColumnName("completed_at")
+            .HasDefaultValueSql("now()")
+            .IsRequired();
+
+        builder.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Exercise)
+            .WithMany()
+            .HasForeignKey(x => x.ExerciseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new
+        {
+            x.UserId,
+            x.ExerciseId
+        })
+        .IsUnique();
+    }
+}
+
 
 internal sealed class ExerciseSubmissionConfiguration : IEntityTypeConfiguration<ExerciseSubmission>
 {

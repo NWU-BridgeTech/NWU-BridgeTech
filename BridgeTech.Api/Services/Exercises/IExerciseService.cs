@@ -12,4 +12,7 @@ public interface IExerciseService
     Task<bool> DeleteAsync(Guid exerciseId, CancellationToken cancellationToken = default);
     Task<ExerciseSubmission?> CreateSubmissionAsync(Guid exerciseId, Guid userId, string githubRepoUrl, CancellationToken cancellationToken = default);
     Task<ExerciseSubmission?> GetSubmissionAsync(Guid submissionId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ExerciseResponse>>GetMyExercisesAsync(Guid userId,CancellationToken cancellationToken = default);
+
+    Task<ExerciseCompletion?>MarkCompletedAsync(Guid userId,Guid exerciseId,CancellationToken cancellationToken = default);
 }
