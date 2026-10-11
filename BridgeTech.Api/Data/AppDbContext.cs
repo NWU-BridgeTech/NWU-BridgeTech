@@ -20,6 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<QuizAnswer> QuizAnswers => Set<QuizAnswer>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseSubmission> ExerciseSubmissions => Set<ExerciseSubmission>();
+    public DbSet<ExerciseCompletion> ExerciseCompletions => Set<ExerciseCompletion>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Badge> Badges => Set<Badge>();

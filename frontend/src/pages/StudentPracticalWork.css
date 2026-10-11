@@ -112,3 +112,21 @@
   .student-practical .practical-card-buttons { flex-direction: column; }
   .student-practical .practical-dialog-content { padding: 20px; }
 }
+
+
+.practical-instructions-list {
+  list-style-type: disc;
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.practical-instructions-list li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.practical-instructions-list li:last-child {
+  margin-bottom: 0;
+}
+

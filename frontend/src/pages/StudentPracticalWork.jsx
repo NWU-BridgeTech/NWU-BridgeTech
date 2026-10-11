@@ -1,26 +1,46 @@
-import { useRef, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import StudentLayout from "../layouts/StudentLayout";
-import { practicalWork } from "../data/studentDashboard";
+import { apiFetch } from "../utils/apiClient";
 import "./StudentPracticalWork.css";
 
-const STORAGE_KEY = "student-practical-completed-exercises";
 
-function readCompletedIds() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    return Array.isArray(stored) ? stored.map(String) : [];
-  } catch {
-    return [];
+function ExerciseBulletList({ text, fallback }) {
+  if (!text || !text.trim()) {
+    return <p>{fallback}</p>;
   }
+
+  const items = text
+    .split("#")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return (
+    <ul className="practical-instructions-list">
+      {items.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  );
 }
 
-function ExerciseCard({ exercise, onInstructions, onComplete, isComplete }) {
+function ExerciseCard({
+  exercise,
+  onInstructions,
+  onComplete,
+  isComplete,
+  isCompleting,
+}) {
   return (
     <li className="practical-card">
       <div className="practical-card-details">
-        <span className="practical-module">{exercise.course || exercise.moduleTitle || "Module not specified"}</span>
+        <span className="practical-module">
+          {exercise.moduleTitle || "Module not specified"}
+        </span>
+
         <h3>{exercise.title}</h3>
       </div>
+
       <div className="practical-card-buttons">
         <button
           type="button"
@@ -29,13 +49,15 @@ function ExerciseCard({ exercise, onInstructions, onComplete, isComplete }) {
         >
           Exercise instructions
         </button>
+
         {!isComplete && (
           <button
             type="button"
             className="practical-button practical-button-primary"
             onClick={() => onComplete(exercise)}
+            disabled={isCompleting}
           >
-            Mark as completed
+            {isCompleting ? "Saving..." : "Mark as completed"}
           </button>
         )}
       </div>
@@ -45,108 +67,256 @@ function ExerciseCard({ exercise, onInstructions, onComplete, isComplete }) {
 
 export default function StudentPracticalWork() {
   const instructionsDialog = useRef(null);
+
   const [selectedExercise, setSelectedExercise] = useState(null);
-  const [completedIds, setCompletedIds] = useState(readCompletedIds);
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [completingId, setCompletingId] = useState(null);
 
-  // Existing demo records marked Passed appear in the completed section.
-  // Newly completed exercises are stored locally until a backend endpoint exists.
-  const isComplete = (exercise) =>
-    exercise.status === "Passed" || completedIds.includes(String(exercise.id));
+  // Retrieve exercises belonging to the student's registered modules
+  const loadExercises = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-  const exercisesToComplete = practicalWork.filter((exercise) => !isComplete(exercise));
-  const completedExercises = practicalWork.filter(isComplete);
+    try {
+      const data = await apiFetch("/exercises/my");
 
+      setExercises(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load exercises:", err);
+
+      setError(
+        err.message || "Unable to load practical exercises."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadExercises();
+  }, [loadExercises]);
+
+  // Separate pending and completed exercises
+  const exercisesToComplete = exercises.filter(
+    (exercise) => !exercise.completed
+  );
+
+  const completedExercises = exercises.filter(
+    (exercise) => exercise.completed
+  );
+
+  // Open exercise instructions
   function openInstructions(exercise) {
     setSelectedExercise(exercise);
-    instructionsDialog.current?.showModal();
+
+    if (instructionsDialog.current) {
+      instructionsDialog.current.showModal();
+    }
   }
 
+  // Close instructions modal
   function closeInstructions() {
     instructionsDialog.current?.close();
   }
 
-  function markAsCompleted(exercise) {
-    const id = String(exercise.id);
-    const updated = [...new Set([...completedIds, id])];
-    setCompletedIds(updated);
+  // Mark exercise as completed using the backend API
+  async function markAsCompleted(exercise) {
+    if (completingId !== null) return;
+
+    setCompletingId(exercise.exerciseId);
+    setError("");
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      // The UI still updates for this session if browser storage is unavailable.
+      const result = await apiFetch(
+        `/exercises/${exercise.exerciseId}/complete`,
+        {
+          method: "POST",
+        }
+      );
+
+      // Only update the UI after the backend confirms completion
+      setExercises((currentExercises) =>
+        currentExercises.map((currentExercise) => {
+          if (
+            currentExercise.exerciseId === exercise.exerciseId
+          ) {
+            return {
+              ...currentExercise,
+              completed: true,
+              completedAt: result?.completedAt ?? null,
+              progressPercentage: 100,
+            };
+          }
+
+          return currentExercise;
+        })
+      );
+    } catch (err) {
+      console.error("Failed to complete exercise:", err);
+
+      setError(
+        err.message || "Unable to mark the exercise as completed."
+      );
+    } finally {
+      setCompletingId(null);
     }
   }
 
-  const renderExerciseList = (items, emptyTitle, emptyMessage, completed = false) =>
-    items.length ? (
+  // Render a reusable exercise list
+  function renderExerciseList(
+    items,
+    emptyTitle,
+    emptyMessage,
+    completed = false
+  ) {
+    if (items.length === 0) {
+      return (
+        <div className="practical-empty">
+          <h3>{emptyTitle}</h3>
+          <p>{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
       <ul className="practical-list">
         {items.map((exercise) => (
           <ExerciseCard
-            key={exercise.id}
+            key={exercise.exerciseId}
             exercise={exercise}
             isComplete={completed}
+            isCompleting={completingId === exercise.exerciseId}
             onInstructions={openInstructions}
             onComplete={markAsCompleted}
           />
         ))}
       </ul>
-    ) : (
-      <div className="practical-empty">
-        <h3>{emptyTitle}</h3>
-        <p>{emptyMessage}</p>
-      </div>
     );
+  }
 
   return (
     <StudentLayout title="Practical work">
       <div className="content student-practical">
-        <section className="practical-section" aria-labelledby="exercises-to-complete">
+
+        {/* API error message */}
+        {error && (
+          <div
+            className="practical-error"
+            role="alert"
+          >
+            <p>{error}</p>
+
+            <button
+              type="button"
+              className="practical-button practical-button-outline"
+              onClick={loadExercises}
+              disabled={loading}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* EXERCISES TO COMPLETE */}
+        <section
+          className="practical-section"
+          aria-labelledby="exercises-to-complete"
+        >
           <div className="practical-section-heading">
             <div>
-              <h2 id="exercises-to-complete">Exercises to Complete</h2>
-              <p>Review the instructions and complete your practical exercises.</p>
+              <h2 id="exercises-to-complete">
+                Exercises to Complete
+              </h2>
+
+              <p>
+                Review the instructions and complete your
+                practical exercises.
+              </p>
             </div>
-            <span className="practical-count">{exercisesToComplete.length} to complete</span>
+
+            <span className="practical-count">
+              {exercisesToComplete.length} to complete
+            </span>
           </div>
-          {renderExerciseList(
-            exercisesToComplete,
-            "No exercises to complete",
-            "You're all caught up with your practical exercises."
+
+          {loading ? (
+            <div className="practical-empty">
+              <p>Loading exercises...</p>
+            </div>
+          ) : error && exercises.length === 0 ? null : (
+            renderExerciseList(
+              exercisesToComplete,
+              "No exercises to complete",
+              exercises.length === 0
+                ? "Register for a module to view available practical exercises."
+                : "You're all caught up with your practical exercises."
+            )
           )}
         </section>
 
-        <section className="practical-section practical-completed" aria-labelledby="completed-exercises">
+        {/* COMPLETED EXERCISES */}
+        <section
+          className="practical-section practical-completed"
+          aria-labelledby="completed-exercises"
+        >
           <div className="practical-section-heading">
             <div>
-              <h2 id="completed-exercises">Completed Exercises</h2>
-              <p>Review the exercises you've marked as completed.</p>
+              <h2 id="completed-exercises">
+                Completed Exercises
+              </h2>
+
+              <p>
+                Review the exercises you've marked as completed.
+              </p>
             </div>
-            <span className="practical-count">{completedExercises.length} completed</span>
+
+            <span className="practical-count">
+              {completedExercises.length} completed
+            </span>
           </div>
-          {renderExerciseList(
-            completedExercises,
-            "No completed exercises",
-            "Exercises you complete will appear here.",
-            true
+
+          {loading ? (
+            <div className="practical-empty">
+              <p>Loading completed exercises...</p>
+            </div>
+          ) : (
+            renderExerciseList(
+              completedExercises,
+              "No completed exercises",
+              "Exercises you complete will appear here.",
+              true
+            )
           )}
         </section>
 
+        {/* EXERCISE INSTRUCTIONS MODAL */}
         <dialog
           ref={instructionsDialog}
           className="practical-instructions-dialog"
           aria-labelledby="practical-instructions-title"
           onClick={(event) => {
-            if (event.target === instructionsDialog.current) closeInstructions();
+            if (event.target === instructionsDialog.current) {
+              closeInstructions();
+            }
           }}
         >
           {selectedExercise && (
             <div className="practical-dialog-content">
+
               <div className="practical-dialog-heading">
                 <div>
                   <span className="practical-module">
-                    {selectedExercise.course || selectedExercise.moduleTitle || "Module not specified"}
+                    {selectedExercise.moduleTitle ||
+                      "Module not specified"}
                   </span>
-                  <h2 id="practical-instructions-title">{selectedExercise.title}</h2>
+
+                  <h2 id="practical-instructions-title">
+                    {selectedExercise.title}
+                  </h2>
                 </div>
+
                 <button
                   type="button"
                   className="practical-dialog-close"
@@ -156,28 +326,43 @@ export default function StudentPracticalWork() {
                   ×
                 </button>
               </div>
+
+              
               <div className="practical-dialog-section">
                 <h3>Exercise instructions</h3>
-                <p>{selectedExercise.instructions || selectedExercise.instruction || "Instructions have not been provided for this exercise yet."}</p>
+
+                <ExerciseBulletList
+                  text={selectedExercise.description}
+                  fallback="Instructions have not been provided for this exercise yet."
+                />
               </div>
+
+
+              
               <div className="practical-dialog-section">
                 <h3>Expected outcomes</h3>
-                {Array.isArray(selectedExercise.expectedOutcomes) && selectedExercise.expectedOutcomes.length ? (
-                  <ul>
-                    {selectedExercise.expectedOutcomes.map((outcome, index) => <li key={index}>{outcome}</li>)}
-                  </ul>
-                ) : (
-                  <p>{selectedExercise.expectedOutcomes || selectedExercise.expectedOutcome || "Expected outcomes have not been provided for this exercise yet."}</p>
-                )}
+
+                <ExerciseBulletList
+                  text={selectedExercise.outcomes}
+                  fallback="Expected outcomes have not been provided for this exercise yet."
+                />
               </div>
+
+
               <div className="practical-dialog-footer">
-                <button type="button" className="practical-button practical-button-primary" onClick={closeInstructions}>
+                <button
+                  type="button"
+                  className="practical-button practical-button-primary"
+                  onClick={closeInstructions}
+                >
                   Close
                 </button>
               </div>
+
             </div>
           )}
         </dialog>
+
       </div>
     </StudentLayout>
   );
