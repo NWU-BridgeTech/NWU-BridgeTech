@@ -160,6 +160,12 @@ public class LessonService(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        if (enrollment.Status == EnrollmentStatus.Completed)
+        {
+            await certificateService.IssueForCompletionAsync(
+                userId, lesson.ModuleId, cancellationToken);
+        }
+
         await badgeService.AwardForLessonCompletionAsync(
             userId, lessonId, cancellationToken);
 
@@ -180,8 +186,6 @@ public class LessonService(
                     cancellationToken);
             }
 
-            await certificateService.IssueForCompletionAsync(
-                userId, lesson.ModuleId, cancellationToken);
         }
 
         return new LessonProgressResponse
