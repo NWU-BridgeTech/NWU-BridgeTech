@@ -204,6 +204,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
 
+                    b.Property<string>("Outcomes")
+                        .HasColumnType("text")
+                        .HasColumnName("outcomes");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -230,6 +234,41 @@ namespace BridgeTech.Api.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("VerificationCriteria"), "gin");
 
                     b.ToTable("exercises", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseCompletion", b =>
+                {
+                    b.Property<Guid>("CompletionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("completion_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exercise_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("CompletionId")
+                        .HasName("pk_exercise_completions");
+
+                    b.HasIndex("ExerciseId")
+                        .HasDatabaseName("ix_exercise_completions_exercise_id");
+
+                    b.HasIndex("UserId", "ExerciseId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_exercise_completions_user_id_exercise_id");
+
+                    b.ToTable("exercise_completions", "public");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseSubmission", b =>
@@ -1202,6 +1241,27 @@ namespace BridgeTech.Api.Migrations
                         .HasConstraintName("fk_exercises_modules_module_id");
 
                     b.Navigation("Module");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseCompletion", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exercise_completions_exercises_exercise_id");
+
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exercise_completions_users_user_id");
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseSubmission", b =>

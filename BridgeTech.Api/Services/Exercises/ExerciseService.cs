@@ -4,6 +4,7 @@ using BridgeTech.Api.DTOs.Exercises;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using BridgeTech.Api.Services.Notifications;
+using Npgsql;
 
 namespace BridgeTech.Api.Services.Exercises;
 
@@ -49,4 +50,120 @@ public sealed class ExerciseService(AppDbContext db, INotificationService notifi
     }
     public Task<ExerciseSubmission?> GetSubmissionAsync(Guid id, CancellationToken ct = default) => db.ExerciseSubmissions.AsNoTracking().SingleOrDefaultAsync(x => x.SubmissionId == id, ct);
     private static ExerciseResponse ToResponse(Exercise x) => new() { ExerciseId = x.ExerciseId, ModuleId = x.ModuleId, Title = x.Title, Description = x.Description, VerificationType = x.VerificationType, VerificationCriteria = x.VerificationCriteria?.RootElement, CreatedAt = x.CreatedAt, ProgressPercentage = 0 };
+
+    
+    public async Task<IReadOnlyList<ExerciseResponse>> GetMyExercisesAsync(
+        Guid userId,
+        CancellationToken ct = default)
+    {
+        var rows = await db.Exercises
+            .AsNoTracking()
+            .Where(x => db.Enrollments.Any(en =>
+                en.UserId == userId &&
+                en.ModuleId == x.ModuleId))
+            .OrderBy(x => x.Module.OrderIndex)
+            .ThenBy(x => x.CreatedAt)
+            .Select(x => new
+            {
+                x.ExerciseId,
+                x.ModuleId,
+                ModuleTitle = x.Module.Title,
+                x.Title,
+                x.Description,
+                x.Outcomes,
+                x.VerificationType,
+                x.CreatedAt,
+
+                CompletedAt = db.ExerciseCompletions
+                    .Where(c =>
+                        c.UserId == userId &&
+                        c.ExerciseId == x.ExerciseId)
+                    .Select(c => (DateTimeOffset?)c.CompletedAt)
+                    .FirstOrDefault()
+            })
+            .ToListAsync(ct);
+
+        return rows.Select(x => new ExerciseResponse
+        {
+            ExerciseId = x.ExerciseId,
+            ModuleId = x.ModuleId,
+            ModuleTitle = x.ModuleTitle,
+            Title = x.Title,
+            Description = x.Description,
+            Outcomes = x.Outcomes,
+            VerificationType = x.VerificationType,
+            CreatedAt = x.CreatedAt,
+
+            Completed = x.CompletedAt.HasValue,
+            CompletedAt = x.CompletedAt,
+
+            ProgressPercentage =
+                x.CompletedAt.HasValue ? 100 : 0
+        }).ToList();
+    }
+
+    
+public async Task<ExerciseCompletion?> MarkCompletedAsync(
+    Guid userId,
+    Guid exerciseId,
+    CancellationToken ct = default)
+{
+    // Confirm that the student is enrolled
+    // in the module containing this exercise.
+    var enrolled = await db.Exercises
+        .AsNoTracking()
+        .AnyAsync(x =>
+            x.ExerciseId == exerciseId &&
+            db.Enrollments.Any(e =>
+                e.UserId == userId &&
+                e.ModuleId == x.ModuleId),
+            ct);
+
+    if (!enrolled)
+        return null;
+
+    // Check whether the student already completed it.
+    var existing = await db.ExerciseCompletions
+        .AsNoTracking()
+        .SingleOrDefaultAsync(x =>
+            x.UserId == userId &&
+            x.ExerciseId == exerciseId,
+            ct);
+
+    if (existing is not null)
+        return existing;
+
+    // Create a new completion record.
+    var completion = new ExerciseCompletion
+    {
+        CompletionId = Guid.NewGuid(),
+        UserId = userId,
+        ExerciseId = exerciseId,
+        CompletedAt = DateTimeOffset.UtcNow
+    };
+
+    db.ExerciseCompletions.Add(completion);
+
+    try
+    {
+        await db.SaveChangesAsync(ct);
+        return completion;
+    }
+    catch (DbUpdateException ex) when (
+        ex.InnerException is PostgresException pg &&
+        pg.SqlState == PostgresErrorCodes.UniqueViolation)
+    {
+        // Handle simultaneous completion requests.
+        db.Entry(completion).State = EntityState.Detached;
+
+        return await db.ExerciseCompletions
+            .AsNoTracking()
+            .SingleAsync(x =>
+                x.UserId == userId &&
+                x.ExerciseId == exerciseId,
+                ct);
+    }
+}
+
+
 }

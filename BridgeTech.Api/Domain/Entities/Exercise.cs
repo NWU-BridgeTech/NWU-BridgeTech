@@ -10,6 +10,7 @@ public class Exercise
     public Guid ModuleId { get; set; }
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
+    public string? Outcomes { get; set; }
     public VerificationType VerificationType { get; set; }
     public JsonDocument? VerificationCriteria { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

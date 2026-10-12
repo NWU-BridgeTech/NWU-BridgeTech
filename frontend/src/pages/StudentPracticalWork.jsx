@@ -1,263 +1,368 @@
-import formatDeadline from "../utils/formatDeadline";
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { apiFetch } from "../utils/apiClient";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import StudentLayout from "../layouts/StudentLayout";
-import { practicalWork } from "../data/studentDashboard";
+import { apiFetch } from "../utils/apiClient";
 import "./StudentPracticalWork.css";
 
-export default function StudentPracticalWork() {
-  const feedbackDialog = useRef(null);
-  const [selectedPractical, setSelectedPractical] = useState(null);
-  const [showAllPractical, setShowAllPractical] = useState(false);
-  const [githubConnected, setGithubConnected] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    apiFetch("/github/me")
-      .then((data) => {
-        if (!cancelled) setGithubConnected(Boolean(data?.username));
-      })
-      .catch(() => {
-        if (!cancelled) setGithubConnected(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const changesRequested = practicalWork.filter(
-    (work) => work.status === "Changes requested",
-  ).length;
-  const awaitingReview = practicalWork.filter(
-    (work) => work.status === "Awaiting review",
-  ).length;
-  const passed = practicalWork.filter(
-    (work) => work.status === "Passed",
-  ).length;
-
-  function priority(work) {
-    if (work.status === "Changes requested") return 0;
-    if (work.status === "Not submitted") return 1;
-    if (work.status === "Awaiting review") return 2;
-    return 3;
+function ExerciseBulletList({ text, fallback }) {
+  if (!text || !text.trim()) {
+    return <p>{fallback}</p>;
   }
 
-  const sortedWork = [...practicalWork].sort((first, second) => {
-    const difference = priority(first) - priority(second);
-    if (difference !== 0) return difference;
-    if (!first.dueAt) return second.dueAt ? 1 : 0;
-    if (!second.dueAt) return -1;
-    return new Date(first.dueAt) - new Date(second.dueAt);
-  });
-  const visibleWork = showAllPractical ? sortedWork : sortedWork.slice(0, 3);
+  const items = text
+    .split("#")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  function openFeedback(practical) {
-    setSelectedPractical(practical);
-    feedbackDialog.current.showModal();
+  return (
+    <ul className="practical-instructions-list">
+      {items.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function ExerciseCard({
+  exercise,
+  onInstructions,
+  onComplete,
+  isComplete,
+  isCompleting,
+}) {
+  return (
+    <li className="practical-card">
+      <div className="practical-card-details">
+        <span className="practical-module">
+          {exercise.moduleTitle || "Module not specified"}
+        </span>
+
+        <h3>{exercise.title}</h3>
+      </div>
+
+      <div className="practical-card-buttons">
+        <button
+          type="button"
+          className="practical-button practical-button-outline"
+          onClick={() => onInstructions(exercise)}
+        >
+          Exercise instructions
+        </button>
+
+        {!isComplete && (
+          <button
+            type="button"
+            className="practical-button practical-button-primary"
+            onClick={() => onComplete(exercise)}
+            disabled={isCompleting}
+          >
+            {isCompleting ? "Saving..." : "Mark as completed"}
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+export default function StudentPracticalWork() {
+  const instructionsDialog = useRef(null);
+
+  const [selectedExercise, setSelectedExercise] = useState(null);
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [completingId, setCompletingId] = useState(null);
+
+  // Retrieve exercises belonging to the student's registered modules
+  const loadExercises = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await apiFetch("/exercises/my");
+
+      setExercises(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load exercises:", err);
+
+      setError(
+        err.message || "Unable to load practical exercises."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadExercises();
+  }, [loadExercises]);
+
+  // Separate pending and completed exercises
+  const exercisesToComplete = exercises.filter(
+    (exercise) => !exercise.completed
+  );
+
+  const completedExercises = exercises.filter(
+    (exercise) => exercise.completed
+  );
+
+  // Open exercise instructions
+  function openInstructions(exercise) {
+    setSelectedExercise(exercise);
+
+    if (instructionsDialog.current) {
+      instructionsDialog.current.showModal();
+    }
+  }
+
+  // Close instructions modal
+  function closeInstructions() {
+    instructionsDialog.current?.close();
+  }
+
+  // Mark exercise as completed using the backend API
+  async function markAsCompleted(exercise) {
+    if (completingId !== null) return;
+
+    setCompletingId(exercise.exerciseId);
+    setError("");
+
+    try {
+      const result = await apiFetch(
+        `/exercises/${exercise.exerciseId}/complete`,
+        {
+          method: "POST",
+        }
+      );
+
+      // Only update the UI after the backend confirms completion
+      setExercises((currentExercises) =>
+        currentExercises.map((currentExercise) => {
+          if (
+            currentExercise.exerciseId === exercise.exerciseId
+          ) {
+            return {
+              ...currentExercise,
+              completed: true,
+              completedAt: result?.completedAt ?? null,
+              progressPercentage: 100,
+            };
+          }
+
+          return currentExercise;
+        })
+      );
+    } catch (err) {
+      console.error("Failed to complete exercise:", err);
+
+      setError(
+        err.message || "Unable to mark the exercise as completed."
+      );
+    } finally {
+      setCompletingId(null);
+    }
+  }
+
+  // Render a reusable exercise list
+  function renderExerciseList(
+    items,
+    emptyTitle,
+    emptyMessage,
+    completed = false
+  ) {
+    if (items.length === 0) {
+      return (
+        <div className="practical-empty">
+          <h3>{emptyTitle}</h3>
+          <p>{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <ul className="practical-list">
+        {items.map((exercise) => (
+          <ExerciseCard
+            key={exercise.exerciseId}
+            exercise={exercise}
+            isComplete={completed}
+            isCompleting={completingId === exercise.exerciseId}
+            onInstructions={openInstructions}
+            onComplete={markAsCompleted}
+          />
+        ))}
+      </ul>
+    );
   }
 
   return (
     <StudentLayout title="Practical work">
       <div className="content student-practical">
-        <section
-          className="practical-section"
-          aria-labelledby="student-page-title"
-        >
-          <div className="practical-heading">
-            <div>
-              <h2>Your submissions</h2>
-              <p>
-                Review feedback, check your progress, and see what’s due next.
-              </p>
-            </div>
-            <Link
-              className={`github-indicator ${githubConnected ? "is-connected" : "is-disconnected"}`}
-              to="/student/github"
-            >
-              <span className="connection-dot" aria-hidden="true" />
-              GitHub ·{" "}
-              {githubConnected ? "Connected" : "Not connected"}
-            </Link>
-          </div>
-          <div className="practical-summary">
-            <p>
-              {changesRequested} need changes · {awaitingReview} awaiting review
-              · {passed} passed
-            </p>
-            <span>All deadlines in SAST</span>
-          </div>
-          {practicalWork.length > 0 ? (
-            <div className="practical-table-wrap">
-              <table className="practical-table" id="practical-list">
-                <caption className="visually-hidden">
-                  Practical exercises, submission status, deadlines and
-                  available actions
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Exercise</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Deadline</th>
-                    <th scope="col">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleWork.map((work) => {
-                    const needsAction =
-                      work.status === "Changes requested" ||
-                      work.status === "Not submitted";
-                    const overdue =
-                      needsAction &&
-                      work.dueAt &&
-                      new Date(work.dueAt) < new Date();
 
-                    return (
-                      <tr key={work.id}>
-                        <th scope="row">
-                          {work.title}
-                          <span className="exercise-course">{work.course}</span>
-                        </th>
-                        <td>
-                          <span className={`activity-status ${work.tone}`}>
-                            {work.status}
-                          </span>
-                        </td>
-                        <td className="exercise-deadline">
-                          {work.dueAt ? (
-                            <>
-                              {overdue && (
-                                <span className="exercise-overdue">
-                                  Overdue
-                                </span>
-                              )}
-                              <time dateTime={work.dueAt}>
-                                {formatDeadline(work.dueAt)}
-                              </time>
-                            </>
-                          ) : (
-                            <span>No deadline set</span>
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            className="text-action"
-                            disabled={work.status === "Not submitted"}
-                            aria-describedby={
-                              work.status === "Not submitted"
-                                ? "submission-availability"
-                                : undefined
-                            }
-                            onClick={() => openFeedback(work)}
-                            aria-label={`${work.action}: ${work.title}`}
-                          >
-                            {work.action}
-                            <span aria-hidden="true"> →</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {practicalWork.length > 3 && (
-                <div className="practical-list-footer">
-                  <span>
-                    Showing {visibleWork.length} of {practicalWork.length}{" "}
-                    exercises
-                  </span>
-                  <button
-                    className="text-action"
-                    aria-expanded={showAllPractical}
-                    aria-controls="practical-list"
-                    onClick={() => setShowAllPractical(!showAllPractical)}
-                  >
-                    {showAllPractical
-                      ? "Show fewer exercises"
-                      : "View all practical work"}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="practical-empty">
-              <h3>No practical work yet</h3>
-              <p>Your exercises and submission updates will appear here.</p>
-            </div>
-          )}
-          <p
-            className="course-preview-note practical-note"
-            id="submission-availability"
+        {/* API error message */}
+        {error && (
+          <div
+            className="practical-error"
+            role="alert"
           >
-            Exercise submissions are coming soon. You can view existing feedback
-            and submission details.
-          </p>
-        </section>
+            <p>{error}</p>
 
-        <dialog
-          className="courses-dialog course-details-dialog"
-          ref={feedbackDialog}
-          aria-labelledby="feedback-dialog-heading"
-        >
-          <div className="action-heading">
-            <h3 id="feedback-dialog-heading">
-              {selectedPractical?.feedback ? "Feedback" : "Submission"}:{" "}
-              {selectedPractical?.title}
-            </h3>
             <button
-              className="btn"
-              onClick={() => feedbackDialog.current.close()}
-              autoFocus
+              type="button"
+              className="practical-button practical-button-outline"
+              onClick={loadExercises}
+              disabled={loading}
             >
-              Close
+              Retry
             </button>
           </div>
-          {selectedPractical && (
-            <>
-              <p>{selectedPractical.course}</p>
-              <span className={`activity-status ${selectedPractical.tone}`}>
-                {selectedPractical.status}
-              </span>
-              {selectedPractical.dueAt && (
-                <p>
-                  Deadline:{" "}
-                  <time dateTime={selectedPractical.dueAt}>
-                    {formatDeadline(selectedPractical.dueAt)}
-                  </time>{" "}
-                  SAST
-                </p>
-              )}
-              {selectedPractical.feedback ? (
-                <>
-                  <h4>
-                    {selectedPractical.status === "Passed"
-                      ? "What went well"
-                      : "What to improve"}
-                  </h4>
-                  <p>{selectedPractical.feedback.summary}</p>
-                  <ul>
-                    {selectedPractical.feedback.points.map((point) => (
-                      <li key={point}>{point}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <h4>Submission status</h4>
-                  <p>{selectedPractical.detail}</p>
-                  <p>
-                    Feedback will appear here once your work has been reviewed.
-                  </p>
-                </>
-              )}
-              <p className="course-preview-note">
-                Exercise submissions are not available yet.
+        )}
+
+        {/* EXERCISES TO COMPLETE */}
+        <section
+          className="practical-section"
+          aria-labelledby="exercises-to-complete"
+        >
+          <div className="practical-section-heading">
+            <div>
+              <h2 id="exercises-to-complete">
+                Exercises to Complete
+              </h2>
+
+              <p>
+                Review the instructions and complete your
+                practical exercises.
               </p>
-            </>
+            </div>
+
+            <span className="practical-count">
+              {exercisesToComplete.length} to complete
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="practical-empty">
+              <p>Loading exercises...</p>
+            </div>
+          ) : error && exercises.length === 0 ? null : (
+            renderExerciseList(
+              exercisesToComplete,
+              "No exercises to complete",
+              exercises.length === 0
+                ? "Register for a module to view available practical exercises."
+                : "You're all caught up with your practical exercises."
+            )
+          )}
+        </section>
+
+        {/* COMPLETED EXERCISES */}
+        <section
+          className="practical-section practical-completed"
+          aria-labelledby="completed-exercises"
+        >
+          <div className="practical-section-heading">
+            <div>
+              <h2 id="completed-exercises">
+                Completed Exercises
+              </h2>
+
+              <p>
+                Review the exercises you've marked as completed.
+              </p>
+            </div>
+
+            <span className="practical-count">
+              {completedExercises.length} completed
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="practical-empty">
+              <p>Loading completed exercises...</p>
+            </div>
+          ) : (
+            renderExerciseList(
+              completedExercises,
+              "No completed exercises",
+              "Exercises you complete will appear here.",
+              true
+            )
+          )}
+        </section>
+
+        {/* EXERCISE INSTRUCTIONS MODAL */}
+        <dialog
+          ref={instructionsDialog}
+          className="practical-instructions-dialog"
+          aria-labelledby="practical-instructions-title"
+          onClick={(event) => {
+            if (event.target === instructionsDialog.current) {
+              closeInstructions();
+            }
+          }}
+        >
+          {selectedExercise && (
+            <div className="practical-dialog-content">
+
+              <div className="practical-dialog-heading">
+                <div>
+                  <span className="practical-module">
+                    {selectedExercise.moduleTitle ||
+                      "Module not specified"}
+                  </span>
+
+                  <h2 id="practical-instructions-title">
+                    {selectedExercise.title}
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="practical-dialog-close"
+                  onClick={closeInstructions}
+                  aria-label="Close instructions"
+                >
+                  ×
+                </button>
+              </div>
+
+              
+              <div className="practical-dialog-section">
+                <h3>Exercise instructions</h3>
+
+                <ExerciseBulletList
+                  text={selectedExercise.description}
+                  fallback="Instructions have not been provided for this exercise yet."
+                />
+              </div>
+
+
+              
+              <div className="practical-dialog-section">
+                <h3>Expected outcomes</h3>
+
+                <ExerciseBulletList
+                  text={selectedExercise.outcomes}
+                  fallback="Expected outcomes have not been provided for this exercise yet."
+                />
+              </div>
+
+
+              <div className="practical-dialog-footer">
+                <button
+                  type="button"
+                  className="practical-button practical-button-primary"
+                  onClick={closeInstructions}
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
           )}
         </dialog>
+
       </div>
     </StudentLayout>
   );
