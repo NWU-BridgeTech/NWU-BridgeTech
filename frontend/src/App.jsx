@@ -9,6 +9,7 @@ import StudentCourses from "./pages/StudentCourses";
 import StudentPracticalWork from "./pages/StudentPracticalWork";
 import StudentCertificates from "./pages/StudentCertificates";
 import StudentGithub from "./pages/StudentGithub";
+import StudentAiSummary from "./pages/StudentAiSummary";
 import StudentProfile from "./pages/StudentProfile";
 import StudentNotifications from "./pages/StudentNotifications";
 import StudentBadges from "./pages/StudentBadges";
@@ -73,6 +74,7 @@ function App() {
           />
           <Route path="/student/badges" element={<StudentBadges />} />
           <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/student/ai-summary" element={<StudentAiSummary />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route
             path="/student/notifications"

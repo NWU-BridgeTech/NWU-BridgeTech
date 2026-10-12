@@ -25,6 +25,7 @@ using BridgeTech.Api.Services.AdminDashboard;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<GitHubApiOptions>(builder.Configuration.GetSection("GitHub"));
+builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddDataProtection();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
@@ -47,6 +48,7 @@ builder.Services.AddHttpClient<IEmailService, BrevoEmailService>(client =>
 });
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>();
+builder.Services.AddScoped<ILearningInsightsService, LearningInsightsService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();

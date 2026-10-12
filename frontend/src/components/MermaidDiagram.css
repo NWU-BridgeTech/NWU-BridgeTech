@@ -1,0 +1,68 @@
+.mmd {
+  margin: 12px 0 16px;
+  overflow: hidden;
+  border: 1px solid #d8e2f0;
+  border-radius: 10px;
+  background: #fafbfd;
+  color: #1c2433;
+}
+
+.mmd-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid #d8e2f0;
+  color: #4a5670;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mmd-actions { display: flex; gap: 6px; }
+.mmd-actions button {
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: transparent;
+  color: #2368e8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+.mmd-actions button:hover { background: #e6eefc; }
+.mmd-actions button:focus-visible { outline: 2px solid #2368e8; outline-offset: 1px; }
+.mmd-canvas { overflow-x: auto; padding: 16px; }
+.mmd-canvas svg { display: block; height: auto; max-width: 100%; margin: 0 auto; }
+.mmd-canvas svg .nodeLabel,
+.mmd-canvas svg .edgeLabel,
+.mmd-canvas svg .messageText,
+.mmd-canvas svg text { color: #111827 !important; fill: #111827 !important; }
+.mmd-canvas svg .edgeLabel rect,
+.mmd-canvas svg .labelBkg { fill: #ffffff !important; opacity: 1 !important; }
+.mmd-canvas svg .flowchart-link,
+.mmd-canvas svg .messageLine0,
+.mmd-canvas svg .messageLine1 { stroke: #1f2937 !important; }
+.mmd-status { padding: 18px 16px; color: #4a5670; font-size: 13px; }
+.mmd-error { color: #a1281f; }
+.mmd-source {
+  margin: 0;
+  overflow-x: auto;
+  padding: 14px 16px;
+  background: #f0f3f9;
+  color: #1c2433;
+  font: 13px/1.55 Consolas, "Courier New", monospace;
+}
+.mmd-source-error {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0c8c4;
+  background: #fff3f1;
+  color: #8f2119;
+  font: 12px/1.45 Consolas, "Courier New", monospace;
+}
+
+:root[data-theme="dark"] .mmd { border-color: #444; background: #fafbfd; }
+:root[data-theme="dark"] .mmd-bar { border-bottom-color: #d8e2f0; }
+:root[data-theme="dark"] .mmd-actions button { color: #2368e8; }
+:root[data-theme="dark"] .mmd-actions button:hover { background: #e6eefc; }
+:root[data-theme="dark"] .mmd-status { color: #4a5670; }
+:root[data-theme="dark"] .mmd-source-error { border-bottom-color: #f0c8c4; background: #fff3f1; color: #8f2119; }

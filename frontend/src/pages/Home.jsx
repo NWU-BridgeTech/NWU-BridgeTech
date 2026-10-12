@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Award,
   BookOpen,
-  CircleCheck,
+  Brain,
   ClipboardCheck,
 } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
@@ -67,8 +66,8 @@ export default function Home() {
   // The profile supplies the greeting name and certificate count; the page
   // still works without it.
   const [profile, setProfile] = useState(null);
-  const [profileLoaded, setProfileLoaded] = useState(false);
   const [pendingQuizzes, setPendingQuizzes] = useState([]);
+  const [learningStatistics, setLearningStatistics] = useState(null);
 
   useEffect(() => {
     apiFetch("/quizzes/pending")
@@ -82,8 +81,11 @@ export default function Home() {
 
     apiFetch("/users/me")
       .then((data) => setProfile(data))
-      .catch(() => setProfile(null))
-      .finally(() => setProfileLoaded(true));
+      .catch(() => setProfile(null));
+
+    apiFetch("/learning-insights")
+      .then((data) => setLearningStatistics(data.statistics || null))
+      .catch(() => setLearningStatistics(null));
   }, []);
 
   const hour = new Date().getHours();
@@ -203,34 +205,24 @@ export default function Home() {
           )}
         </section>
 
-        <dl className="stats" aria-label="Learning progress summary">
-          <div className="stat">
-            <dt>
-              <BookOpen aria-hidden="true" size={16} /> Active courses
-            </dt>
-            <dd>{ready ? activeCourses.length : "–"}</dd>
-            <span>Currently in progress</span>
-          </div>
-          <div className="stat">
-            <dt>
-              <CircleCheck aria-hidden="true" size={16} /> Lessons completed
-            </dt>
-            <dd>
-              {ready ? lessonsDone : "–"}
-              {ready && hasLessons && <small> / {lessonsTotal}</small>}
-            </dd>
-            <span>Across all your courses</span>
-          </div>
-          <div className="stat">
-            <dt id="certificates-summary">
-              <Award aria-hidden="true" size={16} /> Certificates earned
-            </dt>
-            <dd>
-              {profileLoaded && profile ? profile.certificatesEarned : "–"}
-            </dd>
-            <span>Recognising your completed work</span>
-          </div>
-        </dl>
+        {learningStatistics && (
+          <section className="home-progress-glance" aria-labelledby="home-progress-glance-heading">
+            <div className="home-section-heading home-progress-glance-heading">
+              <div>
+                <h2 id="home-progress-glance-heading"><Brain aria-hidden="true" size={22} /> Your progress at a glance</h2>
+                <p>These figures are available without calling the AI service.</p>
+              </div>
+            </div>
+            <div className="home-progress-grid">
+              <div><strong>{learningStatistics.lessonsProgressPercentage}%</strong><span>Lesson progress</span><small>{learningStatistics.lessonsCompleted} of {learningStatistics.lessonsAvailable} lessons</small></div>
+              <div><strong>{learningStatistics.averageQuizScore}%</strong><span>Average quiz score</span><small>{learningStatistics.quizPasses} of {learningStatistics.quizAttempts} attempts passed</small></div>
+              <div><strong>{learningStatistics.exerciseProgressPercentage}%</strong><span>Practical progress</span><small>{learningStatistics.exercisesCompleted} of {learningStatistics.exercisesAvailable} exercises</small></div>
+              <div><strong>{learningStatistics.completedModules}/{learningStatistics.enrolledModules}</strong><span>Modules completed</span><small>{learningStatistics.certificatesEarned} certificates, {learningStatistics.badgesEarned} badges</small></div>
+              <div><strong>{learningStatistics.repositoryCommitsLast30Days}</strong><span>Commits in 30 days</span><small>{learningStatistics.repositoryStars} repository stars</small></div>
+              <div><strong>{learningStatistics.repositoryOpenIssues}</strong><span>Open issues</span><small>Repository collaboration signal</small></div>
+            </div>
+          </section>
+        )}
 
         <section className="home-next" aria-labelledby="next-up-heading">
           <div className="home-section-heading">

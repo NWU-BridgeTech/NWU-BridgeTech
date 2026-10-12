@@ -1,0 +1,217 @@
+.student-ai-summary {
+  --blui-ink: #17233d;
+  --blui-muted: #657a9f;
+  --blui-blue: #2368e8;
+  width: 100%;
+  max-width: none;
+}
+
+.blui-hero, .blui-progress-card, .blui-analysis-card {
+  border: 1px solid #dfe8f5;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.blui-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+  background: linear-gradient(110deg, #f3f7ff, #eaf2ff 62%, #dceaff);
+}
+
+.blui-hero h1, .blui-section-heading h2, .blui-analysis-title h2 {
+  margin: 0;
+  color: var(--blui-ink);
+}
+
+.blui-hero p:not(.blui-eyebrow), .blui-section-heading p, .blui-analysis-title p {
+  color: var(--blui-muted);
+  line-height: 1.55;
+}
+
+.blui-eyebrow {
+  margin: 0 0 6px;
+  color: var(--blui-blue);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.blui-generate-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 16px;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+
+.blui-generate-button:hover:not(:disabled),
+.blui-chat-form button:hover:not(:disabled) { background: #252525; }
+.blui-generate-button:disabled,
+.blui-chat-form button:disabled { cursor: wait; }
+
+.blui-mascot {
+  width: 86px;
+  height: 86px;
+  flex: 0 0 86px;
+  object-fit: contain;
+}
+
+.blui-progress-card, .blui-analysis-card { margin-top: 16px; padding: 20px; }
+.blui-chat-card {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 190px);
+  margin-top: 16px;
+  padding: 4px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.blui-section-heading, .blui-analysis-title { display: flex; align-items: center; gap: 12px; }
+.blui-chat-heading { display: flex; align-items: center; gap: 12px; }
+.blui-chat-heading > div:nth-child(2) { min-width: 0; flex: 1; }
+.blui-clear-chat { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cbd8eb; border-radius: 7px; padding: 7px 10px; background: transparent; color: var(--blui-ink); cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; }
+.blui-clear-chat:hover { background: #f1f5fb; }
+.blui-chat-heading h2 { margin: 0; color: var(--blui-ink); font-size: 18px; }
+.blui-chat-heading p { margin: 4px 0 0; color: var(--blui-muted); font-size: 12px; }
+.blui-chat-messages { display: grid; flex: 1; align-content: start; gap: 10px; min-height: 260px; margin-top: 18px; overflow-y: auto; padding: 4px 8px 12px 4px; }
+.blui-chat-empty { display: grid; gap: 5px; padding: 18px; border: 1px dashed #cbd8eb; border-radius: 10px; color: var(--blui-muted); font-size: 13px; }
+.blui-chat-empty strong { color: var(--blui-ink); }
+.blui-chat-message { max-width: 82%; padding: 11px 14px; border-radius: 12px; color: var(--blui-ink); font-size: 13px; line-height: 1.5; }
+.blui-chat-message.user { justify-self: end; background: var(--blui-blue); color: #fff; }
+.blui-chat-message.assistant { justify-self: start; background: #f1f5fb; }
+.blui-edit-message {
+  margin-top: 6px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  opacity: .75;
+  text-decoration: underline;
+}
+.blui-chat-failure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  color: #b42318;
+  font-size: 10px;
+}
+.blui-chat-failure button {
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  padding: 3px 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+.blui-chat-failure button:disabled { cursor: wait; opacity: .6; }
+.blui-formatted-content { color: inherit; }
+.blui-formatted-content h3 { margin: 2px 0 8px; color: inherit; font-size: 14px; line-height: 1.35; }
+.blui-formatted-content p { margin: 0 0 9px; }
+.blui-formatted-content p:last-child { margin-bottom: 0; }
+.blui-formatted-content .blui-analysis-item { margin: 7px 0; }
+.blui-formatted-content .blui-analysis-spacer { height: 5px; }
+.blui-formatted-content strong { color: inherit; font-weight: 800; }
+.blui-formatted-content code { border-radius: 4px; padding: 2px 5px; background: rgba(35, 104, 232, .12); color: inherit; font-family: Consolas, monospace; font-size: .92em; }
+.blui-code-block { position: relative; margin: 12px 0 16px; overflow: hidden; border: 1px solid #d8e2f0; border-radius: 9px; background: #f4f7fb; }
+.blui-code-language { padding: 7px 12px; border-bottom: 1px solid #d8e2f0; color: #52709b; font-family: Consolas, monospace; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.blui-code-block pre { margin: 0; padding: 14px; overflow-x: auto; color: #172b4d; font: 13px/1.6 Consolas, "Courier New", monospace; tab-size: 2; white-space: pre; }
+.blui-diagram { margin: 12px 0 16px; overflow-x: auto; border: 1px solid #d8e2f0; border-radius: 9px; background: #f8fafc; }
+.blui-diagram svg { display: block; min-width: 620px; width: 100%; min-height: 180px; padding: 18px; }
+.blui-diagram line { stroke: #2368e8; stroke-width: 2.5; }
+.blui-diagram marker path { fill: #2368e8; }
+.blui-diagram rect { fill: #fff; stroke: #2368e8; stroke-width: 2; }
+.blui-diagram polygon { fill: #fff; stroke: #2368e8; stroke-width: 2; }
+.blui-diagram text { fill: #172b4d; font: 700 13px Inter, Arial, sans-serif; }
+.blui-chat-message.user, .blui-chat-message.user p { color: #ffffff !important; }
+.blui-chat-message.assistant { color: #263754; }
+.blui-chat-thinking { display: flex; align-items: center; gap: 8px; color: var(--blui-muted); font-size: 12px; }
+.blui-chat-thinking .blui-mini-mascot { width: 34px; height: 34px; }
+.blui-chat-form {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding: 14px 0 4px;
+  background: linear-gradient(to bottom, transparent, var(--blui-chat-surface, #fff) 26%);
+}
+.blui-chat-form input { min-width: 0; flex: 1; border: 1px solid #cbd8eb; border-radius: 8px; padding: 11px 12px; background: #fff; color: var(--blui-ink); font: inherit; }
+.blui-chat-form button { border: 0; border-radius: 8px; padding: 0 18px; background: #000; color: #fff; cursor: pointer; font: inherit; font-weight: 750; }
+.blui-section-heading svg { color: var(--blui-blue); }
+.blui-section-heading h2, .blui-analysis-title h2 { font-size: 18px; }
+.blui-section-heading p, .blui-analysis-title p { margin: 4px 0 0; font-size: 12px; }
+.blui-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.blui-stat-grid > div { display: grid; gap: 4px; padding: 14px; border: 1px solid #e4ebf5; border-radius: 9px; background: #fbfdff; }
+.blui-stat-grid strong { color: var(--blui-blue); font-size: 22px; }
+.blui-stat-grid span { color: var(--blui-ink); font-size: 12px; font-weight: 750; }
+.blui-stat-grid small { color: var(--blui-muted); font-size: 10px; }
+.blui-mini-mascot { width: 48px; height: 48px; object-fit: contain; }
+.blui-analysis-content { margin-top: 18px; color: var(--blui-ink); font-size: 13px; line-height: 1.55; }
+.blui-analysis-content h3 { margin: 18px 0 8px; color: var(--blui-ink); font-size: 13px; }
+.blui-analysis-content h3:first-child { margin-top: 0; }
+.blui-analysis-content p { margin: 0 0 8px; }
+.blui-table-scroll { width: 100%; margin: 14px 0 18px; overflow-x: auto; border: 1px solid #d8e2f0; border-radius: 8px; }
+.blui-table { width: 100%; min-width: 620px; border-collapse: collapse; color: inherit; font-size: 12px; }
+.blui-table th, .blui-table td { padding: 10px 12px; border-bottom: 1px solid #d8e2f0; text-align: left; vertical-align: top; line-height: 1.45; }
+.blui-table th { background: #eaf1fb; color: var(--blui-ink); font-weight: 800; white-space: nowrap; }
+.blui-table td { color: inherit; }
+.blui-table tbody tr:nth-child(even) { background: rgba(35, 104, 232, .035); }
+.blui-table tbody tr:last-child td { border-bottom: 0; }
+.blui-table code { border-radius: 4px; padding: 2px 4px; background: rgba(35, 104, 232, .12); font-family: Consolas, monospace; }
+.blui-analysis-item { display: flex; gap: 8px; margin: 6px 0; }
+.blui-analysis-number { min-width: 18px; color: var(--blui-blue); font-weight: 800; }
+.blui-analysis-bullet { min-width: 10px; color: var(--blui-blue); font-size: 18px; line-height: 1.2; }
+.blui-analysis-spacer { height: 6px; }
+.blui-status, .blui-error { color: var(--blui-muted); }
+.blui-error { color: #c24141; }
+
+:root[data-theme="dark"] .student-ai-summary { --blui-ink: #f5f5f5; --blui-muted: #d0d0d0; --blui-blue: #a8c5ff; }
+:root[data-theme="dark"] .blui-hero { border-color: #2e2e2e; background: linear-gradient(110deg, #050505, #111 62%, #181818); }
+:root[data-theme="dark"] .blui-progress-card, :root[data-theme="dark"] .blui-analysis-card { border-color: #2e2e2e; background: #0b0b0b; }
+:root[data-theme="dark"] .blui-chat-card { --blui-chat-surface: #0b0b0b; background: transparent; }
+:root[data-theme="dark"] .blui-stat-grid > div { border-color: #303030; background: #151515; }
+:root[data-theme="dark"] .blui-chat-empty { border-color: #444; }
+:root[data-theme="dark"] .blui-chat-message.assistant { background: #171717; }
+:root[data-theme="dark"] .blui-chat-message.user { background: #477fdf; color: #ffffff; }
+:root[data-theme="dark"] .blui-chat-message.assistant { color: #f2f2f2; }
+:root[data-theme="dark"] .blui-chat-failure { color: #ffaaa3; }
+:root[data-theme="dark"] .blui-analysis-content { color: #f2f2f2; }
+:root[data-theme="dark"] .blui-analysis-content h3 { color: #ffffff; }
+:root[data-theme="dark"] .blui-analysis-item { color: #f2f2f2; }
+:root[data-theme="dark"] .blui-chat-form input { border-color: #444; background: #151515; }
+:root[data-theme="dark"] .blui-clear-chat { border-color: #444; color: #f5f5f5; }
+:root[data-theme="dark"] .blui-clear-chat:hover { background: #222; }
+:root[data-theme="dark"] .blui-generate-button,
+:root[data-theme="dark"] .blui-chat-form button { background: #fff; color: #000; }
+:root[data-theme="dark"] .blui-generate-button:hover:not(:disabled),
+:root[data-theme="dark"] .blui-chat-form button:hover:not(:disabled) { background: #e5e5e5; }
+:root[data-theme="dark"] .blui-code-block { border-color: #444; background: #050505; }
+:root[data-theme="dark"] .blui-code-language { border-bottom-color: #444; color: #a9c7f5; }
+:root[data-theme="dark"] .blui-code-block pre { color: #e6edf8; }
+:root[data-theme="dark"] .blui-diagram { border-color: #444; background: #f8fafc; }
+:root[data-theme="dark"] .blui-table-scroll { border-color: #444; }
+:root[data-theme="dark"] .blui-table th, :root[data-theme="dark"] .blui-table td { border-bottom-color: #444; }
+:root[data-theme="dark"] .blui-table th { background: #222; color: #f3f4f6; }
+:root[data-theme="dark"] .blui-table tbody tr:nth-child(even) { background: rgba(141, 180, 255, .08); }
+
+@media (max-width: 720px) {
+  .blui-chat-card { min-height: calc(100dvh - 150px); }
+  .blui-hero { align-items: flex-start; flex-direction: column; }
+  .blui-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
