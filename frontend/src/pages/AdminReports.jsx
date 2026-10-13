@@ -1,160 +1,556 @@
+
 import { useEffect, useState } from "react";
+
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+
 import AppLayout from "../layouts/AppLayout";
+import { apiFetch } from "../utils/apiClient";
+import { downloadReportPdf } from "../utils/reportPdf";
+
 import "./Admin.css";
+import "./AdminReports.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+// ================================================
+// REPORT TABS
+// ================================================
 
-function formatValue(metric) {
-  if (metric.value == null) return "No data";
-  const value = Number(metric.value);
-  if (!Number.isFinite(value)) return "No data";
-  return metric.unit === "percent"
-    ? `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })}%`
-    : Math.round(value).toLocaleString();
+const REPORT_TABS = [
+  {
+    id: "course-applications",
+    label: "Course Applications",
+  },
+  {
+    id: "quiz-pass-rates",
+    label: "Quiz Pass Rates",
+  },
+  {
+    id: "registered-users",
+    label: "Registered Students",
+  },
+  {
+    id: "completion-times",
+    label: "Completion Times",
+  },
+];
+
+const BLUI_TAB = {
+  id: "blui-usage",
+  label: "Blui Usage",
+};
+
+// ================================================
+// CHECK SUPERADMIN ROLE
+// ================================================
+
+function checkSuperAdmin() {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem("user") || "{}"
+    );
+
+    return user.role === "SuperAdmin";
+  } catch {
+    return false;
+  }
 }
 
-export default function AdminReports() {
-  const [report, setReport] = useState(null);
-  const [bluiUsage, setBluiUsage] = useState(null);
-  const [error, setError] = useState("");
+// ================================================
+// CONVERT BLUI RESPONSE INTO REPORT FORMAT
+// ================================================
 
-  function downloadCsv(path, filename) {
-    const token = localStorage.getItem("token");
-    fetch(`${API_URL}/api/admin/reports/${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Could not download the report.");
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch((downloadError) => setError(downloadError.message));
+function buildBluiReport(data) {
+  const frequentQuestions = Array.isArray(
+    data?.frequentQuestions
+  )
+    ? data.frequentQuestions
+    : [];
+
+  return {
+    title: "Blui Usage Report",
+
+    description:
+      "Blui assistant usage statistics from the last 30 days.",
+
+    generatedAt: new Date().toISOString(),
+
+    chartTitle: "Most frequently asked questions",
+    chartType: "bar",
+    chartUnit: "Questions",
+
+    metrics: [
+      {
+        label: "Student questions",
+        value: String(data?.studentQuestions ?? 0),
+      },
+      {
+        label: "Unique students",
+        value: String(data?.uniqueStudents ?? 0),
+      },
+      {
+        label: "Failed responses",
+        value: String(data?.failedResponses ?? 0),
+      },
+    ],
+
+    columns: [
+      {
+        key: "question",
+        label: "Question",
+      },
+      {
+        key: "count",
+        label: "Times asked",
+      },
+    ],
+
+    rows: frequentQuestions.map((item) => ({
+      question: item.question ?? "",
+      count: String(item.count ?? 0),
+    })),
+
+    chart: frequentQuestions.map((item) => ({
+      label: item.question ?? "",
+      value: Number(item.count ?? 0),
+    })),
+  };
+}
+
+// ================================================
+// REUSABLE REPORT GRAPH
+// ================================================
+
+function ReportGraph({ report }) {
+  const chartData = report.chart || [];
+
+  if (chartData.length === 0) {
+    return (
+      <p className="reports-empty">
+        No chart data available yet.
+      </p>
+    );
   }
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`${API_URL}/api/admin/dashboard`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Could not load reports.");
-        setReport(await response.json());
-      })
-      .catch((requestError) => {
-        if (requestError.name !== "AbortError") setError(requestError.message);
-      });
-    return () => controller.abort();
-  }, []);
+  const chartProps = {
+    data: chartData,
+    margin: {
+      top: 15,
+      right: 18,
+      left: 0,
+      bottom: 10,
+    },
+  };
+
+  const chartContent = (
+    <>
+      <CartesianGrid
+        strokeDasharray="3 3"
+        vertical={false}
+      />
+
+      <XAxis
+        dataKey="label"
+        tick={{ fontSize: 11 }}
+        interval={0}
+        angle={-20}
+        textAnchor="end"
+        height={80}
+      />
+
+      <YAxis
+        width={48}
+        domain={
+          report.chartUnit === "%"
+            ? [0, 100]
+            : [0, "auto"]
+        }
+      />
+
+      <Tooltip
+        formatter={(value) =>
+          `${Number(value).toLocaleString()}${
+            report.chartUnit === "%" ? "%" : ""
+          }`
+        }
+      />
+    </>
+  );
+
+  return (
+    <div
+      className="reports-chart-area"
+      role="img"
+      aria-label={report.chartTitle}
+    >
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+      >
+        {report.chartType === "line" ? (
+          <LineChart {...chartProps}>
+            {chartContent}
+
+            <Line
+              dataKey="value"
+              name={report.chartUnit}
+              type="monotone"
+              stroke="#3159ad"
+              strokeWidth={3}
+              dot={{ r: 3 }}
+            />
+          </LineChart>
+        ) : (
+          <BarChart {...chartProps}>
+            {chartContent}
+
+            <Bar
+              dataKey="value"
+              name={report.chartUnit}
+              fill="#3159ad"
+              maxBarSize={56}
+              radius={[5, 5, 0, 0]}
+            />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ================================================
+// MAIN REPORTS PAGE
+// ================================================
+
+export default function AdminReports() {
+  const [isSuperAdmin] = useState(checkSuperAdmin);
+
+  const tabs = isSuperAdmin
+    ? [...REPORT_TABS, BLUI_TAB]
+    : REPORT_TABS;
+
+  const [activeTab, setActiveTab] = useState(
+    REPORT_TABS[0].id
+  );
+
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+
+  const isBluiTab = activeTab === BLUI_TAB.id;
+
+  // ================================================
+  // LOAD THE CURRENTLY SELECTED REPORT
+  // ================================================
 
   useEffect(() => {
-    let role = "";
-    try {
-      role = JSON.parse(localStorage.getItem("user") || "{}").role || "";
-    } catch {
-      role = "";
+    let cancelled = false;
+
+    async function loadReport() {
+      setLoading(true);
+      setError("");
+      setReport(null);
+
+      try {
+        let data;
+
+        if (activeTab === "blui-usage") {
+          if (!isSuperAdmin) {
+            throw new Error(
+              "You do not have permission to view Blui usage."
+            );
+          }
+
+          // Existing Blui API endpoint
+          const bluiData = await apiFetch(
+            "/admin/reports/blui-usage"
+          );
+
+          // Convert to the same structure as other reports
+          data = buildBluiReport(bluiData);
+        } else {
+          // Existing analytics endpoints
+          data = await apiFetch(
+            `/admin/reports/analytics/${activeTab}`
+          );
+        }
+
+        if (!cancelled) {
+          setReport(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err.message || "Unable to load report."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
-    if (role !== "SuperAdmin") return undefined;
 
-    const controller = new AbortController();
-    fetch(`${API_URL}/api/admin/reports/blui-usage`, {
-      headers: { Authorization: `******"token")}` },
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Could not load Blui usage.");
-        setBluiUsage(await response.json());
-      })
-      .catch((requestError) => {
-        if (requestError.name !== "AbortError") setError(requestError.message);
-      });
-    return () => controller.abort();
-  }, []);
+    loadReport();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, retry, isSuperAdmin]);
+
+  // ================================================
+  // DOWNLOAD REPORT AS PDF
+  // ================================================
+
+  function handleDownload() {
+    if (!report || downloading) {
+      return;
+    }
+
+    setDownloading(true);
+    setError("");
+
+    try {
+      downloadReportPdf(report, activeTab);
+    } catch (err) {
+      console.error(
+        "PDF generation failed:",
+        err
+      );
+
+      setError(
+        err.message || "Could not generate PDF."
+      );
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  // ================================================
+  // CHANGE TABS
+  // ================================================
+
+  function selectTab(tabId) {
+    if (tabId === activeTab) {
+      return;
+    }
+
+    setActiveTab(tabId);
+  }
+
+  // ================================================
+  // RETRY LOADING
+  // ================================================
+
+  function retryReport() {
+    setRetry((value) => value + 1);
+  }
+
+  // ================================================
+  // PAGE RENDER
+  // ================================================
 
   return (
     <AppLayout>
+
+      {/* PAGE HEADER */}
       <header className="top dashboard-header">
         <div>
           <h1>Reports</h1>
-          <p>Current learning activity and platform performance.</p>
+
+          <p>
+            Learning activity and platform performance.
+          </p>
         </div>
+
         <div className="dashboard-header-actions">
           <button
             className="btn blue"
             type="button"
-            onClick={() => downloadCsv("overview.csv", "platform-overview.csv")}
+            disabled={
+              !report ||
+              loading ||
+              downloading
+            }
+            onClick={handleDownload}
           >
-            Download overview CSV
-          </button>
-          <button
-            className="btn"
-            type="button"
-            onClick={() => downloadCsv("users.csv", "users-report.csv")}
-          >
-            Download users CSV
+            {downloading
+              ? "Generating PDF..."
+              : "Download PDF"}
           </button>
         </div>
       </header>
-      <div className="content">
-        {error && <p className="dashboard-message" role="alert">{error}</p>}
-        {!report && !error && <p className="dashboard-message">Loading reports...</p>}
-        {report && (
+
+      <div className="content admin-reports-page">
+
+        {/* REPORT TABS */}
+        <nav
+          className="reports-tabs"
+          aria-label="Report categories"
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`reports-tab ${
+                activeTab === tab.id
+                  ? "is-active"
+                  : ""
+              }`}
+              aria-current={
+                activeTab === tab.id
+                  ? "page"
+                  : undefined
+              }
+              onClick={() => selectTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div
+            className="reports-alert"
+            role="alert"
+          >
+            {error}
+
+            <button
+              type="button"
+              onClick={retryReport}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* LOADING STATE */}
+        {loading && (
+          <p className="reports-message">
+            Loading report...
+          </p>
+        )}
+
+        {/* SELECTED REPORT */}
+        {!loading && report && (
           <>
-            <section className="learning-stats" aria-label="Learning metrics">
-              {report.learningOverview.map((metric) => (
-                <article className="learning-stat" key={metric.key}>
-                  <h2>{metric.label}</h2>
-                  <p className="learning-stat-value">{formatValue(metric)}</p>
-                  <p className="learning-stat-description">{metric.description}</p>
-                </article>
-              ))}
+            {/* REPORT TITLE */}
+            <div className="reports-title-block">
+              <h2>{report.title}</h2>
+
+              <p>{report.description}</p>
+            </div>
+
+            {/* SUMMARY STATISTICS */}
+            <section
+              className="reports-metrics"
+              aria-label="Report summary"
+            >
+              {(report.metrics || []).map(
+                (metric) => (
+                  <article
+                    className="reports-metric"
+                    key={metric.label}
+                  >
+                    <p>{metric.label}</p>
+
+                    <strong
+                      title={metric.value}
+                    >
+                      {metric.value}
+                    </strong>
+                  </article>
+                )
+              )}
             </section>
-            <section className="dashboard-panel recent-activity-panel" aria-labelledby="report-activity-heading">
-              <h2 className="attention-heading" id="report-activity-heading">Recent activity</h2>
-              <ol className="recent-activity-list">
-                {report.recentActivity.map((activity) => (
-                  <li className="recent-activity-item" key={activity.id}>
-                    <span className="recent-activity-marker" aria-hidden="true" />
-                    <div className="recent-activity-copy">
-                      <p><strong>{activity.actor}</strong> {activity.action}</p>
-                      <span>{activity.subject}</span>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-            {bluiUsage && (
-              <section className="dashboard-panel recent-activity-panel" aria-labelledby="blui-usage-heading">
-                <h2 className="attention-heading" id="blui-usage-heading">Blui usage · last 30 days</h2>
-                <div className="learning-stats">
-                  <article className="learning-stat"><h2>Student questions</h2><p className="learning-stat-value">{bluiUsage.studentQuestions}</p></article>
-                  <article className="learning-stat"><h2>Unique students</h2><p className="learning-stat-value">{bluiUsage.uniqueStudents}</p></article>
-                  <article className="learning-stat"><h2>Failed responses</h2><p className="learning-stat-value">{bluiUsage.failedResponses}</p></article>
-                </div>
-                <h3>Frequent questions</h3>
-                {bluiUsage.frequentQuestions.length === 0 ? (
-                  <p className="dashboard-message">No Blui questions have been recorded yet.</p>
-                ) : (
-                  <ol className="recent-activity-list">
-                    {bluiUsage.frequentQuestions.map((question) => (
-                      <li className="recent-activity-item" key={question.question}>
-                        <span className="recent-activity-marker" aria-hidden="true" />
-                        <div className="recent-activity-copy">
-                          <p><strong>{question.count}×</strong> {question.question}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
+
+            {/* GRAPH - STANDARD REPORTS ONLY */}
+            {!isBluiTab && (
+              <section
+                className="reports-panel"
+                aria-label="Report chart"
+              >
+                <h3>{report.chartTitle}</h3>
+
+                <ReportGraph report={report} />
               </section>
             )}
+
+            {/* DATA TABLE */}
+            <section
+              className="reports-panel"
+              aria-label="Report data table"
+            >
+              <div className="reports-table-heading">
+                <h3>
+                  {isBluiTab
+                    ? "Frequently Asked Questions"
+                    : "Report details"}
+                </h3>
+
+                <span>
+                  {report.rows?.length || 0} rows
+                </span>
+              </div>
+
+              {report.rows?.length ? (
+                <div className="reports-table-scroll">
+                  <table className="reports-table">
+                    <thead>
+                      <tr>
+                        {report.columns.map(
+                          (column) => (
+                            <th
+                              key={column.key}
+                              scope="col"
+                            >
+                              {column.label}
+                            </th>
+                          )
+                        )}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {report.rows.map(
+                        (row, index) => (
+                          <tr key={index}>
+                            {report.columns.map(
+                              (column) => (
+                                <td key={column.key}>
+                                  {row[column.key] ?? "—"}
+                                </td>
+                              )
+                            )}
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="reports-empty">
+                  {isBluiTab
+                    ? "No Blui questions have been recorded yet."
+                    : "No records available for this report."}
+                </p>
+              )}
+            </section>
           </>
         )}
+
       </div>
     </AppLayout>
   );
