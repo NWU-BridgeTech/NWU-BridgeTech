@@ -441,15 +441,21 @@ public async Task<AdminReportResponse> GetRegisteredUsersAsync(
         GetCompletionTimesAsync(
             CancellationToken ct = default)
     {
+        
         var modules = await db.Modules
             .AsNoTracking()
-            .OrderBy(m => m.Title)
             .Select(m => new
             {
                 m.ModuleId,
-                m.Title
+                m.Title,
+                Count = m.Enrollments.Count(e =>
+                    e.User.Role == UserRole.Student)
             })
+            .Where(m => m.Count > 0)
+            .OrderByDescending(m => m.Count)
+            .ThenBy(m => m.Title)
             .ToListAsync(ct);
+
 
         // Only include completed student enrollments
         // with valid dates.
