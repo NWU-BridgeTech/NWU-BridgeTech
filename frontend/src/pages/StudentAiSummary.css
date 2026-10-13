@@ -4,13 +4,24 @@
   --blui-blue: #2368e8;
   width: 100%;
   max-width: none;
-  padding-bottom: 150px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+.student-layout:has(.student-ai-summary) { height: 100dvh; overflow: hidden; }
+.student-layout:has(.student-ai-summary) > [data-slot="sidebar-wrapper"] { height: 100%; min-height: 0; }
+.student-layout:has(.student-ai-summary) .app-layout-main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.student-layout:has(.student-ai-summary) .home-page { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.student-layout:has(.student-ai-summary) .app-mobile-navigation,
+.student-layout:has(.student-ai-summary) .home-page > .top { flex: none; }
+.student-layout:has(.student-ai-summary) .home-page > .student-ai-summary { flex: 1 1 auto; }
+body:has(.student-ai-summary) { overflow: hidden; }
 .home-page .student-ai-summary {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: var(--section-space) 40px;
+  padding: 0 40px;
   overflow-x: hidden;
 }
 
@@ -73,13 +84,47 @@
   border-radius: 12px;
   background: #fff;
 }
+.blui-hero,
+.blui-chat,
+.blui-analysis-card {
+  width: min(100%, 1100px);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
 
+.blui-chat {
+  width: min(100%, 1200px);
+  background: transparent;
+  overflow: visible;
+}
 .blui-hero {
   display: flex;
   align-items: center;
   gap: 24px;
   padding: 28px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
   background: linear-gradient(110deg, #f3f7ff, #eaf2ff 62%, #dceaff);
+}
+.blui-hero-content { min-width: 0; }
+.blui-hero-wrap {
+  flex: none;
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-bottom: 16px;
+  transition:
+    opacity 250ms ease,
+    grid-template-rows 450ms ease 150ms,
+    margin-bottom 450ms ease 150ms;
+}
+.blui-hero-wrap > .blui-hero { min-height: 0; overflow: hidden; }
+.blui-hero-wrap.is-hidden {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-bottom: 0;
+  pointer-events: none;
 }
 
 .blui-hero h1, .blui-section-heading h2, .blui-analysis-title h2 {
@@ -101,23 +146,7 @@
   text-transform: uppercase;
 }
 
-.blui-generate-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 8px;
-  padding: 11px 16px;
-  background: #000;
-  color: #fff;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 750;
-}
-
-.blui-generate-button:hover:not(:disabled),
 .blui-chat-form button:hover:not(:disabled) { background: #252525; }
-.blui-generate-button:disabled,
 .blui-chat-form button:disabled { cursor: wait; }
 
 .blui-mascot {
@@ -128,49 +157,40 @@
 }
 
 .blui-progress-card, .blui-analysis-card { margin-top: 16px; padding: 20px; }
+.blui-chat-content > .blui-analysis-card { width: 100%; max-width: none; margin: 18px 0 0; }
 .blui-section-heading, .blui-analysis-title { display: flex; align-items: center; gap: 12px; }
-.blui-chat-heading {
-  position: sticky;
-  top: 68px;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 -8px;
-  padding: 10px 8px;
-  border: 1px solid rgb(203 216 235 / 72%);
-  border-radius: 14px;
-  background: rgb(255 255 255 / 72%);
-  box-shadow: 0 10px 28px rgb(45 68 105 / 10%);
-  backdrop-filter: blur(18px) saturate(135%);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
-}
-.blui-chat-heading > div:nth-child(2) { min-width: 0; flex: 1; }
 .blui-clear-chat { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgb(203 216 235 / 90%); border-radius: 9px; padding: 7px 10px; background: rgb(255 255 255 / 58%); color: var(--blui-ink); cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgb(45 68 105 / 8%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .blui-clear-chat:hover { background: rgb(241 245 251 / 85%); }
-.blui-chat-heading h2 { margin: 0; color: var(--blui-ink); font-size: 18px; }
-.blui-chat-heading p { margin: 4px 0 0; color: var(--blui-muted); font-size: 12px; }
-.blui-chat-messages { display: grid; flex: 1; align-content: start; gap: 10px; min-height: 260px; margin-top: 18px; overflow-y: auto; padding: 4px 8px 140px 4px; scroll-behavior: smooth; }
+.blui-chat { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; margin-top: 0; }
+.blui-chat-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3a3f4b transparent; background: transparent; }
+.blui-chat-messages::-webkit-scrollbar { width: 8px; }
+.blui-chat-messages::-webkit-scrollbar-track { background: transparent; }
+.blui-chat-messages::-webkit-scrollbar-thumb { background: #3a3f4b; border-radius: 8px; }
+.blui-chat-messages::-webkit-scrollbar-button { display: none; }
+.blui-chat-content { max-width: 960px; margin: 0 auto; padding: 24px 24px 12px; }
+.blui-chat-content > * + * { margin-top: 10px; }
 .blui-chat-empty { display: grid; gap: 5px; padding: 18px; border: 1px dashed #cbd8eb; border-radius: 10px; color: var(--blui-muted); font-size: 13px; }
 .blui-chat-empty strong { color: var(--blui-ink); }
-.blui-chat-message { max-width: 82%; padding: 11px 14px; border-radius: 12px; color: var(--blui-ink); font-size: 13px; line-height: 1.5; }
+.blui-chat-message { width: fit-content; max-width: 82%; padding: 12px 16px; border-radius: 14px; color: var(--blui-ink); font-size: 14px; line-height: 1.55; }
 .blui-chat-message.assistant {
   animation: blui-message-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: opacity, transform;
 }
-.blui-chat-message.user { justify-self: end; background: var(--blui-blue); color: #fff; }
-.blui-chat-message.assistant { justify-self: start; background: #f1f5fb; }
+.blui-chat-message.user { margin-left: auto; background: var(--blui-blue); color: #fff; }
+.blui-chat-message.assistant { margin-right: auto; background: #f1f5fb; }
 .blui-edit-message {
-  margin-top: 6px;
+  display: block;
+  margin-top: 4px;
   border: 0;
   padding: 0;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
   opacity: .75;
   text-decoration: underline;
 }
+.blui-chat-message.user .blui-edit-message:disabled { visibility: hidden; }
 .blui-chat-failure {
   display: flex;
   align-items: center;
@@ -220,17 +240,14 @@
   .blui-chat-message.assistant { animation: none; }
 }
 .blui-chat-form {
-  position: fixed;
-  left: 50%;
-  right: auto;
-  width: min(900px, calc(100vw - 32px));
-  bottom: 16px;
-  z-index: 20;
+  position: static;
+  flex: none;
+  width: 100%;
   display: flex;
   gap: 8px;
   margin: 0;
-  padding: 10px;
-  transform: translateX(-50%);
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
   border: 1px solid rgb(255 255 255 / 72%);
   border-radius: 16px;
   background:
@@ -240,6 +257,7 @@
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
+.blui-chat-jump { position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%); z-index: 2; border: 1px solid #cbd8eb; border-radius: 999px; padding: 8px 14px; background: #fff; color: var(--blui-ink); cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; box-shadow: 0 4px 14px rgb(45 68 105 / 18%); }
 .blui-chat-form input { min-width: 0; flex: 1; border: 1px solid rgb(255 255 255 / 82%); border-radius: 11px; padding: 11px 12px; background: rgb(255 255 255 / 62%); color: var(--blui-ink); font: inherit; outline: none; box-shadow: inset 0 1px 1px rgb(255 255 255 / 65%), 0 2px 8px rgb(45 68 105 / 7%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .blui-chat-form input:focus { border-color: var(--blui-blue); box-shadow: 0 0 0 3px rgb(35 104 232 / 14%); }
 .blui-chat-form button { border: 1px solid rgb(255 255 255 / 55%); border-radius: 11px; padding: 0 18px; background: rgb(23 35 61 / 88%); color: #fff; cursor: pointer; font: inherit; font-weight: 750; box-shadow: 0 4px 12px rgb(23 35 61 / 18%); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -277,6 +295,7 @@
   --blui-blue: #a8c5ff;
 }
 :root[data-theme="dark"] .blui-hero { border-color: #2e2e2e; background: linear-gradient(110deg, #050505, #111 62%, #181818); }
+:root[data-theme="dark"] .blui-chat { background: transparent; }
 :root[data-theme="dark"] .blui-progress-card, :root[data-theme="dark"] .blui-analysis-card { border-color: #2e2e2e; background: #0b0b0b; }
 :root[data-theme="dark"] .blui-stat-grid > div { border-color: #303030; background: #151515; }
 :root[data-theme="dark"] .blui-chat-empty { border-color: #444; }
@@ -287,15 +306,13 @@
 :root[data-theme="dark"] .blui-analysis-content { color: #f2f2f2; }
 :root[data-theme="dark"] .blui-analysis-content h3 { color: #ffffff; }
 :root[data-theme="dark"] .blui-analysis-item { color: #f2f2f2; }
-:root[data-theme="dark"] .blui-chat-heading { border-color: rgb(82 82 82 / 78%); background: rgb(24 24 24 / 72%); box-shadow: 0 10px 28px rgb(0 0 0 / 24%); }
+:root[data-theme="dark"] .blui-chat-jump { border-color: #4b5563; background: #252a33; color: #f3f4f6; box-shadow: 0 4px 14px rgb(0 0 0 / 35%); }
 :root[data-theme="dark"] .blui-chat-form { border-color: rgb(255 255 255 / 18%); background: linear-gradient(120deg, rgb(45 45 48 / 82%), rgb(25 30 42 / 78%)), rgb(24 24 24 / 76%); box-shadow: 0 12px 34px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 255 255 / 9%); }
 :root[data-theme="dark"] .blui-chat-form input { border-color: rgb(255 255 255 / 18%); background: rgb(15 15 18 / 62%); color: #f5f5f5; box-shadow: inset 0 1px 1px rgb(255 255 255 / 7%), 0 2px 8px rgb(0 0 0 / 20%); }
 :root[data-theme="dark"] .blui-chat-form button { border-color: rgb(255 255 255 / 20%); background: rgb(245 245 245 / 90%); color: #111; box-shadow: 0 4px 12px rgb(0 0 0 / 28%); }
 :root[data-theme="dark"] .blui-clear-chat { border-color: #555; background: rgb(35 35 35 / 70%); color: #f5f5f5; }
 :root[data-theme="dark"] .blui-clear-chat:hover { background: rgb(50 50 50 / 88%); }
-:root[data-theme="dark"] .blui-generate-button,
 :root[data-theme="dark"] .blui-chat-form button { background: #fff; color: #000; }
-:root[data-theme="dark"] .blui-generate-button:hover:not(:disabled),
 :root[data-theme="dark"] .blui-chat-form button:hover:not(:disabled) { background: #e5e5e5; }
 :root[data-theme="dark"] .blui-code-block { border-color: #444; background: #050505; }
 :root[data-theme="dark"] .blui-code-language { border-bottom-color: #444; color: #a9c7f5; }
@@ -318,14 +335,10 @@
 }
 
 @media (max-width: 600px) {
-  .blui-chat-heading { align-items: flex-start; }
-  .blui-chat-heading h2 { font-size: clamp(16px, 4.5vw, 18px); }
-  .blui-chat-heading p { font-size: clamp(10px, 3vw, 12px); }
   .blui-clear-chat { margin-left: auto; padding: 6px 8px; font-size: 10px; }
-  .blui-chat-messages { min-height: 220px; padding-right: 2px; padding-bottom: 120px; }
+  .blui-chat-content { padding-right: 2px; padding-left: 2px; }
   .blui-chat-message { max-width: 94%; padding: 10px 11px; font-size: clamp(12px, 3.5vw, 13px); }
-  .blui-chat-heading { top: 52px; margin: 0 -4px; }
-  .blui-chat-form { width: calc(100vw - 20px); bottom: 10px; gap: 6px; padding: 8px; }
+  .blui-chat-form { gap: 6px; padding-right: 8px; padding-left: 8px; }
   .blui-chat-form input { padding: 10px; font-size: clamp(12px, 3.5vw, 14px); }
   .blui-chat-form button { flex: 0 0 auto; padding: 0 12px; font-size: clamp(12px, 3.5vw, 14px); }
 }
