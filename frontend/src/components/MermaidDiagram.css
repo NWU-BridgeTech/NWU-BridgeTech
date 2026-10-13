@@ -31,8 +31,8 @@
 }
 .mmd-actions button:hover { background: #e6eefc; }
 .mmd-actions button:focus-visible { outline: 2px solid #2368e8; outline-offset: 1px; }
-.mmd-canvas { overflow-x: auto; padding: 16px; }
-.mmd-canvas svg { display: block; height: auto; max-width: 100%; margin: 0 auto; }
+.mmd-canvas { width: 100%; overflow: hidden; padding: 8px 0; }
+.mmd-canvas svg { display: block; width: 100%; min-height: 0; height: auto; max-width: 100%; margin: 0; }
 .mmd-canvas svg .nodeLabel,
 .mmd-canvas svg .edgeLabel,
 .mmd-canvas svg .messageText,
@@ -42,6 +42,18 @@
 .mmd-canvas svg .flowchart-link,
 .mmd-canvas svg .messageLine0,
 .mmd-canvas svg .messageLine1 { stroke: #1f2937 !important; }
+.mmd-canvas svg .flowchart-link,
+.mmd-canvas svg .edgePath path {
+  stroke-dasharray: 8 6;
+  animation: mmd-flow 1.8s linear infinite;
+}
+@keyframes mmd-flow {
+  to { stroke-dashoffset: -28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mmd-canvas svg .flowchart-link,
+  .mmd-canvas svg .edgePath path { animation: none; }
+}
 .mmd-status { padding: 18px 16px; color: #4a5670; font-size: 13px; }
 .mmd-error { color: #a1281f; }
 .mmd-source {
@@ -60,9 +72,28 @@
   font: 12px/1.45 Consolas, "Courier New", monospace;
 }
 
-:root[data-theme="dark"] .mmd { border-color: #444; background: #fafbfd; }
-:root[data-theme="dark"] .mmd-bar { border-bottom-color: #d8e2f0; }
-:root[data-theme="dark"] .mmd-actions button { color: #2368e8; }
-:root[data-theme="dark"] .mmd-actions button:hover { background: #e6eefc; }
-:root[data-theme="dark"] .mmd-status { color: #4a5670; }
-:root[data-theme="dark"] .mmd-source-error { border-bottom-color: #f0c8c4; background: #fff3f1; color: #8f2119; }
+:root[data-theme="dark"] .mmd { border-color: #3f4b5f; background: #111827; }
+.mmd-dark { border-color: #4a4a4a; background: #171717; color: #f8fafc; }
+.mmd-dark .mmd-bar { border-bottom-color: #3f3f46; color: #e5e7eb; }
+.mmd-dark .mmd-actions button { color: #93c5fd; }
+.mmd-dark .mmd-actions button:hover { background: #1f2937; }
+.mmd-dark .mmd-status { color: #d1d5db; }
+.mmd-dark .mmd-source { background: #0b1220; color: #e5e7eb; }
+.mmd-dark .mmd-source-error { border-bottom-color: #7f1d1d; background: #2b1215; color: #fecaca; }
+.mmd-dark .mmd-canvas svg .nodeLabel,
+.mmd-dark .mmd-canvas svg .edgeLabel,
+.mmd-dark .mmd-canvas svg .messageText,
+.mmd-dark .mmd-canvas svg text { color: #f8fafc !important; fill: #f8fafc !important; }
+.mmd-dark .mmd-canvas svg .edgeLabel rect,
+.mmd-dark .mmd-canvas svg .labelBkg { fill: #292929 !important; }
+.mmd-dark .mmd-canvas svg { background: #171717 !important; }
+.mmd-dark .mmd-canvas svg .node rect,
+.mmd-dark .mmd-canvas svg .node polygon,
+.mmd-dark .mmd-canvas svg .node circle,
+.mmd-dark .mmd-canvas svg .node path { fill: #292929 !important; stroke: #a3a3a3 !important; }
+.mmd-dark .mmd-canvas svg .cluster rect { fill: #202020 !important; stroke: #737373 !important; }
+.mmd-dark .mmd-canvas svg .edgeLabel,
+.mmd-dark .mmd-canvas svg .edgeLabel text { color: #f8fafc !important; fill: #f8fafc !important; }
+.mmd-dark .mmd-canvas svg .flowchart-link,
+.mmd-dark .mmd-canvas svg .messageLine0,
+.mmd-dark .mmd-canvas svg .messageLine1 { stroke: #d1d5db !important; }

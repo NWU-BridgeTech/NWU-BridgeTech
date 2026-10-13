@@ -142,6 +142,14 @@ public sealed class LearningInsightsService : ILearningInsightsService
                 content = systemPrompt
             }
         };
+        if (request.Regenerate)
+        {
+            messages.Add(new
+            {
+                role = "system",
+                content = "Regeneration requested: correct the previous response rather than repeating it. If the request calls for a detailed walkthrough, return exactly one valid blui-diagram JSON block with 6 to 14 nodes, at least two connected steps, and valid JSON. Do not explain the correction outside the response."
+            });
+        }
 
         var storedHistory = await db.LearningChatMessages.AsNoTracking()
             .Where(x => x.UserId == userId)
@@ -164,6 +172,47 @@ public sealed class LearningInsightsService : ILearningInsightsService
         });
         using var client = httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
+        var detailedDiagramRequest = IsDetailedDiagramRequest(message);
+        var responseMessage = await SendChatRequestAsync(client, options, messages, ct);
+        if (detailedDiagramRequest && !ContainsValidRichDiagram(responseMessage))
+        {
+            messages.Add(new
+            {
+                role = "assistant",
+                content = responseMessage
+            });
+            messages.Add(new
+            {
+                role = "system",
+                content = "The previous answer did not contain a valid rich diagram. Rewrite it now. Return exactly one blui-diagram fenced block containing valid JSON only, with 6 to 14 nodes, at least two edges, descriptive titles and summaries, and no plain-text simulation steps outside the block."
+            });
+            responseMessage = await SendChatRequestAsync(client, options, messages, ct);
+            if (!ContainsValidRichDiagram(responseMessage))
+            {
+                responseMessage = CreateFallbackArchitectureDiagram();
+            }
+        }
+        if (string.IsNullOrWhiteSpace(responseMessage))
+        {
+            responseMessage = "I couldn’t generate a response.";
+        }
+
+        db.LearningChatMessages.Add(new Domain.Entities.LearningChatMessage
+        {
+            UserId = userId,
+            Role = "assistant",
+            Content = responseMessage
+        });
+        await db.SaveChangesAsync(ct);
+        return new LearningChatResponse { Message = responseMessage };
+    }
+
+    private async Task<string> SendChatRequestAsync(
+        HttpClient client,
+        OpenAIOptions options,
+        List<object> messages,
+        CancellationToken ct)
+    {
         using var response = await client.PostAsJsonAsync(options.Endpoint, new
         {
             model = options.Model,
@@ -173,27 +222,88 @@ public sealed class LearningInsightsService : ILearningInsightsService
         if (!response.IsSuccessStatusCode)
         {
             logger.LogWarning("{Provider} learning chat failed with status {StatusCode}.", options.Provider, response.StatusCode);
-            db.LearningChatMessages.Add(new Domain.Entities.LearningChatMessage
-            {
-                UserId = userId,
-                Role = "assistant",
-                Content = "I’m temporarily unavailable. Please try again shortly."
-            });
-            await db.SaveChangesAsync(ct);
-            return new LearningChatResponse { Message = "I’m temporarily unavailable. Please try again shortly." };
+            return "I’m temporarily unavailable. Please try again shortly.";
         }
 
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-        var content = document.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-        var responseMessage = content ?? "I couldn’t generate a response.";
-        db.LearningChatMessages.Add(new Domain.Entities.LearningChatMessage
+        return document.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString()
+            ?? string.Empty;
+    }
+
+    private static bool IsDetailedDiagramRequest(string message)
+    {
+        var normalized = message.ToLowerInvariant();
+        return normalized.Contains("detailed walkthrough")
+            || normalized.Contains("end-to-end")
+            || normalized.Contains("architecture")
+            || normalized.Contains("authentication lifecycle")
+            || normalized.Contains("step-by-step");
+    }
+
+    private static bool ContainsValidRichDiagram(string response)
+    {
+        var start = response.IndexOf("```blui-diagram", StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return false;
+        start = response.IndexOf('{', start);
+        var end = response.IndexOf("```", start, StringComparison.Ordinal);
+        if (start < 0 || end <= start) return false;
+        try
         {
-            UserId = userId,
-            Role = "assistant",
-            Content = responseMessage
-        });
-        await db.SaveChangesAsync(ct);
-        return new LearningChatResponse { Message = responseMessage };
+            using var document = JsonDocument.Parse(response[start..end]);
+            var root = document.RootElement;
+            return root.TryGetProperty("nodes", out var nodes)
+                && nodes.ValueKind == JsonValueKind.Array
+                && nodes.GetArrayLength() >= 2
+                && root.TryGetProperty("edges", out var edges)
+                && edges.ValueKind == JsonValueKind.Array
+                && edges.GetArrayLength() > 0;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static string CreateFallbackArchitectureDiagram()
+    {
+        var diagram = new
+        {
+            title = "AWS file upload flow",
+            description = "How a file moves from the browser through validation and storage.",
+            direction = "TB",
+            groups = new[]
+            {
+                new { id = "client", label = "Client" },
+                new { id = "edge", label = "API edge" },
+                new { id = "services", label = "Services" },
+                new { id = "storage", label = "Storage" }
+            },
+            nodes = new[]
+            {
+                new { id = "browser", icon = "browser", title = "Select file", summary = "User chooses a file in the browser.", details = "The browser checks the file name and size before uploading. It sends the file with the user's authenticated request.", group = "client", step = 1, kind = "start" },
+                new { id = "gateway", icon = "aws-api-gateway", title = "Receive upload", summary = "API Gateway accepts the request.", details = "The gateway applies routing and request limits. Valid requests continue to the upload function.", group = "edge", step = 2, kind = "process" },
+                new { id = "auth", icon = "aws-cognito", title = "Verify identity", summary = "The upload request is authenticated.", details = "The service checks the user's identity and permissions. Unauthenticated requests are rejected before storage access.", group = "services", step = 3, kind = "decision" },
+                new { id = "function", icon = "aws-lambda", title = "Validate upload", summary = "Lambda checks file rules.", details = "The function validates the content type, size, and destination key. Invalid files receive a clear client error.", group = "services", step = 4, kind = "process" },
+                new { id = "scan", icon = "aws-lambda", title = "Scan content", summary = "The file is checked for threats.", details = "A scanning step inspects the upload before it becomes available. Unsafe content is quarantined instead of being published.", group = "services", step = 5, kind = "process" },
+                new { id = "bucket", icon = "aws-s3", title = "Store object", summary = "S3 stores the approved file.", details = "The object is written to a private bucket using a generated key. Access remains controlled by the application.", group = "storage", step = 6, kind = "data" },
+                new { id = "record", icon = "aws-dynamodb", title = "Save metadata", summary = "Metadata records the upload.", details = "The database stores the owner, object key, size, and upload time. This lets the application list the user's files.", group = "storage", step = 7, kind = "data" },
+                new { id = "response", icon = "server", title = "Return response", summary = "The API confirms the upload.", details = "The service returns a safe JSON response with the file identifier. The browser displays the completed upload.", group = "client", step = 8, kind = "end" }
+            },
+            edges = new[]
+            {
+                new { from = "browser", to = "gateway", label = "Multipart upload" },
+                new { from = "gateway", to = "auth", label = "Forward request" },
+                new { from = "auth", to = "function", label = "Valid identity" },
+                new { from = "auth", to = "browser", label = "Reject: 401" },
+                new { from = "function", to = "scan", label = "Approved file" },
+                new { from = "scan", to = "bucket", label = "Safe content" },
+                new { from = "scan", to = "browser", label = "Reject unsafe file" },
+                new { from = "bucket", to = "record", label = "Object key" },
+                new { from = "record", to = "response", label = "Metadata saved" },
+                new { from = "response", to = "browser", label = "201 JSON response" }
+            }
+        };
+        return $"Here is a reliable AWS upload flow:\\n\\n```blui-diagram\\n{JsonSerializer.Serialize(diagram)}\\n```";
     }
 
     public async Task<LearningChatHistoryResponse> GetChatHistoryAsync(Guid userId, CancellationToken ct = default)
@@ -247,7 +357,25 @@ public sealed class LearningInsightsService : ILearningInsightsService
     {
         using var client = CreateGitHubClient(token);
         using var response = await client.GetAsync($"https://api.github.com/repos/{fullName}", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
+            !string.IsNullOrWhiteSpace(token))
+        {
+            logger.LogWarning(
+                "The saved GitHub token was unauthorized for {Repository}. Retrying public repository metrics.",
+                fullName);
+            using var publicClient = CreateGitHubClient(null);
+            using var publicResponse = await publicClient.GetAsync($"https://api.github.com/repos/{fullName}", ct);
+            publicResponse.EnsureSuccessStatusCode();
+            return await ReadRepositorySnapshotAsync(publicResponse, ct);
+        }
         response.EnsureSuccessStatusCode();
+        return await ReadRepositorySnapshotAsync(response, ct);
+    }
+
+    private static async Task<RepositorySnapshot> ReadRepositorySnapshotAsync(
+        HttpResponseMessage response,
+        CancellationToken ct)
+    {
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         var root = document.RootElement;
         return new RepositorySnapshot(
@@ -260,6 +388,20 @@ public sealed class LearningInsightsService : ILearningInsightsService
         using var client = CreateGitHubClient(token);
         var since = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-30).ToString("O"));
         using var response = await client.GetAsync($"https://api.github.com/repos/{fullName}/commits?since={since}&per_page=100", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
+            !string.IsNullOrWhiteSpace(token))
+        {
+            logger.LogWarning(
+                "The saved GitHub token was unauthorized for {Repository} commits. Retrying public commits.",
+                fullName);
+            using var publicClient = CreateGitHubClient(null);
+            using var publicResponse = await publicClient.GetAsync(
+                $"https://api.github.com/repos/{fullName}/commits?since={since}&per_page=100",
+                ct);
+            publicResponse.EnsureSuccessStatusCode();
+            using var publicDocument = JsonDocument.Parse(await publicResponse.Content.ReadAsStringAsync(ct));
+            return publicDocument.RootElement.GetArrayLength();
+        }
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         return document.RootElement.GetArrayLength();

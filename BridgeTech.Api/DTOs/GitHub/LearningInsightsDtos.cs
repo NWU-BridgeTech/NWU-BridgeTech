@@ -32,6 +32,7 @@ public sealed class LearningChatRequest
 {
     public string Message { get; set; } = string.Empty;
     public List<LearningChatMessage> History { get; set; } = [];
+    public bool Regenerate { get; set; }
 }
 
 public sealed class LearningChatMessage

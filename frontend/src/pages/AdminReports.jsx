@@ -15,6 +15,7 @@ function formatValue(metric) {
 
 export default function AdminReports() {
   const [report, setReport] = useState(null);
+  const [bluiUsage, setBluiUsage] = useState(null);
   const [error, setError] = useState("");
 
   function downloadCsv(path, filename) {
@@ -44,6 +45,30 @@ export default function AdminReports() {
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load reports.");
         setReport(await response.json());
+      })
+      .catch((requestError) => {
+        if (requestError.name !== "AbortError") setError(requestError.message);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    let role = "";
+    try {
+      role = JSON.parse(localStorage.getItem("user") || "{}").role || "";
+    } catch {
+      role = "";
+    }
+    if (role !== "SuperAdmin") return undefined;
+
+    const controller = new AbortController();
+    fetch(`${API_URL}/api/admin/reports/blui-usage`, {
+      headers: { Authorization: `******"token")}` },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load Blui usage.");
+        setBluiUsage(await response.json());
       })
       .catch((requestError) => {
         if (requestError.name !== "AbortError") setError(requestError.message);
@@ -103,6 +128,31 @@ export default function AdminReports() {
                 ))}
               </ol>
             </section>
+            {bluiUsage && (
+              <section className="dashboard-panel recent-activity-panel" aria-labelledby="blui-usage-heading">
+                <h2 className="attention-heading" id="blui-usage-heading">Blui usage · last 30 days</h2>
+                <div className="learning-stats">
+                  <article className="learning-stat"><h2>Student questions</h2><p className="learning-stat-value">{bluiUsage.studentQuestions}</p></article>
+                  <article className="learning-stat"><h2>Unique students</h2><p className="learning-stat-value">{bluiUsage.uniqueStudents}</p></article>
+                  <article className="learning-stat"><h2>Failed responses</h2><p className="learning-stat-value">{bluiUsage.failedResponses}</p></article>
+                </div>
+                <h3>Frequent questions</h3>
+                {bluiUsage.frequentQuestions.length === 0 ? (
+                  <p className="dashboard-message">No Blui questions have been recorded yet.</p>
+                ) : (
+                  <ol className="recent-activity-list">
+                    {bluiUsage.frequentQuestions.map((question) => (
+                      <li className="recent-activity-item" key={question.question}>
+                        <span className="recent-activity-marker" aria-hidden="true" />
+                        <div className="recent-activity-copy">
+                          <p><strong>{question.count}×</strong> {question.question}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+            )}
           </>
         )}
       </div>

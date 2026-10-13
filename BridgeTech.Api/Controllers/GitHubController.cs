@@ -49,12 +49,20 @@ public sealed class GitHubController : ControllerBase
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             return Unauthorized();
 
-        return Ok(new
+        var username = await _githubService.GetUsernameAsync(userId, cancellationToken);
+        var repository = await _githubService.GetRepositoryAsync(userId, cancellationToken);
+        IReadOnlyList<GitHubRepositoryResponse> repositories = [];
+        var authorizationRequired = false;
+        try
         {
-            username = await _githubService.GetUsernameAsync(userId, cancellationToken),
-            repository = await _githubService.GetRepositoryAsync(userId, cancellationToken),
-            repositories = await _githubService.GetRepositoriesAsync(userId, cancellationToken)
-        });
+            repositories = await _githubService.GetRepositoriesAsync(userId, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            authorizationRequired = true;
+        }
+
+        return Ok(new { username, repository, repositories, authorizationRequired });
     }
 
     [Authorize]
@@ -99,7 +107,10 @@ public sealed class GitHubController : ControllerBase
         }
         catch (Exception exception) when (exception is InvalidOperationException or HttpRequestException)
         {
-            return Redirect($"{redirectUrl}?github=error&message={Uri.EscapeDataString(exception.Message)}");
+            var result = exception.Message.Contains("already connected", StringComparison.OrdinalIgnoreCase)
+                ? "account-conflict"
+                : "error";
+            return Redirect($"{redirectUrl}?github={result}&message={Uri.EscapeDataString(exception.Message)}");
         }
     }
 }

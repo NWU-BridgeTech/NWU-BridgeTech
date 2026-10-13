@@ -86,9 +86,13 @@ export default function StudentGithub() {
   const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [savingRepository, setSavingRepository] = useState(false);
+  const [accountConflict, setAccountConflict] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("github") === "account-conflict";
+  });
   const [error, setError] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get("github") === "error"
+    return ["error", "account-conflict"].includes(params.get("github"))
       ? params.get("message") || "Unable to connect your GitHub account."
       : "";
   });
@@ -134,6 +138,9 @@ export default function StudentGithub() {
       .then(([githubData, exerciseData, insights]) => {
         setUsername(githubData.username || null);
         setRepository(githubData.repository || null);
+        if (githubData.authorizationRequired) {
+          setError("GitHub needs to be reconnected. Disconnect GitHub, then connect the account you want to use.");
+        }
         setSelectedRepository("");
         const normalizedRepositories = Array.isArray(githubData.repositories)
           ? githubData.repositories
@@ -164,6 +171,7 @@ export default function StudentGithub() {
 
   async function connectGithub() {
     setError("");
+    setAccountConflict(false);
     setConnecting(true);
     try {
       const response = await fetch(`${API_URL}/api/github/connect`, {
@@ -175,13 +183,21 @@ export default function StudentGithub() {
           clearAuthTokens();
           throw new Error("Your session has expired. Please log in again.");
         }
+
         throw new Error(data.message || "Unable to start GitHub connection.");
       }
+
       window.location.href = data.authorizationUrl;
     } catch (connectionError) {
       setError(connectionError.message);
       setConnecting(false);
     }
+  }
+
+  function prepareDifferentGithubAccount() {
+    window.open("https://github.com/login", "_blank", "noopener,noreferrer");
+    setError("Sign in to the GitHub account you want to use in the new tab, then return here and click Connect GitHub again.");
+    setAccountConflict(false);
   }
 
   async function disconnectGithub() {
@@ -301,16 +317,27 @@ export default function StudentGithub() {
             </p>
             <div className="github-hero-actions">
               {!connected ? (
-              <button
-                className="github-primary-button"
-                type="button"
-                onClick={connectGithub}
-                disabled={connecting || loading}
-              >
-                <GitBranch size={18} aria-hidden="true" />
-                {connecting ? "Opening GitHub..." : "Connect GitHub"}
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
+                <>
+                  <button
+                    className="github-primary-button"
+                    type="button"
+                    onClick={connectGithub}
+                    disabled={connecting || loading}
+                  >
+                    <GitBranch size={18} aria-hidden="true" />
+                    {connecting ? "Opening GitHub..." : accountConflict ? "Connect a different account" : "Connect GitHub"}
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </button>
+                  {accountConflict && (
+                    <button
+                      className="github-secondary-button"
+                      type="button"
+                      onClick={prepareDifferentGithubAccount}
+                    >
+                      Switch GitHub account first
+                    </button>
+                  )}
+                </>
               ) : (
                 <button
                   className="github-secondary-button"

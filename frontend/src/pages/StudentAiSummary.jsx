@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eraser, Sparkles } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
 import { getToken } from "../utils/authStorage";
 import MermaidDiagram from "../components/MermaidDiagram";
+import RichDiagram from "../components/RichDiagram";
 import "./StudentAiSummary.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -66,7 +67,7 @@ function parseCodeFence(line) {
   return match ? match[1] : null;
 }
 
-function renderAnalysis(analysis) {
+function renderAnalysis(analysis, onAsk, complete = true, onRegenerate) {
   const lines = analysis.split(/\r?\n/);
   const rendered = [];
 
@@ -84,6 +85,8 @@ function renderAnalysis(analysis) {
 
       if (language.toLowerCase() === "mermaid") {
         rendered.push(<MermaidDiagram key={`diagram-${index}`} chart={codeLines.join("\n")} />);
+      } else if (language.toLowerCase() === "blui-diagram") {
+        rendered.push(<RichDiagram key={`rich-diagram-${index}`} spec={codeLines.join("\n")} complete={complete} onAsk={onAsk} onRegenerate={onRegenerate} />);
       } else {
         rendered.push(
           <div className="blui-code-block" key={`code-${index}`}>
@@ -191,6 +194,16 @@ export default function StudentAiSummary() {
   const [chatting, setChatting] = useState(false);
   const [editingMessageIndex, setEditingMessageIndex] = useState(null);
   const [error, setError] = useState("");
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    const end = chatEndRef.current;
+    if (!end) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      end.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [chatMessages, chatting]);
 
   useEffect(() => {
     Promise.all([
@@ -201,7 +214,11 @@ export default function StudentAiSummary() {
     ])
       .then(([progress, history]) => {
         setInsights(progress);
-        setChatMessages(history.messages || []);
+        const messages = history.messages || [];
+        while (messages.length > 0 && messages[messages.length - 1].role === "user") {
+          messages.pop();
+        }
+        setChatMessages(messages);
       })
       .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
@@ -223,7 +240,7 @@ export default function StudentAiSummary() {
     }
   }
 
-  async function submitChatMessage(message, editIndex = null) {
+  async function submitChatMessage(message, editIndex = null, regenerate = false) {
     if (!message || chatting) return;
 
     const nextMessages = editIndex === null
@@ -240,16 +257,13 @@ export default function StudentAiSummary() {
       const response = await fetch(`${API_URL}/api/learning-insights/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, regenerate }),
       });
       const data = await readResponse(response, "Unable to send your message.");
       setChatMessages([...nextMessages, { role: "assistant", content: data.message }]);
     } catch (chatError) {
-      setChatMessages(nextMessages.map((chatMessage, index) => (
-        index === (editIndex === null ? nextMessages.length - 1 : editIndex)
-          ? { ...chatMessage, failed: true, error: chatError.message }
-          : chatMessage
-      )));
+      const failedMessageIndex = editIndex === null ? nextMessages.length - 1 : editIndex;
+      setChatMessages(nextMessages.filter((_, index) => index !== failedMessageIndex));
     } finally {
       setChatting(false);
     }
@@ -265,11 +279,22 @@ export default function StudentAiSummary() {
     setEditingMessageIndex(index);
   }
 
-  function regenerateChatMessage(index) {
-    submitChatMessage(chatMessages[index].content, index);
+  function regenerateChatMessage(index, regenerate = false) {
+    submitChatMessage(chatMessages[index].content, index, regenerate);
+  }
+
+  function regenerateAssistantDiagram(index) {
+    for (let messageIndex = index - 1; messageIndex >= 0; messageIndex -= 1) {
+      if (chatMessages[messageIndex].role === "user") {
+        regenerateChatMessage(messageIndex, true);
+        return;
+      }
+    }
   }
 
   async function clearChatHistory() {
+    if (!window.confirm("Clear all of your Blui chat memory? This cannot be undone.")) return;
+
     setError("");
     try {
       const response = await fetch(`${API_URL}/api/learning-insights/chat`, {
@@ -284,7 +309,14 @@ export default function StudentAiSummary() {
   }
 
   return (
-    <StudentLayout title="Blui AI summary">
+    <StudentLayout
+      title="Blui AI summary"
+      headerActions={chatMessages.length > 0 && (
+        <button className="blui-clear-chat" type="button" onClick={clearChatHistory}>
+          <Eraser size={14} aria-hidden="true" /> Clear memory
+        </button>
+      )}
+    >
       <main className="content student-ai-summary">
         <section className="blui-hero">
           <BluiMascot thinking={generating} />
@@ -302,18 +334,13 @@ export default function StudentAiSummary() {
         {loading && <p className="blui-status">Loading your progress...</p>}
         {error && <p className="blui-error" role="alert">{error}</p>}
 
-        <section className="blui-chat-card" aria-labelledby="blui-chat-heading">
+        <>
           <div className="blui-chat-heading">
             <BluiMascot small />
             <div>
               <h2 id="blui-chat-heading">Chat with Blui</h2>
               <p>Ask about your learning, or ask a general question.</p>
             </div>
-            {chatMessages.length > 0 && (
-              <button className="blui-clear-chat" type="button" onClick={clearChatHistory}>
-                <Eraser size={14} aria-hidden="true" /> Clear memory
-              </button>
-            )}
           </div>
           <div className="blui-chat-messages" aria-live="polite">
             {chatMessages.length === 0 && (
@@ -325,7 +352,9 @@ export default function StudentAiSummary() {
             {chatMessages.map((chatMessage, index) => (
               <div className={`blui-chat-message ${chatMessage.role}`} key={`${chatMessage.role}-${index}`}>
               {chatMessage.role === "assistant" ? (
-                <div className="blui-formatted-content">{renderAnalysis(chatMessage.content)}</div>
+                <div className="blui-formatted-content">
+                  {renderAnalysis(chatMessage.content, (message) => submitChatMessage(message), true, () => regenerateAssistantDiagram(index))}
+                </div>
               ) : (
                 <>
                   <p>{chatMessage.content}</p>
@@ -348,6 +377,7 @@ export default function StudentAiSummary() {
                 <span>Blui is thinking...</span>
               </div>
             )}
+            <div ref={chatEndRef} aria-hidden="true" />
           </div>
           <form className="blui-chat-form" onSubmit={sendChatMessage}>
             <input
@@ -362,7 +392,7 @@ export default function StudentAiSummary() {
               {chatting ? "Sending..." : editingMessageIndex !== null ? "Resend" : "Send"}
             </button>
           </form>
-        </section>
+        </>
 
         {insights?.analysis && (
           <section className="blui-analysis-card" aria-labelledby="blui-analysis-heading">
@@ -370,7 +400,7 @@ export default function StudentAiSummary() {
               <BluiMascot small />
               <div><h2 id="blui-analysis-heading">Blui's learning summary</h2><p>Generated on request from your latest progress.</p></div>
             </div>
-            <div className="blui-analysis-content">{renderAnalysis(insights.analysis)}</div>
+            <div className="blui-analysis-content">{renderAnalysis(insights.analysis, (message) => submitChatMessage(message))}</div>
           </section>
         )}
       </main>

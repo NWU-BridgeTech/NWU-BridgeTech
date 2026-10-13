@@ -12,16 +12,16 @@ function getMermaid(themeMode) {
         securityLevel: "strict",
         theme: "base",
         themeVariables: {
-          background: "#fafbfd",
-          primaryColor: "#ffffff",
-          primaryTextColor: "#111827",
-          primaryBorderColor: themeMode === "dark" ? "#2563eb" : "#2368e8",
-          lineColor: "#1f2937",
-          secondaryColor: "#eef4ff",
-          tertiaryColor: "#f8fafc",
-          edgeLabelBackground: "#ffffff",
-          nodeTextColor: "#111827",
-          textColor: "#111827",
+          background: themeMode === "dark" ? "#171717" : "#fafbfd",
+          primaryColor: themeMode === "dark" ? "#292929" : "#ffffff",
+          primaryTextColor: themeMode === "dark" ? "#f8fafc" : "#111827",
+          primaryBorderColor: themeMode === "dark" ? "#a3a3a3" : "#2368e8",
+          lineColor: themeMode === "dark" ? "#a3a3a3" : "#1f2937",
+          secondaryColor: themeMode === "dark" ? "#363636" : "#eef4ff",
+          tertiaryColor: themeMode === "dark" ? "#202020" : "#f8fafc",
+          edgeLabelBackground: themeMode === "dark" ? "#292929" : "#ffffff",
+          nodeTextColor: themeMode === "dark" ? "#f8fafc" : "#111827",
+          textColor: themeMode === "dark" ? "#f8fafc" : "#111827",
         },
         fontFamily: "Inter, system-ui, -apple-system, Segoe UI, sans-serif",
         flowchart: {
@@ -55,7 +55,18 @@ export default function MermaidDiagram({ chart, complete = true }) {
   const [svg, setSvg] = useState("");
   const [error, setError] = useState("");
   const [showSource, setShowSource] = useState(false);
+  const [themeMode, setThemeMode] = useState(
+    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+  );
   const source = normalizeChart(chart);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setThemeMode(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!complete) return undefined;
@@ -63,7 +74,6 @@ export default function MermaidDiagram({ chart, complete = true }) {
 
     (async () => {
       try {
-        const themeMode = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
         const mermaid = await getMermaid(themeMode);
         if (document.fonts?.ready) await document.fonts.ready;
         await mermaid.parse(source);
@@ -84,14 +94,14 @@ export default function MermaidDiagram({ chart, complete = true }) {
     return () => {
       cancelled = true;
     };
-  }, [source, complete, id]);
+  }, [source, complete, id, themeMode]);
 
   const copy = () => {
     if (navigator.clipboard) navigator.clipboard.writeText(source);
   };
 
   return (
-    <figure className="mmd">
+    <figure className={`mmd mmd-${themeMode}`}>
       <figcaption className="mmd-bar">
         <span>Diagram</span>
         <span className="mmd-actions">

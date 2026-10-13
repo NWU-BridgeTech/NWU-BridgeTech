@@ -11,6 +11,33 @@ import { apiFetch } from "../utils/apiClient";
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const HOME_CACHE_TTL = 5 * 60 * 1000;
+
+function getHomeCacheKey(name) {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    return `bridgetech:home:${user?.userId || "current"}:${name}`;
+  } catch {
+    return `bridgetech:home:current:${name}`;
+  }
+}
+
+function readHomeCache(name, fallback) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(getHomeCacheKey(name)) || "null");
+    return cached && Date.now() - cached.savedAt < HOME_CACHE_TTL ? cached.value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeHomeCache(name, value) {
+  try {
+    localStorage.setItem(getHomeCacheKey(name), JSON.stringify({ savedAt: Date.now(), value }));
+  } catch {
+    // Cached data is an optimization; the live request remains authoritative.
+  }
+}
 
 function percentComplete(done, total) {
   return total > 0 ? Math.round((done / total) * 100) : 0;
@@ -60,14 +87,14 @@ function ProgressRing({ percent, lessonsDone, lessonsTotal }) {
 }
 
 export default function Home() {
-  const [myCourses, setMyCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [myCourses, setMyCourses] = useState(() => readHomeCache("courses", []) || []);
+  const [loading, setLoading] = useState(() => readHomeCache("courses", null) === null);
   const [error, setError] = useState(null);
   // The profile supplies the greeting name and certificate count; the page
   // still works without it.
   const [profile, setProfile] = useState(null);
   const [pendingQuizzes, setPendingQuizzes] = useState([]);
-  const [learningStatistics, setLearningStatistics] = useState(null);
+  const [learningStatistics, setLearningStatistics] = useState(() => readHomeCache("statistics", null));
 
   useEffect(() => {
     apiFetch("/quizzes/pending")
@@ -75,7 +102,10 @@ export default function Home() {
       .catch(() => setPendingQuizzes([]));
 
     apiFetch("/user/enrollments")
-      .then((data) => setMyCourses(data))
+      .then((data) => {
+        setMyCourses(data);
+        writeHomeCache("courses", data);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
 
@@ -84,7 +114,11 @@ export default function Home() {
       .catch(() => setProfile(null));
 
     apiFetch("/learning-insights")
-      .then((data) => setLearningStatistics(data.statistics || null))
+      .then((data) => {
+        const statistics = data.statistics || null;
+        setLearningStatistics(statistics);
+        writeHomeCache("statistics", statistics);
+      })
       .catch(() => setLearningStatistics(null));
   }, []);
 
