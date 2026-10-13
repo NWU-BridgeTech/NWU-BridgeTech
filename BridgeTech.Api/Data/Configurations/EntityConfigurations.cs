@@ -56,6 +56,22 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
     }
 
+    internal sealed class LearningChatMessageConfiguration : IEntityTypeConfiguration<LearningChatMessage>
+    {
+        public void Configure(EntityTypeBuilder<LearningChatMessage> builder)
+        {
+            EntityConfigurationHelpers.ConfigureId(builder, "learning_chat_messages", nameof(LearningChatMessage.LearningChatMessageId));
+            builder.Property(x => x.Role).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Content).HasMaxLength(20000).IsRequired();
+            builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+            builder.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(x => new { x.UserId, x.CreatedAt });
+        }
+    }
+
     internal sealed class UserPreferenceConfiguration : IEntityTypeConfiguration<UserPreference>
     {
         public void Configure(EntityTypeBuilder<UserPreference> builder)

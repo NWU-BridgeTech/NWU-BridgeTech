@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getToken } from "../utils/authStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -19,11 +18,11 @@ function getStoredProfilePicture() {
 }
 
 export function ThemeProvider({ children }) {
-  const location = useLocation();
   const [theme, setTheme] = useState(getStoredTheme);
   const [profilePictureUrl, setProfilePictureUrl] = useState(
     getStoredProfilePicture,
   );
+  const userSelectedTheme = useRef(false);
 
   const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
   const isAuthenticated = Boolean(getToken());
@@ -35,11 +34,12 @@ export function ThemeProvider({ children }) {
       delete document.documentElement.dataset.theme;
     }
     window.localStorage.setItem("bridgetech-theme", theme);
-  }, [theme, effectiveTheme, isAuthenticated, location.pathname]);
+  }, [theme, effectiveTheme, isAuthenticated]);
 
   useEffect(() => {
     const token = getToken();
     if (!token) {
+      userSelectedTheme.current = false;
       setProfilePictureUrl(null);
       window.localStorage.removeItem("bridgetech-profile-picture");
       return undefined;
@@ -55,7 +55,10 @@ export function ThemeProvider({ children }) {
         return response.json();
       })
       .then((preferences) => {
-        if (["system", "light", "dark"].includes(preferences.theme)) {
+        if (
+          !userSelectedTheme.current &&
+          ["system", "light", "dark"].includes(preferences.theme)
+        ) {
           setTheme(preferences.theme);
         }
         const nextProfilePictureUrl = preferences.profilePictureUrl ?? null;
@@ -74,7 +77,7 @@ export function ThemeProvider({ children }) {
       });
 
     return () => controller.abort();
-  }, [location.pathname]);
+  }, [isAuthenticated]);
 
   function updateProfilePictureUrl(nextProfilePictureUrl) {
     setProfilePictureUrl(nextProfilePictureUrl);
@@ -99,6 +102,7 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   async function updateTheme(nextTheme) {
+    userSelectedTheme.current = true;
     setTheme(nextTheme);
     const token = getToken();
     if (!token) return;

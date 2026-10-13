@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Award,
   BookOpen,
-  CircleCheck,
+  Brain,
   ClipboardCheck,
 } from "lucide-react";
 import StudentLayout from "../layouts/StudentLayout";
@@ -12,6 +11,33 @@ import { apiFetch } from "../utils/apiClient";
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const HOME_CACHE_TTL = 5 * 60 * 1000;
+
+function getHomeCacheKey(name) {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    return `bridgetech:home:${user?.userId || "current"}:${name}`;
+  } catch {
+    return `bridgetech:home:current:${name}`;
+  }
+}
+
+function readHomeCache(name, fallback) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(getHomeCacheKey(name)) || "null");
+    return cached && Date.now() - cached.savedAt < HOME_CACHE_TTL ? cached.value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeHomeCache(name, value) {
+  try {
+    localStorage.setItem(getHomeCacheKey(name), JSON.stringify({ savedAt: Date.now(), value }));
+  } catch {
+    // Cached data is an optimization; the live request remains authoritative.
+  }
+}
 
 function percentComplete(done, total) {
   return total > 0 ? Math.round((done / total) * 100) : 0;
@@ -61,14 +87,14 @@ function ProgressRing({ percent, lessonsDone, lessonsTotal }) {
 }
 
 export default function Home() {
-  const [myCourses, setMyCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [myCourses, setMyCourses] = useState(() => readHomeCache("courses", []) || []);
+  const [loading, setLoading] = useState(() => readHomeCache("courses", null) === null);
   const [error, setError] = useState(null);
   // The profile supplies the greeting name and certificate count; the page
   // still works without it.
   const [profile, setProfile] = useState(null);
-  const [profileLoaded, setProfileLoaded] = useState(false);
   const [pendingQuizzes, setPendingQuizzes] = useState([]);
+  const [learningStatistics, setLearningStatistics] = useState(() => readHomeCache("statistics", null));
 
   useEffect(() => {
     apiFetch("/quizzes/pending")
@@ -76,14 +102,24 @@ export default function Home() {
       .catch(() => setPendingQuizzes([]));
 
     apiFetch("/user/enrollments")
-      .then((data) => setMyCourses(data))
+      .then((data) => {
+        setMyCourses(data);
+        writeHomeCache("courses", data);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
 
     apiFetch("/users/me")
       .then((data) => setProfile(data))
-      .catch(() => setProfile(null))
-      .finally(() => setProfileLoaded(true));
+      .catch(() => setProfile(null));
+
+    apiFetch("/learning-insights")
+      .then((data) => {
+        const statistics = data.statistics || null;
+        setLearningStatistics(statistics);
+        writeHomeCache("statistics", statistics);
+      })
+      .catch(() => setLearningStatistics(null));
   }, []);
 
   const hour = new Date().getHours();
@@ -203,34 +239,24 @@ export default function Home() {
           )}
         </section>
 
-        <dl className="stats" aria-label="Learning progress summary">
-          <div className="stat">
-            <dt>
-              <BookOpen aria-hidden="true" size={16} /> Active courses
-            </dt>
-            <dd>{ready ? activeCourses.length : "–"}</dd>
-            <span>Currently in progress</span>
-          </div>
-          <div className="stat">
-            <dt>
-              <CircleCheck aria-hidden="true" size={16} /> Lessons completed
-            </dt>
-            <dd>
-              {ready ? lessonsDone : "–"}
-              {ready && hasLessons && <small> / {lessonsTotal}</small>}
-            </dd>
-            <span>Across all your courses</span>
-          </div>
-          <div className="stat">
-            <dt id="certificates-summary">
-              <Award aria-hidden="true" size={16} /> Certificates earned
-            </dt>
-            <dd>
-              {profileLoaded && profile ? profile.certificatesEarned : "–"}
-            </dd>
-            <span>Recognising your completed work</span>
-          </div>
-        </dl>
+        {learningStatistics && (
+          <section className="home-progress-glance" aria-labelledby="home-progress-glance-heading">
+            <div className="home-section-heading home-progress-glance-heading">
+              <div>
+                <h2 id="home-progress-glance-heading"><Brain aria-hidden="true" size={22} /> Your progress at a glance</h2>
+                <p>These figures are available without calling the AI service.</p>
+              </div>
+            </div>
+            <div className="home-progress-grid">
+              <div><strong>{learningStatistics.lessonsProgressPercentage}%</strong><span>Lesson progress</span><small>{learningStatistics.lessonsCompleted} of {learningStatistics.lessonsAvailable} lessons</small></div>
+              <div><strong>{learningStatistics.averageQuizScore}%</strong><span>Average quiz score</span><small>{learningStatistics.quizPasses} of {learningStatistics.quizAttempts} attempts passed</small></div>
+              <div><strong>{learningStatistics.exerciseProgressPercentage}%</strong><span>Practical progress</span><small>{learningStatistics.exercisesCompleted} of {learningStatistics.exercisesAvailable} exercises</small></div>
+              <div><strong>{learningStatistics.completedModules}/{learningStatistics.enrolledModules}</strong><span>Modules completed</span><small>{learningStatistics.certificatesEarned} certificates, {learningStatistics.badgesEarned} badges</small></div>
+              <div><strong>{learningStatistics.repositoryCommitsLast30Days}</strong><span>Commits in 30 days</span><small>{learningStatistics.repositoryStars} repository stars</small></div>
+              <div><strong>{learningStatistics.repositoryOpenIssues}</strong><span>Open issues</span><small>Repository collaboration signal</small></div>
+            </div>
+          </section>
+        )}
 
         <section className="home-next" aria-labelledby="next-up-heading">
           <div className="home-section-heading">

@@ -6,6 +6,7 @@ import {
   Code2,
   GitBranch,
   LayoutDashboard,
+  Sparkles,
 } from "lucide-react";
 import NavigationSidebar from "./NavigationSidebar";
 
@@ -41,6 +42,11 @@ const groups = [
         label: "GitHub activity",
         path: "/student/github",
         icon: GitBranch,
+      },
+      {
+        label: "Blui AI summary",
+        path: "/student/ai-summary",
+        icon: Sparkles,
       },
     ],
   },

@@ -325,6 +325,45 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("exercise_submissions", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LearningChatMessage", b =>
+                {
+                    b.Property<Guid>("LearningChatMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("learning_chat_message_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("LearningChatMessageId")
+                        .HasName("pk_learning_chat_messages");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_learning_chat_messages_user_id_created_at");
+
+                    b.ToTable("learning_chat_messages", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Lesson", b =>
                 {
                     b.Property<Guid>("LessonId")
@@ -1281,6 +1320,18 @@ namespace BridgeTech.Api.Migrations
                         .HasConstraintName("fk_exercise_submissions_users_user_id");
 
                     b.Navigation("Exercise");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LearningChatMessage", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_learning_chat_messages_users_user_id");
 
                     b.Navigation("User");
                 });
