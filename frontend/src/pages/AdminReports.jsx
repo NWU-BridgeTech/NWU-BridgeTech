@@ -16,7 +16,7 @@ import {
 import AppLayout from "../layouts/AppLayout";
 import { apiFetch } from "../utils/apiClient";
 import { downloadReportPdf } from "../utils/reportPdf";
-
+import { downloadReportExcel } from "../utils/reportExcel";
 import "./Admin.css";
 import "./AdminReports.css";
 
@@ -336,6 +336,29 @@ export default function AdminReports() {
     }
   }
 
+  
+async function handleExcelDownload() {
+  if (!report || downloading || loading) {
+    return;
+  }
+
+  setDownloading(true);
+  setError("");
+
+  try {
+    await downloadReportExcel(report, activeTab);
+  } catch (err) {
+    console.error("Excel generation failed:", err);
+
+    setError(
+      err.message || "Could not generate Excel report."
+    );
+  } finally {
+    setDownloading(false);
+  }
+}
+
+
   // ================================================
   // CHANGE TABS
   // ================================================
@@ -373,22 +396,33 @@ export default function AdminReports() {
           </p>
         </div>
 
-        <div className="dashboard-header-actions">
-          <button
-            className="btn blue"
-            type="button"
-            disabled={
-              !report ||
-              loading ||
-              downloading
-            }
-            onClick={handleDownload}
-          >
-            {downloading
-              ? "Generating PDF..."
-              : "Download PDF"}
-          </button>
-        </div>
+        
+      <div className="dashboard-header-actions">
+        {/* DOWNLOAD PDF */}
+        <button
+          className="btn blue"
+          type="button"
+          disabled={!report || loading || downloading}
+          onClick={handleDownload}
+        >
+          {downloading
+            ? "Preparing download..."
+            : "Download PDF"}
+        </button>
+
+        {/* DOWNLOAD EXCEL */}
+        <button
+          className="btn"
+          type="button"
+          disabled={!report || loading || downloading}
+          onClick={handleExcelDownload}
+        >
+          {downloading
+            ? "Preparing download..."
+            : "Download Excel"}
+        </button>
+      </div>
+
       </header>
 
       <div className="content admin-reports-page">
