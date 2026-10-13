@@ -396,6 +396,23 @@ async function handleExcelDownload() {
           </p>
         </div>
 
+        <div className="dashboard-header-actions">
+          <button
+            className="btn blue"
+            type="button"
+            disabled={
+              !report ||
+              loading ||
+              downloading
+            }
+            onClick={handleDownload}
+          >
+            {downloading
+              ? "Generating PDF..."
+              : "Download PDF"}
+          </button>
+        </div>
+
         
       <div className="dashboard-header-actions">
         {/* DOWNLOAD PDF */}
