@@ -1,0 +1,279 @@
+
+/* ============================================
+   ADMIN REPORTS PAGE
+   ============================================ */
+
+.admin-page .admin-reports-page {
+  display: grid;
+  gap: 20px;
+}
+
+/* ============================================
+   REPORT TABS
+   ============================================ */
+
+.admin-page .reports-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  padding: 10px;
+
+  background: #ffffff;
+  border: 1px solid #e6e9ed;
+  border-radius: 12px;
+}
+
+.admin-page .reports-tab {
+  appearance: none;
+
+  padding: 11px 14px;
+
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  color: #536176;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.admin-page .reports-tab:hover {
+  background: #f4f7fb;
+}
+
+.admin-page .reports-tab.is-active {
+  color: #3159ad;
+  background: #eaf0fb;
+  border-color: #d0def5;
+}
+
+.admin-page .reports-tab:focus-visible {
+  outline: 2px solid #3159ad;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   REPORT TITLE
+   ============================================ */
+
+.admin-page .reports-title-block h2 {
+  margin: 0 0 6px;
+
+  font-size: 21px;
+  font-weight: 600;
+
+  color: #202733;
+}
+
+.admin-page .reports-title-block p {
+  margin: 0;
+
+  color: #687384;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ============================================
+   SUMMARY CARDS
+   ============================================ */
+
+.admin-page .reports-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+.admin-page .reports-metric {
+  background: #ffffff;
+
+  border: 1px solid #e6e9ed;
+  border-radius: 12px;
+
+  padding: 21px;
+
+  min-width: 0;
+}
+
+.admin-page .reports-metric p {
+  margin: 0 0 12px;
+
+  color: #687384;
+  font-size: 13px;
+}
+
+.admin-page .reports-metric strong {
+  display: block;
+
+  color: #202733;
+  font-size: 23px;
+  font-weight: 700;
+
+  overflow-wrap: anywhere;
+}
+
+/* ============================================
+   GRAPH AND TABLE PANELS
+   ============================================ */
+
+.admin-page .reports-panel {
+  background: #ffffff;
+
+  border: 1px solid #e6e9ed;
+  border-radius: 12px;
+
+  padding: 21px;
+
+  min-width: 0;
+}
+
+.admin-page .reports-panel h3 {
+  margin: 0 0 18px;
+
+  color: #202733;
+
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.admin-page .reports-chart-area {
+  width: 100%;
+  height: 330px;
+}
+
+/* ============================================
+   REPORT TABLE
+   ============================================ */
+
+.admin-page .reports-table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.admin-page .reports-table-heading span {
+  color: #687384;
+  font-size: 12px;
+}
+
+.admin-page .reports-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-page .reports-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  font-size: 13px;
+}
+
+.admin-page .reports-table th,
+.admin-page .reports-table td {
+  padding: 13px 12px;
+
+  text-align: left;
+
+  border-bottom: 1px solid #e9edf2;
+}
+
+.admin-page .reports-table th {
+  background: #f7f9fc;
+
+  color: #536176;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.admin-page .reports-table td {
+  color: #394353;
+  line-height: 1.5;
+}
+
+.admin-page .reports-table tbody tr:hover {
+  background: #f9fafc;
+}
+
+/* ============================================
+   LOADING, EMPTY AND ERROR STATES
+   ============================================ */
+
+.admin-page .reports-message,
+.admin-page .reports-empty {
+  padding: 18px;
+
+  color: #687384;
+  font-size: 14px;
+}
+
+.admin-page .reports-alert {
+  padding: 14px;
+
+  background: #fff4f2;
+
+  color: #9f3027;
+
+  border: 1px solid #f2d1cc;
+  border-radius: 8px;
+}
+
+.admin-page .reports-alert button {
+  margin-left: 12px;
+
+  background: transparent;
+  border: none;
+
+  color: #3159ad;
+
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-page .dashboard-header .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE LAYOUT
+   ============================================ */
+
+@media (max-width: 850px) {
+  .admin-page .reports-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-page .reports-chart-area {
+    height: 290px;
+  }
+}
+
+@media (max-width: 550px) {
+  .admin-page .reports-tabs {
+    flex-direction: column;
+  }
+
+  .admin-page .reports-tab {
+    text-align: left;
+  }
+
+  .admin-page .reports-panel {
+    padding: 15px;
+  }
+
+  .admin-page .reports-metric strong {
+    font-size: 20px;
+  }
+}

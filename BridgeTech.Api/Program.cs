@@ -21,8 +21,10 @@ using BridgeTech.Api.Services.Lessons;
 using BridgeTech.Api.Services.Badges;
 using BridgeTech.Api.Services.Admin;
 using BridgeTech.Api.Services.AdminDashboard;
+using BridgeTech.Api.Services.Reports;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.Configure<GitHubApiOptions>(builder.Configuration.GetSection("GitHub"));
 builder.Services.AddDataProtection();
@@ -53,6 +55,7 @@ builder.Services.AddScoped<IBadgeService, BadgeService>();
 builder.Services.AddScoped<IAdministratorService, AdministratorService>();
 builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAdminReportService, AdminReportService>();
 
 builder.Services.AddRateLimiter(options =>
 {
