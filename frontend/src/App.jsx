@@ -1,47 +1,59 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PublicHomepage from "./pages/PublicHomepage";
-import VerifyCertificate from "./pages/VerifyCertificate";
-import Home from "./pages/Home";
-import StudentCourses from "./pages/StudentCourses";
-import StudentPracticalWork from "./pages/StudentPracticalWork";
-import StudentCertificates from "./pages/StudentCertificates";
-import StudentGithub from "./pages/StudentGithub";
-import StudentProfile from "./pages/StudentProfile";
-import StudentNotifications from "./pages/StudentNotifications";
-import StudentBadges from "./pages/StudentBadges";
-import Admin from "./pages/Admin";
-import AdminModules from "./pages/AdminModules";
-import AdminLessons from "./pages/AdminLessons";
-import AdminAssessments from "./pages/AdminAssessments";
-import AdminPracticalExercises from "./pages/AdminPracticalExercises";
-import AdminStudents from "./pages/AdminStudents";
-import AdminAdministrators from "./pages/AdminAdministrators";
-import AdminSettings from "./pages/AdminSettings";
-import AdminReports from "./pages/AdminReports";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import SignOut from "./pages/SignOut";
-import Quizzes from "./pages/Quizzes";
-import QuizzRunner from "./pages/QuizzRunner";
-import TeamArea from "./pages/TeamArea";
 import "./pages/Admin.css";
-import Lessons from "./pages/Lessons";
 import { ThemeProvider } from "./contexts/ThemeContext";
+
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const PublicHomepage = lazy(() => import("./pages/PublicHomepage"));
+const VerifyCertificate = lazy(() => import("./pages/VerifyCertificate"));
+const Home = lazy(() => import("./pages/Home"));
+const StudentCourses = lazy(() => import("./pages/StudentCourses"));
+const StudentPracticalWork = lazy(() => import("./pages/StudentPracticalWork"));
+const StudentCertificates = lazy(() => import("./pages/StudentCertificates"));
+const StudentGithub = lazy(() => import("./pages/StudentGithub"));
+const StudentAiSummary = lazy(() => import("./pages/StudentAiSummary"));
+const StudentProfile = lazy(() => import("./pages/StudentProfile"));
+const StudentNotifications = lazy(() => import("./pages/StudentNotifications"));
+const StudentBadges = lazy(() => import("./pages/StudentBadges"));
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminModules = lazy(() => import("./pages/AdminModules"));
+const AdminLessons = lazy(() => import("./pages/AdminLessons"));
+const AdminAssessments = lazy(() => import("./pages/AdminAssessments"));
+const AdminPracticalExercises = lazy(() => import("./pages/AdminPracticalExercises"));
+const AdminStudents = lazy(() => import("./pages/AdminStudents"));
+const AdminAdministrators = lazy(() => import("./pages/AdminAdministrators"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminReports = lazy(() => import("./pages/AdminReports"));
+const Login = lazy(() => import("./pages/Login"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
+const SignOut = lazy(() => import("./pages/SignOut"));
+const Quizzes = lazy(() => import("./pages/Quizzes"));
+const QuizzRunner = lazy(() => import("./pages/QuizzRunner"));
+const TeamArea = lazy(() => import("./pages/TeamArea"));
+const Lessons = lazy(() => import("./pages/Lessons"));
 
 function AdminSection({ children }) {
   return children;
+}
+
+function PageLoading() {
+  return (
+    <main className="content" aria-live="polite" aria-busy="true">
+      <p>Loading page...</p>
+    </main>
+  );
 }
 
 function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <Routes>
+        <Suspense fallback={<PageLoading />}>
+          <Routes>
         <Route path="/" element={<PublicHomepage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/team-login" element={<Login team />} />
@@ -73,6 +85,7 @@ function App() {
           />
           <Route path="/student/badges" element={<StudentBadges />} />
           <Route path="/student/github" element={<StudentGithub />} />
+          <Route path="/student/ai-summary" element={<StudentAiSummary />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route
             path="/student/notifications"
@@ -186,7 +199,8 @@ function App() {
           />
 
         </Route>
-        </Routes>
+          </Routes>
+        </Suspense>
       </ThemeProvider>
     </BrowserRouter>
   );

@@ -139,6 +139,17 @@ public sealed class GitHubService : IGitHubService
         using var response = await client.GetAsync(
             endpoint,
             cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized &&
+            !string.IsNullOrWhiteSpace(account.GithubAccessToken))
+        {
+            using var publicClient = CreateGitHubClient(null);
+            using var publicResponse = await publicClient.GetAsync(
+                $"https://api.github.com/users/{Uri.EscapeDataString(account.GithubUsername)}/repos?sort=updated&per_page=100",
+                cancellationToken);
+            publicResponse.EnsureSuccessStatusCode();
+            return await publicResponse.Content.ReadFromJsonAsync<List<GitHubRepositoryResponse>>(
+                cancellationToken) ?? [];
+        }
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<List<GitHubRepositoryResponse>>(

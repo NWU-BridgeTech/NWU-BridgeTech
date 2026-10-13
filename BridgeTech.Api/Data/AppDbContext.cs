@@ -29,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<StaffActivity> StaffActivities => Set<StaffActivity>();
+    public DbSet<LearningChatMessage> LearningChatMessages => Set<LearningChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

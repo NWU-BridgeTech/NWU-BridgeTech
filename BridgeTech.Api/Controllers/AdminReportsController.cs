@@ -107,6 +107,51 @@ public sealed class AdminReportsController(AppDbContext db) : ControllerBase
             $"users-report-{generatedAt:yyyyMMdd-HHmmss}.csv");
     }
 
+    [HttpGet("blui-usage")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<ActionResult<BluiUsageReport>> GetBluiUsage(CancellationToken cancellationToken)
+    {
+            var since = DateTimeOffset.UtcNow.AddDays(-30);
+            var messages = await db.LearningChatMessages.AsNoTracking()
+                .Where(message => message.CreatedAt >= since)
+                .Select(message => new { message.UserId, message.Role, message.Content, message.CreatedAt })
+                .ToListAsync(cancellationToken);
+
+            var questions = messages
+                .Where(message => message.Role == "user")
+                .ToList();
+            var assistantMessages = messages.Where(message => message.Role == "assistant").ToList();
+            var failureCount = assistantMessages.Count(message =>
+                message.Content.Contains("temporarily unavailable", StringComparison.OrdinalIgnoreCase)
+                || message.Content.Contains("not configured", StringComparison.OrdinalIgnoreCase)
+                || message.Content.Contains("could not", StringComparison.OrdinalIgnoreCase));
+
+            var frequentQuestions = questions
+                .GroupBy(message => message.Content.Trim(), StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(group => group.Count())
+                .ThenBy(group => group.Key)
+                .Take(10)
+                .Select(group => new BluiQuestion(group.Key, group.Count()))
+                .ToList();
+
+            var dailyQuestions = questions
+                .GroupBy(message => DateOnly.FromDateTime(message.CreatedAt.UtcDateTime))
+                .OrderBy(group => group.Key)
+                .Select(group => new BluiDailyUsage(group.Key, group.Count(), group.Select(message => message.UserId).Distinct().Count()))
+                .ToList();
+
+            return new BluiUsageReport(
+                since,
+                messages.Count,
+                questions.Count,
+                assistantMessages.Count,
+                questions.Select(message => message.UserId).Distinct().Count(),
+                questions.Where(message => message.CreatedAt >= DateTimeOffset.UtcNow.AddDays(-7)).Select(message => message.UserId).Distinct().Count(),
+                failureCount,
+                frequentQuestions,
+                dailyQuestions);
+    }
+
     private Guid GetUserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
             ? userId
@@ -124,4 +169,19 @@ public sealed class AdminReportsController(AppDbContext db) : ControllerBase
         DateTimeOffset? LastLoginAt);
 
     private sealed record OverviewRow(string Metric, int Value);
+
+    public sealed record BluiUsageReport(
+        DateTimeOffset Since,
+        int TotalMessages,
+        int StudentQuestions,
+        int AssistantResponses,
+        int UniqueStudents,
+        int ActiveStudentsLast7Days,
+        int FailedResponses,
+        List<BluiQuestion> FrequentQuestions,
+        List<BluiDailyUsage> DailyUsage);
+
+    public sealed record BluiQuestion(string Question, int Count);
+
+    public sealed record BluiDailyUsage(DateOnly Date, int Questions, int UniqueStudents);
 }

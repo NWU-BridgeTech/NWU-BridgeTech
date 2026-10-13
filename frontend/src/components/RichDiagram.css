@@ -1,0 +1,110 @@
+.rd {
+  --rd-bg: #ffffff;
+  --rd-text: #172033;
+  --rd-muted: #42516a;
+  --rd-line: #c5d0df;
+  --rd-grid: #d7e0ec;
+  --rd-edge-text: #172033;
+  --rd-edge-bg: #ffffff;
+  margin: 12px 0 16px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--rd-line);
+  border-radius: 12px;
+  background: var(--rd-bg);
+  color: var(--rd-text);
+}
+.rd-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--rd-line); }
+.rd-name { font-size: 16px; font-weight: 750; }
+.rd-hint, .rd-count { color: var(--rd-muted); font-size: 12px; }
+.rd-fullscreen { margin-left: auto; border: 1px solid var(--rd-line); border-radius: 7px; padding: 6px 10px; background: var(--rd-bg); color: var(--rd-text); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.rd-fullscreen:hover { background: #e8eef7; }
+.rd-desc { margin: 0; padding: 12px 16px 0; color: var(--rd-muted); font-size: 14px; }
+.rd-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; list-style: none; margin: 0; padding: 12px 16px 0; color: var(--rd-muted); font-size: 12px; }
+.rd-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 3px; vertical-align: -1px; }
+.rd-canvas { width: 100%; max-width: 100%; height: min(58vh, 500px); margin-top: 8px; overflow: hidden; border-top: 1px solid var(--rd-line); border-bottom: 1px solid var(--rd-line); }
+.rd .react-flow { background: var(--rd-bg); }
+.rd .react-flow__pane { cursor: default; }
+.rd .react-flow__node { cursor: pointer; }
+.rd-node { position: relative; width: 220px; min-height: 88px; padding: 11px 12px 11px 42px; border: 1px solid #c8d4e8; border-left: 5px solid var(--accent, #5b6b8c); border-radius: 10px; background: #fff; color: #1c2433; box-shadow: 0 2px 5px rgba(20, 30, 60, .12); cursor: pointer; animation: rd-node-in 650ms cubic-bezier(.2,.8,.2,1) both; animation-delay: var(--motion-delay, 0ms); }
+.rd-node:hover, .rd-node.is-selected { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #2e6be6) 28%, transparent); }
+.rd-node.is-selected { animation: rd-node-pulse 1.8s ease-in-out infinite; animation-delay: 0ms; }
+@keyframes rd-node-in {
+  from { opacity: 0; transform: translateY(14px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes rd-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, #2e6be6) 8%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent, #2e6be6) 24%, transparent); }
+}
+.rd-step, .rd-badge { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: color-mix(in srgb, var(--accent, #5b6b8c) 15%, white); color: var(--accent, #5b6b8c); font-size: 11px; font-weight: 750; }
+.rd-step { position: absolute; top: 9px; left: 7px; gap: 1px; }
+.rd-step b { font-size: 9px; line-height: 1; }
+.rd-icon { display: block; }
+.rd-title { font-size: 14px; font-weight: 750; line-height: 1.3; }
+.rd-summary { margin-top: 5px; color: #3a455c; font-size: 12px; line-height: 1.35; }
+.rd-kind { position: absolute; top: 8px; right: 10px; color: #4a5670; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.rd-panel { padding: 16px; }
+.rd-panel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rd-panel-head h4 { margin: 0; font-size: 17px; }
+.rd-count { margin-left: auto; }
+.rd-panel-summary { margin: 9px 0 0; font-size: 14px; font-weight: 650; }
+.rd-panel-details { margin: 7px 0 0; color: var(--rd-muted); font-size: 14px; line-height: 1.55; }
+.rd-code { margin: 12px 0 0; overflow-x: auto; padding: 12px; border-radius: 8px; background: #f0f3f9; color: #1c2433; font: 12.5px/1.5 Consolas, monospace; }
+.rd-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.rd-actions button { border: 1px solid #c9d3e6; border-radius: 8px; padding: 7px 12px; background: #fff; color: #1c2433; cursor: pointer; font: inherit; font-size: 13px; }
+.rd-actions button:hover { background: #eef3fc; }
+.rd-actions .rd-primary { border-color: #2e6be6; background: #2e6be6; color: #fff; }
+.rd-steps { margin: 14px 0 0; padding-left: 22px; font-size: 13px; }
+.rd-steps button { border: 0; border-radius: 6px; padding: 4px; background: transparent; color: var(--rd-text); cursor: pointer; font: inherit; text-align: left; }
+.rd-steps button:hover, .rd-steps button[aria-current="true"] { background: #e3ecfd; }
+.rd-status { padding: 20px 16px; color: var(--rd-muted); font-size: 14px; }
+.rd-error { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #a1281f; }
+.rd-regenerate { display: inline-flex; align-items: center; gap: 6px; border: 1px solid currentColor; border-radius: 7px; padding: 6px 10px; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.rd-regenerate:hover { background: rgb(161 40 31 / 10%); }
+.rd .react-flow__controls { overflow: hidden; border: 1px solid #b8c5d6; border-radius: 8px; background: #ffffff; box-shadow: 0 2px 6px rgba(20, 30, 60, .18); }
+.rd .react-flow__controls-button { width: 28px; height: 28px; border-bottom: 1px solid #c5d0df; background: #ffffff; color: #172033; }
+.rd .react-flow__controls-button:last-child { border-bottom: 0; }
+.rd .react-flow__controls-button:hover { background: #e8eef7; }
+.rd .react-flow__controls-button svg { fill: currentColor; max-width: 14px; max-height: 14px; }
+.rd .react-flow__edge.animated path,
+.rd .react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 9 7 !important;
+  animation: rd-flow 1.4s linear infinite;
+}
+@keyframes rd-flow {
+  to { stroke-dashoffset: -32; }
+}
+.rd-fullscreen-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: rgb(2 6 23 / 78%); backdrop-filter: blur(8px); }
+.rd-fullscreen-view { width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; display: flex; flex-direction: column; }
+.rd-fullscreen-view .rd-canvas { flex: 1; height: auto; min-height: 360px; }
+.rd-fullscreen-view .rd-panel { overflow-y: auto; max-height: 32vh; }
+
+:root[data-theme="dark"] .rd { --rd-bg: #111827; --rd-text: #f8fafc; --rd-muted: #dbe5f2; --rd-line: #475569; --rd-grid: #334155; --rd-edge-text: #f8fafc; --rd-edge-bg: #1f2937; }
+:root[data-theme="dark"] .rd-node { border-color: #475569; background: #1f2937; color: #f8fafc; }
+:root[data-theme="dark"] .rd-step { background: color-mix(in srgb, var(--accent, #5b6b8c) 24%, #1f2937); }
+:root[data-theme="dark"] .rd-summary { color: #dbeafe; }
+:root[data-theme="dark"] .rd-kind { color: #cbd5e1; }
+:root[data-theme="dark"] .rd-code { background: #0b1220; color: #e5e7eb; }
+:root[data-theme="dark"] .rd-actions button { border-color: #475569; background: #1f2937; color: #f8fafc; }
+:root[data-theme="dark"] .rd-actions button:hover, :root[data-theme="dark"] .rd-steps button:hover, :root[data-theme="dark"] .rd-steps button[aria-current="true"] { background: #263449; }
+:root[data-theme="dark"] .rd-actions .rd-primary { border-color: #2563eb; background: #2563eb; }
+:root[data-theme="dark"] .rd .react-flow__controls { border-color: #64748b; background: #1f2937; }
+:root[data-theme="dark"] .rd .react-flow__controls-button { border-bottom-color: #475569; background: #1f2937; color: #f8fafc; }
+:root[data-theme="dark"] .rd .react-flow__controls-button:hover { background: #334155; }
+:root[data-theme="dark"] .rd-fullscreen { background: #1f2937; color: #f8fafc; }
+:root[data-theme="dark"] .rd-fullscreen:hover { background: #334155; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-node,
+  .rd .react-flow__edge.animated path,
+  .rd .react-flow__edge.animated .react-flow__edge-path { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .rd-bar { align-items: flex-start; flex-direction: column; }
+  .rd-canvas { height: 360px; }
+  .rd-panel { padding: 12px; }
+  .rd-actions button { flex: 1 1 auto; }
+}
