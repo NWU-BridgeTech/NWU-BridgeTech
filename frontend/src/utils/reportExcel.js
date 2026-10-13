@@ -21,29 +21,67 @@ const COLORS = {
 // ============================================
 
 // Determines suitable column widths.
-function getColumnWidth(key) {
-  const widths = {
-    module: 42,
-    name: 32,
-    email: 42,
-    question: 75,
-    registered: 23,
-    status: 18,
-    role: 20,
-    share: 17,
-    enrollments: 20,
-    attempts: 22,
-    passed: 17,
-    failed: 17,
-    rate: 19,
-    completed: 20,
-    average: 21,
-    fastest: 21,
-    slowest: 21,
-    count: 19,
+function getColumnWidth(column, rows = []) {
+  const key = column?.key || "";
+  const header = String(column?.label || "");
+
+  // Minimum widths by column type
+  const minimums = {
+    module: 50,
+    name: 30,
+    email: 38,
+    question: 80,
+    registered: 22,
+    status: 16,
+    role: 18,
+    share: 14,
+    enrollments: 16,
+    attempts: 18,
+    passed: 14,
+    failed: 14,
+    rate: 14,
+    completed: 16,
+    average: 16,
+    fastest: 16,
+    slowest: 16,
+    count: 14,
   };
 
-  return widths[key] || 24;
+  // Maximum widths by column type
+  const maximums = {
+    module: 60,
+    name: 36,
+    email: 45,
+    question: 90,
+    registered: 24,
+    status: 18,
+    role: 20,
+    share: 16,
+    enrollments: 18,
+    attempts: 20,
+    passed: 16,
+    failed: 16,
+    rate: 16,
+    completed: 18,
+    average: 18,
+    fastest: 18,
+    slowest: 18,
+    count: 16,
+  };
+
+  // Calculate longest text in this column
+  const longestValue = rows.reduce((max, row) => {
+    const text = String(row?.[key] ?? "");
+    return Math.max(max, text.length);
+  }, header.length);
+
+  // Add a little padding
+  const suggested = longestValue + 4;
+
+  const min = minimums[key] || 20;
+  const max = maximums[key] || 28;
+
+  return Math.max(min, Math.min(max, suggested));
 }
 
 // Keep numeric values as numbers in Excel.
@@ -136,13 +174,13 @@ export async function downloadReportExcel(
   // COLUMN WIDTHS
   // ============================================
 
-  for (let i = 1; i <= totalColumns; i++) {
-    const column = columns[i - 1];
+for (let i = 1; i <= totalColumns; i++) {
+  const column = columns[i - 1];
 
-    sheet.getColumn(i).width = column
-      ? getColumnWidth(column.key)
-      : 24;
-  }
+  sheet.getColumn(i).width = column
+    ? getColumnWidth(column, rows)
+    : 24;
+}
 
   // ============================================
   // MAIN BLUE HEADER
@@ -434,14 +472,27 @@ export async function downloadReportExcel(
         color: { argb: COLORS.text },
       };
 
+      if (columnIndex === 0) {
+        cell.font = {
+        name: "Calibri",
+        size: 10,
+        bold: true,
+        color: { argb: COLORS.text },
+  };
+}
+
       cell.alignment = {
-        vertical: "middle",
-        horizontal:
-          typeof formatted.value === "number"
-            ? "right"
-            : "left",
-        wrapText: true,
-      };
+  vertical: "middle",
+  horizontal:
+    typeof formatted.value === "number"
+      ? "right"
+      : "left",
+  wrapText: column.key === "question",
+  indent:
+    typeof formatted.value === "number"
+      ? 0
+      : 1,
+};
 
       if (index % 2 === 1) {
         cell.fill = {
@@ -461,14 +512,11 @@ export async function downloadReportExcel(
 
     // Additional height for long Blui questions.
     const hasLongText = columns.some((column) => {
-      const text = String(
-        record[column.key] ?? ""
-      );
-
-      return text.length > 80;
+        const text = String(record[column.key] ?? "");
+        return text.length > 80;
     });
 
-    excelRow.height = hasLongText ? 45 : 26;
+    excelRow.height = hasLongText ? 42 : 24;
 
     dataRowNumber++;
   });
@@ -492,13 +540,14 @@ export async function downloadReportExcel(
 
   // Freeze the report's header area so column
   // headings remain accessible when scrolling.
-  sheet.views = [
+ 
+    sheet.views = [
     {
-      state: "frozen",
-      ySplit: tableHeaderRow,
-      showGridLines: false,
+        state: "normal",
+        showGridLines: false,
     },
-  ];
+    ];
+
 
   // ============================================
   // PRINT SETTINGS
