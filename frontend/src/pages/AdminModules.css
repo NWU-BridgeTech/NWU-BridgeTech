@@ -131,6 +131,17 @@
   font-size: 14px;
   margin: 10px 0 20px;
 }
+.modules-page .modules-empty {
+  padding: 32px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  text-align: center;
+}
+.modules-page .modules-empty p {
+  margin: 10px 0 20px;
+  color: #687384;
+  font-size: 14px;
+}
 .admin-page .module-editor {
   margin-bottom: 24px;
 }

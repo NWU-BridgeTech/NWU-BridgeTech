@@ -34,6 +34,10 @@ const SignOut = lazy(() => import("./pages/SignOut"));
 const Quizzes = lazy(() => import("./pages/Quizzes"));
 const QuizzRunner = lazy(() => import("./pages/QuizzRunner"));
 const TeamArea = lazy(() => import("./pages/TeamArea"));
+const InstructorSettings = lazy(() => import("./pages/InstructorSettings"));
+const InstructorCourses = lazy(() => import("./pages/InstructorCourses"));
+const InstructorCalendar = lazy(() => import("./pages/InstructorCalendar"));
+const InstructorLessonsQuizzes = lazy(() => import("./pages/InstructorLessonsQuizzes"));
 const Lessons = lazy(() => import("./pages/Lessons"));
 
 function AdminSection({ children }) {
@@ -112,7 +116,13 @@ function App() {
         <Route element={<ProtectedRoute requiredRole="Instructor" />}>
           <Route path="/instructor" element={<TeamArea role="Instructor" />} />
           <Route path="/instructor/modules" element={<AdminModules readOnly />} />
-          <Route path="/instructor/lessons" element={<AdminLessons readOnly />} />
+          <Route path="/instructor/lessons" element={<InstructorLessonsQuizzes />} />
+          <Route path="/instructor/courses" element={<InstructorCourses />} />
+          <Route path="/instructor/calendar" element={<InstructorCalendar />} />
+          <Route
+            path="/instructor/settings"
+            element={<InstructorSettings />}
+          />
         </Route>
 
         <Route element={<ProtectedRoute requiredRole="SuperAdmin" />}>

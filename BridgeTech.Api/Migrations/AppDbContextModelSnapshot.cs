@@ -1141,6 +1141,30 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("bytea")
                         .HasColumnName("profile_picture");
 
+                    b.Property<bool>("NotifyNewSubmissions")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_new_submissions");
+
+                    b.Property<bool>("NotifyPlatformUpdates")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_platform_updates");
+
+                    b.Property<bool>("NotifyQuizCompletions")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_quiz_completions");
+
+                    b.Property<bool>("NotifyStudentsFallingBehind")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_students_falling_behind");
+
                     b.Property<string>("ProfilePictureContentType")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

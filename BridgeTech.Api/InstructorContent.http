@@ -1,0 +1,136 @@
+@baseUrl = http://localhost:5174
+@token = replace-with-instructor-jwt
+@moduleId = 00000000-0000-0000-0000-000000000001
+@lessonId = 00000000-0000-0000-0000-000000000002
+@quizId = 00000000-0000-0000-0000-000000000003
+
+### Create an instructor-owned draft module
+POST {{baseUrl}}/api/instructor/content/modules
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Introduction to Web Development",
+  "description": "Learn the building blocks of the modern web."
+}
+
+### List modules created by the signed-in instructor
+GET {{baseUrl}}/api/instructor/content/modules
+Authorization: Bearer {{token}}
+
+### Get a module's lessons, quizzes, scores, and exercises
+GET {{baseUrl}}/api/instructor/content/modules/{{moduleId}}
+Authorization: Bearer {{token}}
+
+### Update a module created by the signed-in instructor
+PUT {{baseUrl}}/api/instructor/content/modules/{{moduleId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Introduction to Web Development",
+  "description": "Learn the building blocks of the modern web.",
+  "level": "Beginner",
+  "status": "Draft"
+}
+
+### Delete a module created by the signed-in instructor
+DELETE {{baseUrl}}/api/instructor/content/modules/{{moduleId}}
+Authorization: Bearer {{token}}
+
+### Create a draft lesson
+POST {{baseUrl}}/api/instructor/content/modules/{{moduleId}}/lessons
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Introduction and learning objectives",
+  "description": "Explore the key ideas in this module.",
+  "content": "## Learning objectives\nIdentify the main concepts.\n\n## Overview\nAn introduction to the topic.",
+  "durationMinutes": 20,
+  "status": "Draft"
+}
+
+### Update a lesson
+PUT {{baseUrl}}/api/instructor/content/lessons/{{lessonId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Introduction and learning objectives",
+  "description": "Explore the key ideas in this module.",
+  "content": "## Learning objectives\nIdentify the main concepts.",
+  "durationMinutes": 25,
+  "status": "Draft"
+}
+
+### Move a lesson down one position (use -1 to move up)
+POST {{baseUrl}}/api/instructor/content/lessons/{{lessonId}}/move
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "direction": 1
+}
+
+### Add a multiple-question single-choice quiz to a lesson
+POST {{baseUrl}}/api/instructor/content/lessons/{{lessonId}}/quizzes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Knowledge check",
+  "passingScore": 70,
+  "questions": [
+    {
+      "questionText": "Which item is a learning objective?",
+      "options": [
+        { "text": "A measurable outcome", "isCorrect": true },
+        { "text": "A decorative heading", "isCorrect": false }
+      ]
+    },
+    {
+      "questionText": "Which statement best describes a quiz?",
+      "options": [
+        { "text": "A way to check understanding", "isCorrect": true },
+        { "text": "A lesson title", "isCorrect": false }
+      ]
+    }
+  ]
+}
+
+### Add another question to an existing quiz
+POST {{baseUrl}}/api/instructor/content/quizzes/{{quizId}}/questions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "questionText": "What does semantic HTML improve?",
+  "options": [
+    { "text": "Meaning and accessibility", "isCorrect": true },
+    { "text": "Image resolution", "isCorrect": false }
+  ]
+}
+
+### Update an unanswered question in an existing quiz (zero-based question index)
+PUT {{baseUrl}}/api/instructor/content/quizzes/{{quizId}}/questions/0
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "questionText": "What does semantic HTML improve?",
+  "options": [
+    { "text": "Meaning and accessibility", "isCorrect": true },
+    { "text": "Image resolution", "isCorrect": false }
+  ]
+}
+
+### Add an exercise to a module
+POST {{baseUrl}}/api/instructor/content/modules/{{moduleId}}/exercises
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Practice the module concepts",
+  "description": "Apply the concepts in a small practical task."
+}

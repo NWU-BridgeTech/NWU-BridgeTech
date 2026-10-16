@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import {
   createModule,
@@ -6,6 +8,11 @@ import {
   getAdminModules,
   updateModule,
 } from "../utils/adminApi";
+import { apiFetch } from "../utils/apiClient";
+import {
+  deleteInstructorModule,
+  updateInstructorModule,
+} from "../utils/instructorContentApi";
 import "./Admin.css";
 import "./AdminModules.css";
 
@@ -18,6 +25,7 @@ function toModuleRow(module) {
     level: module.level,
     status: module.status,
     lessons: module.lessonCount,
+    publishedLessons: module.publishedLessonCount ?? 0,
     students: module.studentCount,
   };
 }
@@ -32,13 +40,28 @@ export default function AdminModules({ readOnly = false }) {
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
 
-  // Load every module (drafts included) from the database when the page opens.
+  // Instructor read-only view is scoped to modules attributed to the signed-in instructor.
   useEffect(() => {
     let cancelled = false;
 
-    getAdminModules()
+    const loadModules = readOnly
+      ? apiFetch("/instructor/content/modules").then((ownedModules) =>
+          ownedModules.map((module) => ({
+            id: module.moduleId,
+            title: module.title,
+            description: module.description ?? "",
+            level: module.level,
+            status: module.status,
+            lessons: module.lessonCount,
+            publishedLessons: module.publishedLessonCount ?? 0,
+            students: module.studentCount,
+          })),
+        )
+      : getAdminModules().then((data) => data.map(toModuleRow));
+
+    loadModules
       .then((data) => {
-        if (!cancelled) setModules(data.map(toModuleRow));
+        if (!cancelled) setModules(data);
       })
       .catch((error) => {
         if (!cancelled) setMessage(`Could not load modules: ${error.message}`);
@@ -50,7 +73,7 @@ export default function AdminModules({ readOnly = false }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [readOnly]);
 
   const publishedCount = modules.filter(
     (module) => module.status === "Published",
@@ -63,6 +86,27 @@ export default function AdminModules({ readOnly = false }) {
       .includes(search.trim().toLowerCase());
     return matchesSearch && (status === "All" || module.status === status);
   });
+
+  async function removeInstructorModule(module) {
+    if (
+      !window.confirm(
+        `Remove "${module.title}"? This also removes its lessons and cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingId(module.id);
+    setMessage("");
+    try {
+      await deleteInstructorModule(module.id);
+      setModules((current) => current.filter((item) => item.id !== module.id));
+      setMessage(`${module.title} removed.`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function removeModule(module) {
     if (
@@ -99,14 +143,33 @@ export default function AdminModules({ readOnly = false }) {
     const details = {
       title,
       description,
-      level: form.get("level"),
       status: form.get("status"),
     };
+    if (!readOnly) {
+      details.level = form.get("level");
+    }
 
     setSaving(true);
     setMessage("");
     try {
-      if (editingModule.id) {
+      if (readOnly) {
+        const updated = await updateInstructorModule(editingModule.id, details);
+        const updatedRow = {
+          ...editingModule,
+          title: updated.title,
+          description: updated.description ?? "",
+          level: updated.level,
+          status: updated.status,
+          lessons: updated.lessonCount,
+          publishedLessons: updated.publishedLessonCount ?? 0,
+          students: updated.studentCount,
+        };
+        setModules((current) =>
+          current.map((module) =>
+            module.id === updatedRow.id ? updatedRow : module,
+          ),
+        );
+      } else if (editingModule.id) {
         const updated = toModuleRow(
           await updateModule(editingModule.id, details),
         );
@@ -135,8 +198,12 @@ export default function AdminModules({ readOnly = false }) {
     <AppLayout>
       <header className="top dashboard-header modules-header">
         <div>
-          <h1>Modules</h1>
-          <p>Organise learning content and manage module availability.</p>
+          <h1>{readOnly ? "My modules" : "Modules"}</h1>
+          <p>
+            {readOnly
+              ? "Modules created by you and their learner progress."
+              : "Organise learning content and manage module availability."}
+          </p>
         </div>
         {!readOnly && <button
           className="btn blue"
@@ -160,9 +227,11 @@ export default function AdminModules({ readOnly = false }) {
 
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {loading ? "Loading modules..." : !editingModule && message}
+          {loading
+            ? readOnly ? "Loading your modules..." : "Loading modules..."
+            : !editingModule && message}
         </p>
-        {!readOnly && editingModule && (
+        {editingModule && (
           <section
             className="card module-editor"
             aria-labelledby="module-editor-heading"
@@ -192,7 +261,7 @@ export default function AdminModules({ readOnly = false }) {
                 defaultValue={editingModule.description}
               />
               <div className="module-form-row">
-                <div>
+                {!readOnly && <div>
                   <label htmlFor="module-level">Level</label>
                   <select
                     id="module-level"
@@ -203,7 +272,7 @@ export default function AdminModules({ readOnly = false }) {
                     <option>Intermediate</option>
                     <option>Advanced</option>
                   </select>
-                </div>
+                </div>}
                 <div>
                   <label htmlFor="module-status">Status</label>
                   <select
@@ -212,9 +281,18 @@ export default function AdminModules({ readOnly = false }) {
                     defaultValue={editingModule.status}
                   >
                     <option>Draft</option>
-                    <option disabled={!editingModule.lessons}>Published</option>
+                    <option
+                      disabled={readOnly
+                        ? !editingModule.publishedLessons
+                        : !editingModule.lessons}
+                    >
+                      Published
+                    </option>
                   </select>
-                  {!editingModule.lessons && (
+                  {readOnly && !editingModule.publishedLessons && (
+                    <p className="sub">Publish at least one lesson before publishing this module.</p>
+                  )}
+                  {!readOnly && !editingModule.lessons && (
                     <p className="sub">Add lessons before publishing.</p>
                   )}
                 </div>
@@ -246,7 +324,9 @@ export default function AdminModules({ readOnly = false }) {
           className="card module-list"
           aria-labelledby="module-list-heading"
         >
-          <h2 id="module-list-heading">All modules</h2>
+          <h2 id="module-list-heading">
+            {readOnly ? "Modules created by you" : "All modules"}
+          </h2>
           <p className="sub">
             {modules.length} modules · {publishedCount} published · {draftCount}{" "}
             drafts
@@ -279,21 +359,21 @@ export default function AdminModules({ readOnly = false }) {
             <thead>
               <tr>
                 <th scope="col">Module</th>
-                <th scope="col">Level</th>
+                {!readOnly && <th scope="col">Level</th>}
                 <th scope="col">Lessons</th>
                 <th scope="col">Students</th>
                 <th scope="col">Status</th>
-                {!readOnly && <th scope="col">Action</th>}
+                <th scope="col">Action</th>
               </tr>
             </thead>
             <tbody>
               {visibleModules.map((module) => (
                 <tr key={module.id}>
-                  {!readOnly && <td>
+                  <td>
                     <strong>{module.title}</strong>
                     <p>{module.description}</p>
-                  </td>}
-                  <td>{module.level}</td>
+                  </td>
+                  {!readOnly && <td>{module.level}</td>}
                   <td>{module.lessons}</td>
                   <td>{module.students}</td>
                   <td>
@@ -320,7 +400,7 @@ export default function AdminModules({ readOnly = false }) {
                       className="module-edit assessment-danger"
                       type="button"
                       disabled={!!editingModule || deletingId === module.id}
-                      onClick={() => removeModule(module)}
+                      onClick={() => readOnly ? removeInstructorModule(module) : removeModule(module)}
                     >
                       {deletingId === module.id ? "Removing..." : "Remove"}
                     </button>
@@ -331,18 +411,29 @@ export default function AdminModules({ readOnly = false }) {
           </table>
           {!loading && visibleModules.length === 0 && (
             <div className="modules-empty">
-              <h3>No modules found</h3>
-              <p>Try a different search or status.</p>
-              <button
-                className="btn"
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setStatus("All");
-                }}
-              >
-                Clear filters
-              </button>
+              <h3>{readOnly && modules.length === 0 ? "No modules created yet" : "No modules found"}</h3>
+              <p>
+                {readOnly && modules.length === 0
+                  ? "Your teaching journey starts here. Create your first module to begin building lessons for your learners."
+                  : "Try a different search or status."}
+              </p>
+              {readOnly && modules.length === 0 && (
+                <Link className="instructor-first-module-link" to="/instructor/lessons?createModule=1">
+                  Create your first module <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              )}
+              {!(readOnly && modules.length === 0) && (
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setStatus("All");
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
           <p className="module-result-count" role="status">

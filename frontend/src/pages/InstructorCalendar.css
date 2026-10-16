@@ -1,0 +1,314 @@
+.instructor-calendar-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  padding-bottom: 36px;
+}
+
+.instructor-calendar-page .instructor-planner {
+  width: 100%;
+  max-width: 1240px;
+  justify-self: center;
+  padding: 26px;
+}
+
+.instructor-calendar-page .instructor-planner-page-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  align-items: start;
+  gap: 0 28px;
+}
+
+.instructor-calendar-page .instructor-planner-page-layout > .instructor-planner-header {
+  grid-column: 1 / -1;
+  margin-bottom: 24px;
+}
+
+.instructor-calendar-page .instructor-planner-calendar-area {
+  grid-column: 1;
+  grid-row: 2;
+  padding: 18px;
+  border: 1px solid #e1e6ee;
+  border-radius: 14px;
+  background: #fff;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.instructor-calendar-page .instructor-planner-calendar-area > .instructor-planner-month-controls {
+  justify-content: flex-end;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar {
+  display: contents;
+}
+
+.instructor-calendar-page .instructor-planner-header {
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
+  align-items: center;
+}
+
+.instructor-calendar-page .instructor-planner-page-layout > .instructor-planner-header {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.instructor-calendar-page .instructor-planner-title h2 {
+  font-size: 20px;
+}
+
+.instructor-calendar-page .instructor-planner-title p {
+  font-size: 13px;
+}
+
+.instructor-calendar-page .instructor-calendar {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.instructor-calendar-page .instructor-calendar-weekday {
+  height: 34px;
+  font-size: 12px;
+}
+
+.instructor-calendar-page .instructor-calendar-day {
+  max-width: 52px;
+  font-size: 13px;
+}
+
+.instructor-calendar-page .instructor-planner-schedule {
+  margin-top: 24px;
+  padding-top: 20px;
+}
+
+.instructor-calendar-page .instructor-planner-notes {
+  margin-top: 22px;
+  padding-top: 20px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule {
+  grid-column: 2;
+  grid-row: 2;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.instructor-calendar-page .instructor-planner-schedule-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.instructor-calendar-page .instructor-planner-schedule-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.instructor-calendar-page .instructor-planner-event-count {
+  color: #6b7789;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form {
+  grid-template-columns: minmax(94px, 0.55fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #e1e6ee;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.instructor-calendar-page .instructor-planner-event-form-heading {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.instructor-calendar-page .instructor-planner-event-form-heading strong {
+  color: #303a49;
+  font-size: 13px;
+}
+
+.instructor-calendar-page .instructor-planner-event-form-heading > span {
+  color: #687384;
+  font-size: 11px;
+}
+
+.instructor-calendar-page .instructor-planner-event-field {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: #596678;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form input {
+  height: 38px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form button {
+  min-height: 38px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form {
+  border-color: #343d4a;
+  background: #1a202b;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-form-heading strong {
+  color: #e5eaf2;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-form-heading > span,
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-field {
+  color: #b5c0ce;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule ul {
+  margin: 0;
+  gap: 8px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule li {
+  grid-template-columns: 54px minmax(0, 1fr) 30px;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e8ecf1;
+  color: #647084;
+  font-size: 12px;
+}
+
+.instructor-calendar-page .instructor-planner-event-groups {
+  display: grid;
+  gap: 16px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.instructor-calendar-page .instructor-planner-event-group h4 {
+  margin: 0 0 6px;
+  color: #465366;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.instructor-calendar-page .instructor-planner-event-group time {
+  color: #315db6;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule li > span {
+  font-size: 12px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule li button {
+  width: 28px;
+  height: 28px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-empty {
+  margin: 0 0 14px;
+  font-size: 12px;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-calendar-area {
+  border-color: #3a4658;
+  background: #171d28;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-group h4 {
+  color: #e5eaf2;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-count {
+  color: #aeb9c9;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule li {
+  border-color: #343d4a;
+  color: #c2ccda;
+}
+
+:root[data-theme="dark"] .instructor-calendar-page .instructor-planner-event-group time {
+  color: #9dbdff;
+}
+
+.instructor-calendar-page .instructor-planner-all-notes .instructor-note-list {
+  display: grid;
+  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-flow: column;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px 4px 10px 2px;
+}
+
+.instructor-calendar-page .instructor-planner-all-notes .instructor-note-slide {
+  min-height: 145px;
+  border-width: 2px;
+}
+
+.instructor-calendar-page .instructor-note-slide {
+  min-height: 145px;
+}
+
+.instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-notes {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-width: 0;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid #e8ecf1;
+}
+
+.instructor-calendar-page .instructor-planner-all-notes #instructor-personal-notes-content {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .instructor-calendar-page .instructor-planner {
+    padding: 18px;
+  }
+
+  .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-event-form button {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .instructor-calendar-page .instructor-planner-header,
+  .instructor-calendar-page .instructor-planner-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .instructor-calendar-page .instructor-planner-page-layout > .instructor-planner-header,
+  .instructor-calendar-page .instructor-planner-calendar-area {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-schedule,
+  .instructor-calendar-page .instructor-planner-page-sidebar .instructor-planner-notes {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}

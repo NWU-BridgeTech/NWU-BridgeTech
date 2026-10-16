@@ -1,0 +1,148 @@
+.instructor-settings-page {
+  max-width: 900px;
+}
+
+.instructor-settings-page .profile-section {
+  margin-bottom: 20px;
+}
+
+.instructor-settings-page .profile-section-heading p,
+.instructor-settings-page .profile-picture-controls p,
+.instructor-settings-page .theme-select span,
+.instructor-settings-page .profile-form label > span {
+  color: #687383;
+}
+
+.instructor-settings-page .profile-form label > span {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.instructor-settings-page .profile-form input[readonly] {
+  background: #f3f5f8;
+  color: #687383;
+  cursor: not-allowed;
+}
+
+.instructor-settings-page .profile-signout-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.instructor-settings-page .profile-signout-section .profile-section-heading {
+  margin-bottom: 0;
+}
+
+.instructor-settings-page .settings-notification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid #edf0f3;
+  cursor: pointer;
+}
+
+.instructor-settings-page .settings-notification:first-child {
+  padding-top: 0;
+}
+
+.instructor-settings-page .settings-notification:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.instructor-settings-page .settings-notification strong {
+  display: block;
+  color: #283342;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.instructor-settings-page .settings-notification span > span {
+  display: block;
+  margin-top: 6px;
+  color: #687383;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.instructor-settings-page .settings-notification input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: #3159ad;
+  cursor: pointer;
+}
+
+.instructor-settings-page .settings-notification input:disabled {
+  cursor: wait;
+}
+
+.instructor-settings-page .security-form button {
+  justify-self: start;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-section {
+  border-color: #303030;
+  background: #111;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-section-heading h3,
+:root[data-theme="dark"] .instructor-settings-page .profile-form label,
+:root[data-theme="dark"] .instructor-settings-page .profile-picture-controls strong,
+:root[data-theme="dark"] .instructor-settings-page .theme-select {
+  color: #f5f5f5;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-section-heading p,
+:root[data-theme="dark"] .instructor-settings-page .profile-picture-controls p,
+:root[data-theme="dark"] .instructor-settings-page .theme-select span,
+:root[data-theme="dark"] .instructor-settings-page .profile-form label > span {
+  color: #c4c9d2;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .settings-notification {
+  border-color: #303030;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .settings-notification strong {
+  color: #f5f5f5;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .settings-notification span > span {
+  color: #c4c9d2;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-form input,
+:root[data-theme="dark"] .instructor-settings-page .profile-form textarea,
+:root[data-theme="dark"] .instructor-settings-page .theme-select select {
+  border-color: #444;
+  background: #171717;
+  color: #f5f5f5;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-form input[readonly] {
+  background: #222;
+  color: #c4c9d2;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-picture-edit-button {
+  border-color: #444;
+  background: #171717;
+  color: #f5f5f5;
+}
+
+:root[data-theme="dark"] .instructor-settings-page .profile-picture-preview {
+  background: #24334d;
+  color: #c5d9ff;
+}
+
+@media (max-width: 640px) {
+  .instructor-settings-page .profile-signout-section {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

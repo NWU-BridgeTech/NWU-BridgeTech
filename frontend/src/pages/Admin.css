@@ -110,6 +110,18 @@
   gap: 8px;
 }
 
+.admin-page .admin-utility-actions .theme-switch {
+  cursor: pointer;
+}
+
+.admin-page .admin-utility-theme-error {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  max-width: min(320px, calc(100vw - 32px));
+  margin: 0;
+}
+
 .admin-page .admin-utility-item {
   position: static;
 }

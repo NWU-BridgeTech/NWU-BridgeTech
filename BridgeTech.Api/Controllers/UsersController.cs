@@ -1,21 +1,22 @@
 using BridgeTech.Api.Data;
+using BridgeTech.Api.DTOs.Auth;
+using BridgeTech.Api.DTOs.Users;
 using BridgeTech.Api.Domain.Entities;
 using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.Services.Auth;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using BridgeTech.Api.DTOs.Users;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
 [Authorize]
-// Provides safe, read-only user profiles for administrative and learning views.
+// Provides self-service profile settings and safe user profiles for other views.
 public class UsersController(
     AppDbContext dbContext,
     IPasswordHasher<User> passwordHasher,
@@ -218,6 +219,9 @@ public class UsersController(
             candidate.FirstName,
             candidate.LastName,
             candidate.Email,
+            candidate.PhoneNumber,
+            candidate.Address,
+            candidate.University,
             candidate.GithubUsername,
             candidate.Role,
             candidate.EmailVerified,
@@ -226,6 +230,64 @@ public class UsersController(
             CertificatesEarned = candidate.Certificates.Count()
         }).SingleOrDefaultAsync(cancellationToken);
         return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateCurrentUser(
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var user = await dbContext.Users
+            .SingleOrDefaultAsync(candidate => candidate.UserId == userId, cancellationToken);
+        if (user is null) return NotFound();
+        if (!string.Equals(user.Email, request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Email address changes are not available in account settings." });
+        }
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber)
+            ? null
+            : request.PhoneNumber.Trim();
+        user.Address = string.IsNullOrWhiteSpace(request.Address)
+            ? null
+            : request.Address.Trim();
+        user.University = string.IsNullOrWhiteSpace(request.University)
+            ? null
+            : request.University.Trim();
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = "Profile updated successfully." });
+    }
+
+    [HttpPost("me/password")]
+    public async Task<IActionResult> ChangeCurrentUserPassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var user = await dbContext.Users
+            .SingleOrDefaultAsync(candidate => candidate.UserId == userId, cancellationToken);
+        if (user is null) return NotFound();
+
+        var verificationResult = passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            request.CurrentPassword);
+        if (verificationResult == PasswordVerificationResult.Failed)
+        {
+            return BadRequest(new { message = "Current password is incorrect." });
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, request.NewPassword);
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(new { message = "Password changed successfully." });
     }
 
     [HttpGet("me/preferences")]
@@ -262,6 +324,14 @@ public class UsersController(
         }
 
         preference.Theme = theme;
+        if (request.NotifyNewSubmissions.HasValue)
+            preference.NotifyNewSubmissions = request.NotifyNewSubmissions.Value;
+        if (request.NotifyQuizCompletions.HasValue)
+            preference.NotifyQuizCompletions = request.NotifyQuizCompletions.Value;
+        if (request.NotifyStudentsFallingBehind.HasValue)
+            preference.NotifyStudentsFallingBehind = request.NotifyStudentsFallingBehind.Value;
+        if (request.NotifyPlatformUpdates.HasValue)
+            preference.NotifyPlatformUpdates = request.NotifyPlatformUpdates.Value;
         preference.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ToPreferenceResponse(preference));
@@ -330,7 +400,13 @@ public class UsersController(
                          preference.ProfilePictureContentType is { Length: > 0 } contentType
             ? $"data:{contentType};base64,{Convert.ToBase64String(picture)}"
             : null;
-        return new UserPreferenceResponse(preference?.Theme ?? "light", pictureUrl);
+        return new UserPreferenceResponse(
+            preference?.Theme ?? "light",
+            pictureUrl,
+            preference?.NotifyNewSubmissions ?? true,
+            preference?.NotifyQuizCompletions ?? true,
+            preference?.NotifyStudentsFallingBehind ?? true,
+            preference?.NotifyPlatformUpdates ?? true);
     }
 
     [HttpGet]

@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, CheckCheck, LogOut, Settings, UserRound } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  LogOut,
+  Moon,
+  Settings,
+  Sun,
+  UserRound,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { clearAuthTokens } from "../utils/authStorage";
+import { useTheme } from "../contexts/ThemeContext";
 import "../pages/Admin.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -40,8 +50,15 @@ function formatRole(role) {
   return "Account";
 }
 
+function getSettingsPath(role) {
+  return role === "Instructor" || role === 1
+    ? "/instructor/settings"
+    : "/admin/settings";
+}
+
 export default function AdminUtilityBar() {
   const navigate = useNavigate();
+  const { effectiveTheme, updateTheme } = useTheme();
   const toolbarRef = useRef(null);
   const notificationButtonRef = useRef(null);
   const userButtonRef = useRef(null);
@@ -54,7 +71,9 @@ export default function AdminUtilityBar() {
   );
   const [profile, setProfile] = useState(readStoredUser);
   const [profileError, setProfileError] = useState("");
+  const [themeError, setThemeError] = useState("");
   const unreadCount = notifications.filter((notification) => !notification.isRead).length;
+  const isInstructor = profile?.role === "Instructor" || profile?.role === 1;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -157,10 +176,18 @@ export default function AdminUtilityBar() {
         keepalive: true,
       }).catch(() => {});
     }
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    navigate("/login", { replace: true });
+    clearAuthTokens();
+    navigate("/", { replace: true });
+  }
+
+  async function toggleTheme() {
+    const nextTheme = effectiveTheme === "dark" ? "light" : "dark";
+    setThemeError("");
+    try {
+      await updateTheme(nextTheme);
+    } catch (error) {
+      setThemeError(error.message || "Unable to save the selected theme.");
+    }
   }
 
   const displayName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ")
@@ -171,6 +198,23 @@ export default function AdminUtilityBar() {
   return (
     <div className="admin-utility-bar" ref={toolbarRef}>
       <div className="admin-utility-actions">
+        {isInstructor && (
+          <button
+            type="button"
+            className="theme-switch"
+            role="switch"
+            aria-checked={effectiveTheme === "dark"}
+            aria-label={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${effectiveTheme === "dark" ? "light" : "dark"} mode`}
+            onClick={toggleTheme}
+          >
+            <Sun aria-hidden="true" size={15} />
+            <span className="theme-switch-track">
+              <span className="theme-switch-thumb" />
+            </span>
+            <Moon aria-hidden="true" size={15} />
+          </button>
+        )}
         <div className="admin-utility-item">
           <button
             ref={notificationButtonRef}
@@ -282,7 +326,10 @@ export default function AdminUtilityBar() {
               </div>
               {profileError && <p className="admin-popover-message">{profileError}</p>}
               <div className="admin-profile-actions">
-                <Link to="/admin/settings" onClick={() => setOpenPanel(null)}>
+                <Link
+                  to={getSettingsPath(profile?.role)}
+                  onClick={() => setOpenPanel(null)}
+                >
                   <Settings size={16} aria-hidden="true" />
                   Account settings
                 </Link>
@@ -295,6 +342,11 @@ export default function AdminUtilityBar() {
           )}
         </div>
       </div>
+      {isInstructor && themeError && (
+        <p className="admin-popover-message admin-utility-theme-error" role="alert">
+          {themeError}
+        </p>
+      )}
     </div>
   );
 }
