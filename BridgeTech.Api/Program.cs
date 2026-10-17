@@ -22,6 +22,7 @@ using BridgeTech.Api.Services.Badges;
 using BridgeTech.Api.Services.Admin;
 using BridgeTech.Api.Services.AdminDashboard;
 using BridgeTech.Api.Services.Reports;
+using BridgeTech.Api.Services.SupportTickets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,7 @@ builder.Services.AddScoped<IAdministratorService, AdministratorService>();
 builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IAdminReportService, AdminReportService>();
+builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
 
 builder.Services.AddRateLimiter(options =>
 {
