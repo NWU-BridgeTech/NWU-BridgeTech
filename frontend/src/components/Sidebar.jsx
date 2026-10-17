@@ -1,6 +1,7 @@
 import {
   GraduationCap,
   LayoutDashboard,
+  LifeBuoy,
   Layers,
   Settings2,
   ShieldCheck,
@@ -42,6 +43,7 @@ function getGroups() {
     label: "Manage",
     items: [
       { label: "Reports", path: "/admin/reports", icon: BarChart3 },
+      { label: "Support tickets", path: "/admin/support", icon: LifeBuoy },
       { label: "Settings", path: "/admin/settings", icon: Settings2 },
     ],
   },
