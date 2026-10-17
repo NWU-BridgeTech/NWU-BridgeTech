@@ -135,6 +135,193 @@ const STYLES = `
     grid-template-columns: 1fr;
   }
 }
+
+
+.public-footer {
+  background: #1d2433;
+  color: #c2cbd9;
+  border-top: none;
+  padding: 0;
+  font-size: 14px;
+}
+
+
+.public-footer .public-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.9fr 1.3fr;
+  gap: 48px;
+  padding-top: 65px;
+  padding-bottom: 65px;
+}
+
+
+.public-footer-section {
+  min-width: 0;
+}
+
+.public-footer-section h3 {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 28px;
+  padding-bottom: 14px;
+  position: relative;
+}
+
+.public-footer-section h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 42px;
+  background: #627fe0;
+}
+
+
+.public-footer-logo {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.8px;
+  margin-bottom: 22px;
+}
+
+.public-footer-logo span {
+  color: #86a9ff;
+}
+
+.public-footer-about p {
+  color: #c2cbd9;
+  font-size: 13px;
+  line-height: 1.85;
+  margin: 0 0 16px;
+  max-width: 310px;
+}
+
+/* FOOTER LISTS */
+
+.public-footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.public-footer-section li {
+  color: #c2cbd9;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.public-footer-section li a {
+  color: #c2cbd9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.public-footer-section li a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* CONTACT DETAILS */
+
+.public-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.public-footer-contact a {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  color: #c2cbd9;
+  text-decoration: none;
+
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+
+  transition: color 0.2s ease;
+}
+
+.public-footer-contact a:hover {
+  color: #ffffff;
+}
+
+.public-footer-contact svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #86a9ff;
+}
+
+.public-footer-contact-note {
+  color: #a3aec0;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 24px;
+}
+
+/* COPYRIGHT AREA */
+
+.public-footer-bottom {
+  background: #151c29;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 0;
+}
+
+.public-footer-bottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.public-footer-bottom p {
+  margin: 0;
+  font-size: 12px;
+  color: #a3aec0;
+}
+
+/* TABLET RESPONSIVENESS */
+
+@media (max-width: 1000px) {
+  .public-footer .public-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+    padding-top: 50px;
+    padding-bottom: 50px;
+  }
+}
+
+/* MOBILE RESPONSIVENESS */
+
+@media (max-width: 600px) {
+  .public-footer .public-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 45px;
+    padding-bottom: 45px;
+  }
+
+  .public-footer-section h3 {
+    margin-bottom: 20px;
+  }
+
+  .public-footer-bottom-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+}
+
 `;
 
 const FEATURES = [
@@ -347,14 +534,138 @@ export default function PublicHomepage() {
         </div>
       </div>
 
-      <footer>
-        <div className="container footer-row">
-          <div className="logo">
-            <span style={{ color: "#000000" }}>Bridge</span><i>Tech</i>
-          </div>
-          <div>Practical industry tool learning for computer science students.</div>
+      
+<footer className="public-footer">
+  <div className="container">
+    <div className="public-footer-grid">
+
+      <div className="public-footer-section public-footer-about">
+        <div className="public-footer-logo">
+          Bridge<span>Tech</span>
         </div>
-      </footer>
+
+        <p>
+          Bridging the classroom-to-career gap through
+          practical, industry-focused software development
+          education.
+        </p>
+
+        <p>
+          Learn industry-standard tools, build practical
+          skills, and prepare for a career in software
+          development.
+        </p>
+      </div>
+
+      <div className="public-footer-section">
+        <h3>Learning Modules</h3>
+
+        <ul>
+          <li>Git &amp; Version Control</li>
+          <li>APIs &amp; Web Services</li>
+          <li>CI/CD Pipelines</li>
+          <li>Cloud Basics</li>
+        </ul>
+      </div>
+
+      <div className="public-footer-section">
+        <h3>Quick Links</h3>
+
+        <ul>
+          <li>
+            <a href="/login">Student Login</a>
+          </li>
+
+          <li>
+            <a href="/signup">Create an Account</a>
+          </li>
+
+          <li>
+            <a href="/team-login">Team Login</a>
+          </li>
+        </ul>
+      </div>
+
+      <div className="public-footer-section">
+        <h3>Contact Us</h3>
+
+        <div className="public-footer-contact">
+          <a href="mailto:Supportbridgetech@gmail.com">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect
+                x="3"
+                y="5"
+                width="18"
+                height="14"
+                rx="2"
+              />
+              <path d="m3 7 9 6 9-6" />
+            </svg>
+
+            <span>Supportbridgetech@gmail.com</span>
+          </a>
+
+          <a href="tel:+27612141260">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M22 16.9v3a2 2 0 0 1-2.2 2
+                19.8 19.8 0 0 1-8.6-3.1
+                19.5 19.5 0 0 1-6-6
+                A19.8 19.8 0 0 1 2.1 4.2
+                2 2 0 0 1 4.1 2h3
+                a2 2 0 0 1 2 1.7
+                c.1 1 .3 2 .7 2.9
+                a2 2 0 0 1-.5 2.1L8 10
+                a16 16 0 0 0 6 6l1.3-1.3
+                a2 2 0 0 1 2.1-.5
+                c.9.4 1.9.6 2.9.7
+                a2 2 0 0 1 1.7 2z"
+              />
+            </svg>
+
+            <span>061 214 1260</span>
+          </a>
+        </div>
+
+        <p className="public-footer-contact-note">
+          Have a question about BridgeTech?
+          We're here to help.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <div className="public-footer-bottom">
+    <div className="container public-footer-bottom-inner">
+      <p>
+        © {new Date().getFullYear()} BridgeTech.
+        All rights reserved.
+      </p>
+
+      <p>
+        Learn. Practice. Grow.
+      </p>
+    </div>
+  </div>
+</footer>
+
     </>
   );
 }
