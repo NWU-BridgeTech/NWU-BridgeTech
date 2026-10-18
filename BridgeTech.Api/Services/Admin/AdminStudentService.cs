@@ -139,6 +139,7 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
         var progress = context.LessonProgress.AsNoTracking().Where(p => p.Completed && p.CompletedAt != null && p.User.Role == UserRole.Student);
         var enrollments = context.Enrollments.AsNoTracking().Where(e => e.User.Role == UserRole.Student);
         var certificates = context.Certificates.AsNoTracking().Where(c => c.User.Role == UserRole.Student);
+        var exerciseCompletions = context.ExerciseCompletions.AsNoTracking();
 
         if (onlyStudentId is { } id)
         {
@@ -148,6 +149,7 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
             progress = progress.Where(p => p.UserId == id);
             enrollments = enrollments.Where(e => e.UserId == id);
             certificates = certificates.Where(c => c.UserId == id);
+            exerciseCompletions = exerciseCompletions.Where(c => c.UserId == id);
         }
 
         var userRows = await users
@@ -215,6 +217,12 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
         var quizByUser = quizRows.ToDictionary(r => r.UserId);
         var submissionsByUser = submissionRows.ToDictionary(r => r.UserId);
         var certificatesByUser = certificateRows.ToDictionary(r => r.UserId, r => r.Count);
+        // "Practical tasks completed" counts distinct exercises in the exercise_completions table.
+        var completionRows = await exerciseCompletions
+            .GroupBy(c => c.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Select(c => c.ExerciseId).Distinct().Count() })
+            .ToListAsync(cancellationToken);
+        var completedExercisesByUser = completionRows.ToDictionary(r => r.UserId, r => r.Count);
         var progressByUserModule = progressRows.ToDictionary(r => (r.UserId, r.ModuleId), r => r.LastAt);
         var lastProgressByUser = progressRows
             .GroupBy(r => r.UserId)
@@ -266,7 +274,6 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
 
             if (submissionsByUser.TryGetValue(row.UserId, out var submission))
             {
-                snapshot.VerifiedPracticals = submission.Verified;
                 snapshot.FailedPracticals = submission.Failed;
                 lastActive = Latest(lastActive, submission.LastAt);
             }
@@ -283,6 +290,7 @@ public class AdminStudentService(AppDbContext context) : IAdminStudentService
 
             snapshot.LastActiveAt = lastActive;
             snapshot.CertificatesEarned = certificatesByUser.GetValueOrDefault(row.UserId);
+            snapshot.VerifiedPracticals = completedExercisesByUser.GetValueOrDefault(row.UserId);
 
             StudentStatusRules.Apply(snapshot, now);
             snapshots.Add(snapshot);
