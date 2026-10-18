@@ -24,6 +24,7 @@ using BridgeTech.Api.Services.AdminDashboard;
 using BridgeTech.Api.Services.Reports;
 using BridgeTech.Api.Services.InstructorDashboard;
 using BridgeTech.Api.Services.InstructorContent;
+using BridgeTech.Api.Services.SupportTickets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,7 @@ builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IAdminReportService, AdminReportService>();
 builder.Services.AddScoped<IInstructorDashboardService, InstructorDashboardService>();
 builder.Services.AddScoped<IInstructorContentService, InstructorContentService>();
+builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
 
 builder.Services.AddRateLimiter(options =>
 {

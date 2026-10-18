@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { getToken } from "../utils/authStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -18,6 +19,7 @@ function getStoredProfilePicture() {
 }
 
 export function ThemeProvider({ children }) {
+  const { pathname } = useLocation();
   const [theme, setTheme] = useState(getStoredTheme);
   const [profilePictureUrl, setProfilePictureUrl] = useState(
     getStoredProfilePicture,
@@ -26,15 +28,16 @@ export function ThemeProvider({ children }) {
 
   const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
   const isAuthenticated = Boolean(getToken());
+  const isPublicHomepage = pathname === "/";
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isPublicHomepage) {
       document.documentElement.dataset.theme = effectiveTheme;
     } else {
       delete document.documentElement.dataset.theme;
     }
     window.localStorage.setItem("bridgetech-theme", theme);
-  }, [theme, effectiveTheme, isAuthenticated]);
+  }, [theme, effectiveTheme, isAuthenticated, isPublicHomepage]);
 
   useEffect(() => {
     const token = getToken();
@@ -95,11 +98,13 @@ export function ThemeProvider({ children }) {
     if (theme !== "system") return undefined;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const updateTheme = () => {
-      document.documentElement.dataset.theme = getSystemTheme();
+      if (isAuthenticated && !isPublicHomepage) {
+        document.documentElement.dataset.theme = getSystemTheme();
+      }
     };
     mediaQuery.addEventListener("change", updateTheme);
     return () => mediaQuery.removeEventListener("change", updateTheme);
-  }, [theme]);
+  }, [theme, isAuthenticated, isPublicHomepage]);
 
   async function updateTheme(nextTheme) {
     userSelectedTheme.current = true;

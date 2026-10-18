@@ -60,6 +60,7 @@
 }
 
 .profile-form input,
+.profile-form select,
 .profile-form textarea {
   border: 1px solid #cbd3dd;
   border-radius: 5px;
@@ -76,6 +77,7 @@
 }
 
 .profile-form input:focus,
+.profile-form select:focus,
 .profile-form textarea:focus {
   border-color: #1d67d5;
   outline: 3px solid #dbeafe;

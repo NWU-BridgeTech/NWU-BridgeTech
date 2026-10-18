@@ -421,3 +421,16 @@ internal sealed class LessonProgressConfiguration : IEntityTypeConfiguration<Les
         builder.HasIndex(x => x.LessonId);
     }
 }
+internal sealed class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
+{
+    public void Configure(EntityTypeBuilder<SupportTicket> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "support_tickets", nameof(SupportTicket.SupportTicketId));
+        builder.Property(x => x.Category).HasConversion<short>().IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(2000).IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().HasDefaultValue(SupportTicketStatus.Open).IsRequired();
+        builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.Status, x.CreatedAt });
+    }
+}

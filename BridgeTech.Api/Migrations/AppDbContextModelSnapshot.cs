@@ -968,6 +968,52 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("staff_activities", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.SupportTicket", b =>
+                {
+                    b.Property<Guid>("SupportTicketId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("support_ticket_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<short>("Category")
+                        .HasColumnType("smallint")
+                        .HasColumnName("category");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<short>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)0)
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("SupportTicketId")
+                        .HasName("pk_support_tickets");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_support_tickets_user_id");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_support_tickets_status_created_at");
+
+                    b.ToTable("support_tickets", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1522,6 +1568,18 @@ namespace BridgeTech.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_staff_activities_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.SupportTicket", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_support_tickets_users_user_id");
 
                     b.Navigation("User");
                 });

@@ -17,6 +17,7 @@ const StudentAiSummary = lazy(() => import("./pages/StudentAiSummary"));
 const StudentProfile = lazy(() => import("./pages/StudentProfile"));
 const StudentNotifications = lazy(() => import("./pages/StudentNotifications"));
 const StudentBadges = lazy(() => import("./pages/StudentBadges"));
+const StudentFeedback = lazy(() => import("./pages/StudentFeedback"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminModules = lazy(() => import("./pages/AdminModules"));
 const AdminLessons = lazy(() => import("./pages/AdminLessons"));
@@ -26,6 +27,7 @@ const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const AdminAdministrators = lazy(() => import("./pages/AdminAdministrators"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
 const AdminReports = lazy(() => import("./pages/AdminReports"));
+const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const Login = lazy(() => import("./pages/Login"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -88,6 +90,7 @@ function App() {
             element={<StudentCertificates />}
           />
           <Route path="/student/badges" element={<StudentBadges />} />
+          <Route path="/student/feedback" element={<StudentFeedback />} />
           <Route path="/student/github" element={<StudentGithub />} />
           <Route path="/student/ai-summary" element={<StudentAiSummary />} />
           <Route path="/student/profile" element={<StudentProfile />} />
@@ -204,6 +207,14 @@ function App() {
             element={
               <AdminSection>
                 <AdminReports />
+              </AdminSection>
+            }
+          />
+          <Route
+            path="/admin/support"
+            element={
+              <AdminSection>
+                <AdminSupport />
               </AdminSection>
             }
           />
