@@ -488,4 +488,37 @@ public class LessonService(
             Quiz = quizInfo
         };
     }
+      public async Task<bool> DeleteAsync(Guid lessonId, CancellationToken cancellationToken = default)
+    {
+        var lesson = await context.Lessons.FindAsync(new object[] { lessonId }, cancellationToken);
+        if (lesson is null) return false;
+
+        // Don't silently wipe quizzes or student progress along with the lesson.
+        if (await context.Quizzes.AnyAsync(q => q.LessonId == lessonId, cancellationToken))
+            throw new InvalidOperationException(
+                "This lesson has a quiz. Delete the quiz first, or set the lesson to Draft instead.");
+
+        if (await context.LessonProgress.AnyAsync(p => p.LessonId == lessonId, cancellationToken))
+            throw new InvalidOperationException(
+                "Students have progress on this lesson, so it can't be deleted. Set it to Draft to hide it instead.");
+
+        try
+        {
+            // The lesson's video summary (if it has one) is removed with it.
+            var videos = await context.VideoSummaries
+                .Where(v => v.LessonId == lessonId)
+                .ToListAsync(cancellationToken);
+            context.VideoSummaries.RemoveRange(videos);
+
+            context.Lessons.Remove(lesson);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException(
+                "This lesson is still linked to other data, so it can't be deleted.");
+        }
+
+        return true;
+    }
 }
