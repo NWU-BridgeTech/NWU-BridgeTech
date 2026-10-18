@@ -33,9 +33,9 @@ const Login = ({ team = false }) => {
       Student: "/home",
       Instructor: "/instructor",
       Admin: "/admin",
-      SuperAdmin: "/admin/administrators",
+      SuperAdmin: "/admin",
     };
-    navigate(destinations[data.role] || "/login");
+    navigate(destinations[data.role] || "/login", { replace: true });
   }
 
   async function handleLogin(event) {

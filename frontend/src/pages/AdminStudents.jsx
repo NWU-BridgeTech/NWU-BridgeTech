@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminStudents.css";
@@ -51,6 +52,8 @@ export default function AdminStudents() {
   const [moduleFilter, setModuleFilter] = useState("All");
   const [status, setStatus] = useState("All");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const detailsRef = useRef(null);
   const viewButtonRef = useRef(null);
 
@@ -90,17 +93,36 @@ export default function AdminStudents() {
     setStatus("All");
   }
 
+  
   async function deleteStudent(student) {
-    if (!window.confirm(`Delete ${student.name}'s account? This cannot be undone.`)) return;
+    if (!student || deletingId !== null) return;
+
+    setDeletingId(student.id);
+    setMessage("");
+
     try {
-      await apiRequest(`/api/admin/students/${student.id}`, { method: "DELETE" });
-      setStudents((current) => current.filter((item) => item.id !== student.id));
-      setSelectedStudent(null);
+      await apiRequest(`/api/admin/students/${student.id}`, {
+        method: "DELETE",
+      });
+
+      setStudents((current) =>
+        current.filter((item) => item.id !== student.id)
+      );
+
+      setSelectedStudent((current) =>
+        current?.id === student.id ? null : current
+      );
+
+      setStudentToDelete(null);
       setMessage(`${student.name} was deleted.`);
     } catch (error) {
       setMessage(`Could not delete student: ${error.message}`);
+      setStudentToDelete(null);
+    } finally {
+      setDeletingId(null);
     }
   }
+
 
   return (
     <AppLayout>
@@ -141,9 +163,12 @@ export default function AdminStudents() {
               <button
                 className="btn danger"
                 type="button"
-                onClick={() => deleteStudent(selectedStudent)}
+                disabled={deletingId !== null}
+                onClick={() => setStudentToDelete(selectedStudent)}
               >
-                Delete student
+                {deletingId === selectedStudent.id
+              ? "Deleting..."
+              : "Delete student"}
               </button>
             </div>
             <div
@@ -312,9 +337,12 @@ export default function AdminStudents() {
                     <button
                       className="module-edit danger-text"
                       type="button"
-                      onClick={() => deleteStudent(student)}
+                      disabled={deletingId !== null}
+                      onClick={() => setStudentToDelete(student)}
                     >
-                      Delete
+                      {deletingId === student.id
+                      ? "Deleting..."
+                      : "Delete"}
                     </button>
                   </td>
                 </tr>
@@ -334,8 +362,24 @@ export default function AdminStudents() {
             Showing {visibleStudents.length} of {students.length}{" "}
             students
           </p>
+        
         </section>
       </div>
+
+      <ConfirmDeleteModal
+        open={studentToDelete !== null}
+        title="Delete student?"
+        message={
+          studentToDelete
+            ? `Are you sure you want to permanently delete ${studentToDelete.name} (${studentToDelete.email})? This may also remove their enrollments, progress, and related learning records. This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete student"
+        loading={deletingId !== null}
+        onCancel={() => setStudentToDelete(null)}
+        onConfirm={() => deleteStudent(studentToDelete)}
+      />
     </AppLayout>
   );
 }
+

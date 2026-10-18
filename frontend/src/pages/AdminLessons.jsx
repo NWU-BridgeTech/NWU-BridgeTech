@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
 import {
@@ -11,7 +12,11 @@ import "./AdminModules.css";
 
 // Converts a module from the API into the shape this page uses.
 function toModuleOption(module) {
-  return { id: module.moduleId, title: module.title, status: module.status };
+  return {
+    id: module.moduleId,
+    title: module.title,
+    status: module.status,
+  };
 }
 
 // Converts a lesson from the API into the shape this page displays.
@@ -45,14 +50,19 @@ export default function AdminLessons({ readOnly = false }) {
     Promise.all([getAdminModules(), getAdminLessons()])
       .then(([moduleData, lessonData]) => {
         if (cancelled) return;
+
         setModules(moduleData.map(toModuleOption));
         setLessons(lessonData.map(toLessonRow));
       })
       .catch((error) => {
-        if (!cancelled) setMessage(`Could not load lessons: ${error.message}`);
+        if (!cancelled) {
+          setMessage(`Could not load lessons: ${error.message}`);
+        }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -61,16 +71,19 @@ export default function AdminLessons({ readOnly = false }) {
   }, []);
 
   const publishedCount = lessons.filter(
-    (lesson) => lesson.status === "Published",
+    (lesson) => lesson.status === "Published"
   ).length;
+
   const draftCount = lessons.length - publishedCount;
 
   const visibleLessons = lessons.filter((lesson) => {
     const matchesSearch = `${lesson.title} ${lesson.description}`
       .toLowerCase()
       .includes(search.trim().toLowerCase());
+
     const matchesModule =
       moduleFilter === "All" || lesson.moduleId === moduleFilter;
+
     return (
       matchesSearch &&
       matchesModule &&
@@ -86,23 +99,30 @@ export default function AdminLessons({ readOnly = false }) {
 
   async function saveLesson(event) {
     event.preventDefault();
+
     const form = new FormData(event.currentTarget);
+
     const title = form.get("title").trim();
     const description = form.get("description").trim();
     const content = form.get("content").trim();
     const lessonStatus = form.get("status");
     const moduleId = form.get("moduleId");
-    const parentModule = modules.find((module) => module.id === moduleId);
+
+    const parentModule = modules.find(
+      (module) => module.id === moduleId
+    );
+
     if (!title || !description) {
       setMessage("Enter a lesson title and description.");
       return;
     }
+
     if (
       lessonStatus === "Published" &&
       (!content || parentModule?.status !== "Published")
     ) {
       setMessage(
-        "Add lesson content and choose a published module before publishing.",
+        "Add lesson content and choose a published module before publishing."
       );
       return;
     }
@@ -117,25 +137,34 @@ export default function AdminLessons({ readOnly = false }) {
 
     setSaving(true);
     setMessage("");
+
     try {
       if (editingLesson.id) {
         const updated = toLessonRow(
-          await updateLesson(editingLesson.id, { ...details, moduleId }),
+          await updateLesson(editingLesson.id, {
+            ...details,
+            moduleId,
+          })
         );
+
         setLessons((current) =>
           current.map((lesson) =>
-            lesson.id === updated.id ? updated : lesson,
-          ),
+            lesson.id === updated.id ? updated : lesson
+          )
         );
       } else {
-        const created = toLessonRow(await createLesson(moduleId, details));
+        const created = toLessonRow(
+          await createLesson(moduleId, details)
+        );
+
         setLessons((current) => [...current, created]);
       }
+
       clearFilters();
       setEditingLesson(null);
       setMessage(`${title} saved.`);
     } catch (error) {
-      // Keep the form open so the admin can fix the problem and try again.
+      // Keep the form open so the admin can fix the problem.
       setMessage(error.message);
     } finally {
       setSaving(false);
@@ -144,48 +173,82 @@ export default function AdminLessons({ readOnly = false }) {
 
   return (
     <AppLayout>
+      {/* PAGE HEADER */}
       <header className="top dashboard-header modules-header">
         <div>
           <h1>Lessons</h1>
-          <p>Create lesson content and organise it by module.</p>
+          <p>
+            Create lesson content and organise it by module.
+          </p>
         </div>
-        {!readOnly && <button
-          className="btn blue"
-          type="button"
-          disabled={!!editingLesson || loading || modules.length === 0}
-          onClick={() => {
-            setMessage("");
-            setEditingLesson({
-              title: "",
-              description: "",
-              content: "",
-              moduleId: moduleFilter === "All" ? modules[0].id : moduleFilter,
-              duration: 20,
-              status: "Draft",
-            });
-          }}
-        >
-          Create lesson
-        </button>}
+
+        {!readOnly && (
+          <button
+            className="btn blue"
+            type="button"
+            disabled={
+              !!editingLesson ||
+              loading ||
+              modules.length === 0
+            }
+            onClick={() => {
+              setMessage("");
+
+              setEditingLesson({
+                title: "",
+                description: "",
+                content: "",
+                moduleId:
+                  moduleFilter === "All"
+                    ? modules[0].id
+                    : moduleFilter,
+                duration: 20,
+                status: "Draft",
+              });
+            }}
+          >
+            Create lesson
+          </button>
+        )}
       </header>
+
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {loading ? "Loading lessons..." : !editingLesson && message}
+          {loading
+            ? "Loading lessons..."
+            : !editingLesson && message}
         </p>
+
         {!loading && modules.length === 0 && (
-          <p className="sub">Create a module before adding lessons.</p>
+          <p className="sub">
+            Create a module before adding lessons.
+          </p>
         )}
+
+        {/* CREATE / EDIT LESSON - ADMIN ONLY */}
         {!readOnly && editingLesson && (
           <section
             className="card module-editor"
             aria-labelledby="lesson-editor-heading"
           >
             <h2 id="lesson-editor-heading">
-              {editingLesson.id ? "Edit lesson" : "Create lesson"}
+              {editingLesson.id
+                ? "Edit lesson"
+                : "Create lesson"}
             </h2>
-            <p className="sub">Changes are saved to the database.</p>
-            <form key={editingLesson.id ?? "new"} onSubmit={saveLesson}>
-              <label htmlFor="lesson-title">Lesson title</label>
+
+            <p className="sub">
+              Changes are saved to the database.
+            </p>
+
+            <form
+              key={editingLesson.id ?? "new"}
+              onSubmit={saveLesson}
+            >
+              <label htmlFor="lesson-title">
+                Lesson title
+              </label>
+
               <input
                 id="lesson-title"
                 name="title"
@@ -195,7 +258,11 @@ export default function AdminLessons({ readOnly = false }) {
                 defaultValue={editingLesson.title}
                 autoFocus
               />
-              <label htmlFor="lesson-description">Short description</label>
+
+              <label htmlFor="lesson-description">
+                Short description
+              </label>
+
               <textarea
                 id="lesson-description"
                 name="description"
@@ -204,24 +271,37 @@ export default function AdminLessons({ readOnly = false }) {
                 rows={2}
                 defaultValue={editingLesson.description}
               />
+
               <div className="module-form-row">
                 <div>
-                  <label htmlFor="lesson-module">Module</label>
+                  <label htmlFor="lesson-module">
+                    Module
+                  </label>
+
                   <select
                     id="lesson-module"
                     name="moduleId"
                     defaultValue={editingLesson.moduleId}
                   >
                     {modules.map((module) => (
-                      <option key={module.id} value={module.id}>
+                      <option
+                        key={module.id}
+                        value={module.id}
+                      >
                         {module.title}
-                        {module.status === "Draft" ? " (Draft)" : ""}
+                        {module.status === "Draft"
+                          ? " (Draft)"
+                          : ""}
                       </option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label htmlFor="lesson-duration">Duration (minutes)</label>
+                  <label htmlFor="lesson-duration">
+                    Duration (minutes)
+                  </label>
+
                   <input
                     id="lesson-duration"
                     name="duration"
@@ -234,7 +314,11 @@ export default function AdminLessons({ readOnly = false }) {
                   />
                 </div>
               </div>
-              <label htmlFor="lesson-content">Lesson content</label>
+
+              <label htmlFor="lesson-content">
+                Lesson content
+              </label>
+
               <textarea
                 id="lesson-content"
                 name="content"
@@ -243,7 +327,11 @@ export default function AdminLessons({ readOnly = false }) {
                 defaultValue={editingLesson.content}
                 placeholder="Write the lesson instructions and learning material here."
               />
-              <label htmlFor="lesson-status">Status</label>
+
+              <label htmlFor="lesson-status">
+                Status
+              </label>
+
               <select
                 id="lesson-status"
                 name="status"
@@ -252,16 +340,30 @@ export default function AdminLessons({ readOnly = false }) {
                 <option>Draft</option>
                 <option>Published</option>
               </select>
+
               <p className="sub">
-                Publishing requires lesson content and a published module.
+                Publishing requires lesson content and a
+                published module.
               </p>
-              <p className="modules-message" role="status">
+
+              <p
+                className="modules-message"
+                role="status"
+              >
                 {message}
               </p>
+
               <div className="module-form-actions">
-                <button className="btn blue" type="submit" disabled={saving}>
-                  {saving ? "Saving..." : "Save lesson"}
+                <button
+                  className="btn blue"
+                  type="submit"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving..."
+                    : "Save lesson"}
                 </button>
+
                 <button
                   className="btn"
                   type="button"
@@ -277,114 +379,207 @@ export default function AdminLessons({ readOnly = false }) {
             </form>
           </section>
         )}
+
+        {/* ALL LESSONS TABLE */}
         <section
           className="card module-list"
           aria-labelledby="lesson-list-heading"
         >
-          <h2 id="lesson-list-heading">All lessons</h2>
+          <h2 id="lesson-list-heading">
+            All lessons
+          </h2>
+
           <p className="sub">
-            {lessons.length} lessons · {publishedCount} published · {draftCount}{" "}
-            drafts
+            {lessons.length} lessons · {publishedCount} published
+            {" · "}
+            {draftCount} drafts
           </p>
+
+          {/* SEARCH AND FILTERS */}
           <div className="module-toolbar">
             <div className="module-search">
-              <label htmlFor="lesson-search">Search lessons</label>
+              <label htmlFor="lesson-search">
+                Search lessons
+              </label>
+
               <input
                 id="lesson-search"
                 type="search"
                 placeholder="Search by title or description"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
               />
             </div>
+
             <div>
-              <label htmlFor="lesson-module-filter">Module</label>
+              <label htmlFor="lesson-module-filter">
+                Module
+              </label>
+
               <select
                 id="lesson-module-filter"
                 value={moduleFilter}
-                onChange={(event) => setModuleFilter(event.target.value)}
+                onChange={(event) =>
+                  setModuleFilter(event.target.value)
+                }
               >
-                <option value="All">All modules</option>
+                <option value="All">
+                  All modules
+                </option>
+
                 {modules.map((module) => (
-                  <option key={module.id} value={module.id}>
+                  <option
+                    key={module.id}
+                    value={module.id}
+                  >
                     {module.title}
                   </option>
                 ))}
               </select>
             </div>
+
             <div>
-              <label htmlFor="lesson-status-filter">Status</label>
+              <label htmlFor="lesson-status-filter">
+                Status
+              </label>
+
               <select
                 id="lesson-status-filter"
                 value={status}
-                onChange={(event) => setStatus(event.target.value)}
+                onChange={(event) =>
+                  setStatus(event.target.value)
+                }
               >
-                <option value="All">All statuses</option>
+                <option value="All">
+                  All statuses
+                </option>
                 <option>Published</option>
                 <option>Draft</option>
               </select>
             </div>
           </div>
+
+          {/* LESSONS TABLE */}
           <table className="modules-table">
             <thead>
               <tr>
-                <th scope="col">Lesson</th>
-                <th scope="col">Module</th>
-                <th scope="col">Duration</th>
-                <th scope="col">Status</th>
-                {!readOnly && <th scope="col">Action</th>}
+                <th scope="col">
+                  Lesson
+                </th>
+
+                <th scope="col">
+                  Module
+                </th>
+
+                {!readOnly && (
+                  <th scope="col">
+                    Duration
+                  </th>
+                )}
+
+                <th scope="col">
+                  Status
+                </th>
+
+                {!readOnly && (
+                  <th scope="col">
+                    Action
+                  </th>
+                )}
               </tr>
             </thead>
+
             <tbody>
               {visibleLessons.map((lesson) => (
                 <tr key={lesson.id}>
-                  {!readOnly && <td>
-                    <strong>{lesson.title}</strong>
-                    <p>{lesson.description}</p>
-                  </td>}
+                  {/* FULL LESSON TITLE */}
                   <td>
-                    {
-                      modules.find((module) => module.id === lesson.moduleId)
-                        ?.title
-                    }
+                    <strong>
+                      {lesson.title}
+                    </strong>
+                    <p>
+                      {lesson.description}
+                    </p>
                   </td>
-                  <td>{lesson.duration} min</td>
+
+                  {/* CORRESPONDING MODULE */}
+                  <td>
+                    {modules.find(
+                      (module) =>
+                        module.id === lesson.moduleId
+                    )?.title ?? "Unknown module"}
+                  </td>
+
+                  {/* DURATION - ADMIN ONLY */}
+                  {!readOnly && (
+                    <td>
+                      {lesson.duration} min
+                    </td>
+                  )}
+
+                  {/* LESSON STATUS */}
                   <td>
                     <span
-                      className={`module-status ${lesson.status === "Published" ? "published" : "draft"}`}
+                      className={`module-status ${
+                        lesson.status === "Published"
+                          ? "published"
+                          : "draft"
+                      }`}
                     >
                       {lesson.status}
                     </span>
                   </td>
-                  <td>
-                    <button
-                      className="module-edit"
-                      type="button"
-                      disabled={!!editingLesson}
-                      aria-label={`Edit ${lesson.title}`}
-                      onClick={() => {
-                        setEditingLesson(lesson);
-                        setMessage("");
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </td>
+
+                  {/* EDIT BUTTON - ADMIN ONLY */}
+                  {!readOnly && (
+                    <td>
+                      <button
+                        className="module-edit"
+                        type="button"
+                        disabled={!!editingLesson}
+                        aria-label={`Edit ${lesson.title}`}
+                        onClick={() => {
+                          setEditingLesson(lesson);
+                          setMessage("");
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* EMPTY STATE */}
           {!loading && visibleLessons.length === 0 && (
             <div className="modules-empty">
               <h3>No lessons found</h3>
-              <p>Try a different search, module or status.</p>
-              <button className="btn" type="button" onClick={clearFilters}>
+
+              <p>
+                Try a different search, module or status.
+              </p>
+
+              <button
+                className="btn"
+                type="button"
+                onClick={clearFilters}
+              >
                 Clear filters
               </button>
             </div>
           )}
-          <p className="module-result-count" role="status">
-            Showing {visibleLessons.length} of {lessons.length} lessons
+
+          {/* RESULT COUNT */}
+          <p
+            className="module-result-count"
+            role="status"
+          >
+            Showing {visibleLessons.length} of{" "}
+            {lessons.length} lessons
           </p>
         </section>
       </div>
