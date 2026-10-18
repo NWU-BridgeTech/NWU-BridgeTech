@@ -37,6 +37,7 @@ const Quizzes = lazy(() => import("./pages/Quizzes"));
 const QuizzRunner = lazy(() => import("./pages/QuizzRunner"));
 const TeamArea = lazy(() => import("./pages/TeamArea"));
 const Lessons = lazy(() => import("./pages/Lessons"));
+const AdminExersises = lazy(() => import("./pages/AdminExersises"));
 
 function AdminSection({ children }) {
   return children;
@@ -134,6 +135,10 @@ function App() {
             element={<AdminAssessments />}
           />
         </Route>
+         <Route
+            path="/instructor/exercises"
+            element={<AdminExersises />}
+          />
 
 
         <Route element={<ProtectedRoute requiredRole="SuperAdmin" />}>

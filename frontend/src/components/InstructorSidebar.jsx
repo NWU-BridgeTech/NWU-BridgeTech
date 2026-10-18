@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Library,
   ClipboardCheck,
+  ListTodo,
 } from "lucide-react";
 
 import NavigationSidebar from "./NavigationSidebar";
@@ -37,6 +38,11 @@ const groups = [
         label: "Assessments",
         path: "/instructor/assessments",
         icon: ClipboardCheck,
+      },
+      {
+        label: "Practical Exercises",
+        path: "/instructor/exercises",
+        icon: ListTodo,
       },
     ],
   },
