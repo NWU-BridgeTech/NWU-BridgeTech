@@ -122,6 +122,7 @@ body {
 }
 
 :root[data-theme="dark"] .profile-form input,
+:root[data-theme="dark"] .profile-form select,
 :root[data-theme="dark"] .profile-form textarea,
 :root[data-theme="dark"] .theme-select select {
   background: #303030;
@@ -153,11 +154,20 @@ body {
 }
 
 :root[data-theme="dark"] .student-profile-page .profile-form input,
+:root[data-theme="dark"] .student-profile-page .profile-form select,
 :root[data-theme="dark"] .student-profile-page .profile-form textarea,
 :root[data-theme="dark"] .student-profile-page .theme-select select {
   background: #303030;
   border-color: #555555;
   color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .support-ticket-form .profile-message.success {
+  color: #86efac;
+}
+
+:root[data-theme="dark"] .support-ticket-form .profile-message.error {
+  color: #ff9b9b;
 }
 
 :root[data-theme="dark"] .student-profile-page .profile-form input::placeholder,

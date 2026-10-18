@@ -57,3 +57,18 @@ public enum ModuleLevel : short
     Intermediate = 1,
     Advanced = 2
 }
+
+public enum SupportTicketCategory : short
+{
+    Bug = 0,
+    CourseContent = 1,
+    Account = 2,
+    Feedback = 3,
+    Other = 4
+}
+
+public enum SupportTicketStatus : short
+{
+    Open = 0,
+    Resolved = 1
+}

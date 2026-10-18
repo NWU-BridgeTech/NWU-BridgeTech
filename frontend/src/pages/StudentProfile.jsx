@@ -5,6 +5,7 @@ import useCurrentUser from "../hooks/useCurrentUser";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
 import { LogOut } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import SupportTicketForm from "../components/student/SupportTicketForm";
 import "./StudentProfile.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
@@ -460,6 +461,20 @@ export default function StudentProfile() {
                   ) : null}
                 </div>
               </form>
+            </section>
+
+            <section
+              className="profile-section"
+              aria-labelledby="report-problem-heading"
+            >
+              <div className="profile-section-heading">
+                <h3 id="report-problem-heading">Report a problem</h3>
+                <p>
+                  Something not working? Tell us and an administrator will
+                  look into it.
+                </p>
+              </div>
+              <SupportTicketForm />
             </section>
 
             <section className="profile-section profile-signout-section">

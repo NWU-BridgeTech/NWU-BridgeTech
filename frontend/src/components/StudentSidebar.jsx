@@ -6,6 +6,7 @@ import {
   Code2,
   GitBranch,
   LayoutDashboard,
+  MessageSquare,
   Sparkles,
 } from "lucide-react";
 import NavigationSidebar from "./NavigationSidebar";
@@ -48,6 +49,12 @@ const groups = [
         path: "/student/ai-summary",
         icon: Sparkles,
       },
+    ],
+  },
+  {
+    label: "Support",
+    items: [
+      { label: "Feedback", path: "/student/feedback", icon: MessageSquare },
     ],
   },
 ];
