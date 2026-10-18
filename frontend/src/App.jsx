@@ -112,11 +112,29 @@ function App() {
           />
         </Route>
 
+        
         <Route element={<ProtectedRoute requiredRole="Instructor" />}>
-          <Route path="/instructor" element={<TeamArea role="Instructor" />} />
-          <Route path="/instructor/modules" element={<AdminModules readOnly />} />
-          <Route path="/instructor/lessons" element={<AdminLessons readOnly />} />
+          <Route
+            path="/instructor"
+            element={<TeamArea role="Instructor" />}
+          />
+
+          <Route
+            path="/instructor/modules"
+            element={<AdminModules readOnly />}
+          />
+
+          <Route
+            path="/instructor/lessons"
+            element={<AdminLessons readOnly />}
+          />
+
+          <Route
+            path="/instructor/assessments"
+            element={<AdminAssessments />}
+          />
         </Route>
+
 
         <Route element={<ProtectedRoute requiredRole="SuperAdmin" />}>
           <Route

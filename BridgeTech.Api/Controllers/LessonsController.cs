@@ -52,7 +52,7 @@ public class LessonsController(ILessonService service) : ControllerBase
     }
 
     [HttpPost("modules/{moduleId:guid}/lessons")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
     public async Task<IActionResult> CreateLesson(
         Guid moduleId, [FromBody] CreateLessonRequest request, CancellationToken cancellationToken)
     {
@@ -69,7 +69,7 @@ public class LessonsController(ILessonService service) : ControllerBase
 
     // Admin: update a lesson. Only the fields that are sent are changed.
     [HttpPut("lessons/{lessonId:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
     public async Task<IActionResult> UpdateLesson(
         Guid lessonId, [FromBody] UpdateLessonRequest request, CancellationToken cancellationToken)
     {
@@ -83,6 +83,23 @@ public class LessonsController(ILessonService service) : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+    
+    [HttpDelete("lessons/{lessonId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> DeleteLesson(
+        Guid lessonId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deleted = await service.DeleteAsync(lessonId, cancellationToken);
+            return deleted ? Ok(new { deleted = true }) : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 
     private Guid GetUserId()
     {

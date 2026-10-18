@@ -59,7 +59,6 @@ public class QuizService : IQuizService
             .OrderBy(_ => Random.Shared.Next())
             .ToList();
 
-
         for (short i = 0; i < question.Options.Count; i++)
         {
             question.Options[i].OrderIndex = i;
@@ -68,6 +67,61 @@ public class QuizService : IQuizService
 
     return quiz;
 }
+
+public async Task<AdminQuizDetailResponse?> GetForAdminAsync(
+    Guid quizId,
+    CancellationToken cancellationToken = default)
+{
+    var quiz = await _context.Quizzes
+        .AsNoTracking()
+        .Include(q => q.Questions)
+            .ThenInclude(question => question.Options)
+        .FirstOrDefaultAsync(
+            q => q.QuizId == quizId,
+            cancellationToken
+        );
+
+    if (quiz is null)
+    {
+        return null;
+    }
+
+    return new AdminQuizDetailResponse
+    {
+        QuizId = quiz.QuizId,
+        ModuleId = quiz.ModuleId,
+        LessonId = quiz.LessonId,
+        Title = quiz.Title,
+        PassingScore = quiz.PassingScore,
+
+        // Temporary value until quiz publication status is
+        // connected to your actual database model.
+        Status = "Draft",
+
+        Questions = quiz.Questions
+            .OrderBy(q => q.OrderIndex)
+            .Select(question => new AdminQuizQuestionResponse
+            {
+                QuestionId = question.QuestionId,
+                QuestionText = question.QuestionText,
+                QuestionType = question.QuestionType.ToString(),
+                OrderIndex = question.OrderIndex,
+
+                Options = question.Options
+                    .OrderBy(o => o.OrderIndex)
+                    .Select(option => new AdminQuizOptionResponse
+                    {
+                        OptionId = option.OptionId,
+                        OptionText = option.OptionText,
+                        IsCorrect = option.IsCorrect,
+                        OrderIndex = option.OrderIndex
+                    })
+                    .ToList()
+            })
+            .ToList()
+    };
+}
+
     public async Task<QuizResponse?> GetByIdAsync(Guid quizId, CancellationToken cancellationToken = default)
     {
         return await _context.Quizzes
@@ -94,21 +148,57 @@ public class QuizService : IQuizService
                 Title = q.Title,
                 ModuleId = q.ModuleId,
                 PassingScore = q.PassingScore,
-                CreatedAt = q.CreatedAt
+                CreatedAt = q.CreatedAt,
+                LessonId = q.LessonId,
             })
             .ToListAsync(cancellationToken);
     }
 
     public async Task<QuizResponse> CreateAsync(CreateQuizRequest request, CancellationToken cancellationToken = default)
     {
-        var quiz = new Quiz
+        
+    var quiz = new Quiz
+    {
+        
+        QuizId = Guid.NewGuid(),
+        Title = request.Title,
+        ModuleId = request.ModuleId ?? Guid.Empty,
+        LessonId = request.LessonId,
+        PassingScore = request.PassingScore,
+        CreatedAt = DateTimeOffset.UtcNow
+    };
+
+    
+foreach (var questionRequest in request.Questions)
+{
+    var questionId = Guid.NewGuid();
+
+    var question = new QuizQuestion
+    {
+        QuestionId = questionId,
+        QuizId = quiz.QuizId,
+        QuestionText = questionRequest.QuestionText.Trim(),
+        QuestionType = questionRequest.QuestionType,
+        OrderIndex = (short)quiz.Questions.Count
+    };
+
+    foreach (var optionRequest in questionRequest.Options)
+    {
+        question.Options.Add(new QuizOption
         {
-            QuizId = Guid.NewGuid(),
-            Title = request.Title,
-            ModuleId = request.ModuleId ?? Guid.Empty,
-            PassingScore = request.PassingScore,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
+            OptionId = Guid.NewGuid(),
+            QuizId = quiz.QuizId,
+            QuestionId = questionId,
+            OptionText = optionRequest.OptionText.Trim(),
+            IsCorrect = optionRequest.IsCorrect,
+            OrderIndex = (short)question.Options.Count
+        });
+    }
+
+    quiz.Questions.Add(question);
+}
+
+
 
         _context.Quizzes.Add(quiz);
         await _context.SaveChangesAsync(cancellationToken);
@@ -138,6 +228,13 @@ public class QuizService : IQuizService
             quiz.PassingScore = request.PassingScore.Value;
         }
 
+        
+        if (request.LessonId.HasValue)
+        {
+            quiz.LessonId = request.LessonId.Value;
+        }
+
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return new QuizResponse
@@ -166,7 +263,6 @@ public class QuizService : IQuizService
 
     var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
     if (quiz is null) return null;
-
 
     var existing = await _context.QuizAttempts
         .Where(a => a.UserId == userId && a.QuizId == quiz.QuizId && a.CompletedAt == null)
@@ -242,7 +338,6 @@ public class QuizService : IQuizService
             IsCorrect = isCorrect
         });
     }
-
 
     int totalQuestions = attempt.Quiz.Questions.Count;
     int percent = totalQuestions == 0 ? 0 : (int)Math.Round(correct * 100.0 / totalQuestions);
