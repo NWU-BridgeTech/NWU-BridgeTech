@@ -213,27 +213,137 @@ foreach (var questionRequest in request.Questions)
         };
     }
 
-    public async Task<QuizResponse?> UpdateAsync(Guid id, UpdateQuizRequest request, CancellationToken cancellationToken = default)
+    
+    public async Task<QuizResponse?> UpdateAsync(
+        Guid id,
+        UpdateQuizRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var quiz = await _context.Quizzes.FindAsync(new object[] { id }, cancellationToken);
-        if (quiz is null) return null;
+        var quiz = await _context.Quizzes
+            .Include(q => q.Questions)
+                .ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(
+                q => q.QuizId == id,
+                cancellationToken
+            );
 
+        if (quiz is null)
+            return null;
+
+        // Update quiz details
         if (!string.IsNullOrWhiteSpace(request.Title))
-        {
-            quiz.Title = request.Title;
-        }
+            quiz.Title = request.Title.Trim();
 
         if (request.PassingScore.HasValue)
-        {
             quiz.PassingScore = request.PassingScore.Value;
-        }
 
-        
         if (request.LessonId.HasValue)
-        {
             quiz.LessonId = request.LessonId.Value;
-        }
 
+        // Only modify questions when they were supplied.
+        if (request.Questions is not null)
+        {
+            var existingQuestions = quiz.Questions.ToList();
+            var savedQuestionIds = new HashSet<Guid>();
+
+            for (int questionIndex = 0;
+                questionIndex < request.Questions.Count;
+                questionIndex++)
+            {
+                var questionRequest = request.Questions[questionIndex];
+
+                // Find an existing question by its ID.
+                var question = questionRequest.QuestionId.HasValue
+                    ? existingQuestions.FirstOrDefault(q =>
+                        q.QuestionId == questionRequest.QuestionId.Value)
+                    : null;
+
+                if (question is null)
+                {
+                    // New question
+                    question = new QuizQuestion
+                    {
+                        QuestionId = Guid.NewGuid(),
+                        QuizId = quiz.QuizId
+                    };
+
+                    quiz.Questions.Add(question);
+                }
+
+                question.QuestionText =
+                    questionRequest.QuestionText.Trim();
+
+                question.QuestionType =
+                    questionRequest.QuestionType;
+
+                question.OrderIndex = (short)questionIndex;
+
+                savedQuestionIds.Add(question.QuestionId);
+
+                // Update this question's answer options.
+                var existingOptions = question.Options.ToList();
+                var savedOptionIds = new HashSet<Guid>();
+
+                for (int optionIndex = 0;
+                    optionIndex < questionRequest.Options.Count;
+                    optionIndex++)
+                {
+                    var optionRequest =
+                        questionRequest.Options[optionIndex];
+
+                    var option = optionRequest.OptionId.HasValue
+                        ? existingOptions.FirstOrDefault(o =>
+                            o.OptionId == optionRequest.OptionId.Value)
+                        : null;
+
+                    if (option is null)
+                    {
+                        // New answer option
+                        option = new QuizOption
+                        {
+                            OptionId = Guid.NewGuid(),
+                            QuizId = quiz.QuizId,
+                            QuestionId = question.QuestionId
+                        };
+
+                        question.Options.Add(option);
+                    }
+
+                    option.OptionText =
+                        optionRequest.OptionText.Trim();
+
+                    option.IsCorrect =
+                        optionRequest.IsCorrect;
+
+                    option.OrderIndex = (short)optionIndex;
+
+                    savedOptionIds.Add(option.OptionId);
+                }
+
+                // Remove answer options deleted in the editor.
+                foreach (var oldOption in existingOptions)
+                {
+                    if (!savedOptionIds.Contains(oldOption.OptionId))
+                    {
+                        _context.Remove(oldOption);
+                    }
+                }
+            }
+
+            // Remove questions deleted in the editor.
+            foreach (var oldQuestion in existingQuestions)
+            {
+                if (!savedQuestionIds.Contains(oldQuestion.QuestionId))
+                {
+                    foreach (var oldOption in oldQuestion.Options.ToList())
+                    {
+                        _context.Remove(oldOption);
+                    }
+
+                    _context.Remove(oldQuestion);
+                }
+            }
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -246,6 +356,7 @@ foreach (var questionRequest in request.Questions)
             CreatedAt = quiz.CreatedAt
         };
     }
+
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
