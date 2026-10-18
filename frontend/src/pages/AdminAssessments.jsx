@@ -11,6 +11,7 @@ import {
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminAssessments.css";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 6;
@@ -548,25 +549,37 @@ export default function AdminAssessments() {
   const [editorMessage, setEditorMessage] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const quizToDelete =
+  quizzes.find((quiz) => quiz.quizId === pendingDeleteId) ?? null;
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([listCourseOutline(), listQuizzes()]).then(
-      ([loadedOutline, loadedQuizzes]) => {
-        if (cancelled) return;
-        setOutline(loadedOutline);
-        setQuizzes(loadedQuizzes);
-        setLoadState("ready");
-      },
-      () => {
-        if (!cancelled) setLoadState("error");
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadToken]);
+  
+    useEffect(() => {
+      let cancelled = false;
+
+      Promise.all([listCourseOutline(), listQuizzes()])
+        .then(([loadedOutline, loadedQuizzes]) => {
+          if (cancelled) return;
+
+          setOutline(loadedOutline);
+          setQuizzes(loadedQuizzes);
+          setLoadState("ready");
+        })
+        .catch((error) => {
+          if (cancelled) return;
+
+          console.error("Failed to load assessments:", error);
+          setMessage(
+            `Could not load assessments: ${error.message}`
+          );
+          setLoadState("error");
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [reloadToken]);
+
 
   const quizByLesson = new Map(
     quizzes
@@ -658,45 +671,69 @@ export default function AdminAssessments() {
     setDraft(nextDraft);
   }
 
+
   async function startEdit(quizId) {
     setMessage("");
     setOpeningQuizId(quizId);
+
     try {
-      openEditor(toDraft(await getQuiz(quizId)));
+      const quiz = await getQuiz(quizId);
+
+      if (!quiz) {
+        throw new Error("Quiz could not be found.");
+      }
+
+      if (!Array.isArray(quiz.questions)) {
+        throw new Error(
+          "The backend did not return the quiz questions needed for editing."
+        );
+      }
+
+      openEditor(toDraft(quiz));
     } catch (error) {
-      setMessage(`Could not open the quiz: ${error.message}`);
+      console.error("Failed to open quiz editor:", error);
+      setMessage(`Could not edit quiz: ${error.message}`);
     } finally {
       setOpeningQuizId(null);
     }
   }
 
-  async function handleSave(event) {
-    event.preventDefault();
-    const problem = validateDraft(draft, outline);
-    if (problem) {
-      setEditorMessage(problem);
-      return;
-    }
-    setSaving(true);
-    setEditorMessage("");
-    try {
-      const saved = await saveQuiz(toPayload(draft));
-      const listItem = toListItem(saved);
-      setQuizzes((current) =>
-        current.some((quiz) => quiz.quizId === saved.quizId)
-          ? current.map((quiz) =>
-              quiz.quizId === saved.quizId ? listItem : quiz,
-            )
-          : [...current, listItem],
-      );
-      setDraft(null);
-      setMessage(`"${saved.title}" saved as ${saved.status.toLowerCase()}.`);
-    } catch (error) {
-      setEditorMessage(error.message);
-    } finally {
-      setSaving(false);
-    }
+
+  
+async function handleSave(event) {
+  event.preventDefault();
+
+  const problem = validateDraft(draft, outline);
+
+  if (problem) {
+    setEditorMessage(problem);
+    return;
   }
+
+  setSaving(true);
+  setEditorMessage("");
+
+  try {
+    const payload = toPayload(draft);
+
+    const saved = await saveQuiz(payload);
+
+    // Reload the quizzes from the backend instead of assuming
+    // the save response includes questions.
+    const updatedQuizzes = await listQuizzes();
+
+    setQuizzes(updatedQuizzes);
+    setDraft(null);
+
+    setMessage(`"${saved.title ?? payload.title}" saved.`);
+  } catch (error) {
+    console.error("Quiz save failed:", error);
+    setEditorMessage(error.message);
+  } finally {
+    setSaving(false);
+  }
+}
+
 
   async function confirmDelete(quiz) {
     setDeletingId(quiz.quizId);
@@ -731,30 +768,8 @@ export default function AdminAssessments() {
       );
     }
 
+    
     const { quiz } = row;
-    if (pendingDeleteId === quiz.quizId) {
-      return (
-        <>
-          <span className="assessment-delete-prompt">Delete this quiz?</span>
-          <button
-            className="module-edit assessment-danger"
-            type="button"
-            disabled={deletingId === quiz.quizId}
-            onClick={() => confirmDelete(quiz)}
-          >
-            {deletingId === quiz.quizId ? "Deleting…" : "Delete"}
-          </button>
-          <button
-            className="module-edit"
-            type="button"
-            disabled={deletingId === quiz.quizId}
-            onClick={() => setPendingDeleteId(null)}
-          >
-            Keep
-          </button>
-        </>
-      );
-    }
 
     return (
       <>
@@ -767,6 +782,7 @@ export default function AdminAssessments() {
         >
           {openingQuizId === quiz.quizId ? "Opening…" : "Edit"}
         </button>
+
         <button
           className="module-edit assessment-danger"
           type="button"
@@ -783,29 +799,9 @@ export default function AdminAssessments() {
     );
   }
 
+
   return (
     <AppLayout>
-      <header className="top dashboard-header modules-header">
-        <div>
-          <h1>Assessments</h1>
-          <p>Every lesson needs a quiz. Create, edit and publish them here.</p>
-        </div>
-        <button
-          className="btn blue"
-          type="button"
-          disabled={loadState !== "ready" || busy || !firstOpenLesson}
-          onClick={() =>
-            openEditor(
-              blankDraft(
-                firstOpenLesson.moduleId,
-                firstOpenLesson.lesson.lessonId,
-              ),
-            )
-          }
-        >
-          Create quiz
-        </button>
-      </header>
       <div className="content modules-page assessments-page">
         <p className="modules-message" role="status">
           {message}
@@ -854,41 +850,6 @@ export default function AdminAssessments() {
             <h2 id="assessment-list-heading">Quizzes by lesson</h2>
             {hasContent && (
               <>
-                <div className="assessment-summary">
-                  <div className="assessment-coverage">
-                    <p className="assessment-coverage-label">
-                      <strong>
-                        {coveredCount} of {lessonCount}
-                      </strong>{" "}
-                      {lessonCount === 1 ? "lesson has" : "lessons have"} a quiz
-                    </p>
-                    <div
-                      className="assessment-coverage-track"
-                      role="progressbar"
-                      aria-label="Lessons with a quiz"
-                      aria-valuemin={0}
-                      aria-valuemax={lessonCount}
-                      aria-valuenow={coveredCount}
-                    >
-                      <span style={{ width: `${coveragePercent}%` }} />
-                    </div>
-                  </div>
-                  <dl className="assessment-counts">
-                    <div>
-                      <dt>Published</dt>
-                      <dd>{publishedCount}</dd>
-                    </div>
-                    <div>
-                      <dt>Drafts</dt>
-                      <dd>{draftCount}</dd>
-                    </div>
-                    <div>
-                      <dt>Missing</dt>
-                      <dd>{lessonCount - coveredCount}</dd>
-                    </div>
-                  </dl>
-                </div>
-
                 <div className="module-toolbar">
                   <div className="module-search">
                     <label htmlFor="assessment-search">Search</label>
@@ -954,13 +915,12 @@ export default function AdminAssessments() {
                     <thead>
                       <tr>
                         <th scope="col">Lesson</th>
-                        <th scope="col">Quiz</th>
-                        <th scope="col">Questions</th>
+                        <th scope="col">Quiz</th>                   
                         <th scope="col">Pass mark</th>
-                        <th scope="col">Status</th>
                         <th scope="col" className="assessment-actions">
                           Action
                         </th>
+
                       </tr>
                     </thead>
                     <tbody>
@@ -986,19 +946,16 @@ export default function AdminAssessments() {
                           </td>
                           {row.quiz ? (
                             <>
-                              <td data-label="Quiz">{row.quiz.title}</td>
-                              <td data-label="Questions">
-                                {row.quiz.questionCount}
-                              </td>
-                              <td data-label="Pass mark">
-                                {row.quiz.passingScore}%
-                              </td>
-                              <td data-label="Status">
-                                <StatusBadge status={row.quiz.status} />
-                              </td>
+                              
+                          <td data-label="Quiz">{row.quiz.title}</td>
+                          <td data-label="Pass mark">
+                            {row.quiz.passingScore}%
+                          </td>
+
+
                             </>
                           ) : (
-                            <td colSpan={4} data-label="Quiz">
+                            <td colSpan={2} data-label="Quiz">
                               <span className="assessment-missing">
                                 No quiz yet
                               </span>
@@ -1035,6 +992,26 @@ export default function AdminAssessments() {
           </section>
         )}
       </div>
+
+      
+<ConfirmDeleteModal
+  open={!!quizToDelete}
+  title="Delete quiz"
+  message={`Are you sure you want to delete "${quizToDelete?.title ?? ""}"? This action cannot be undone.`}
+  confirmText="Delete quiz"
+  loading={!!deletingId}
+  onConfirm={() => {
+    if (quizToDelete) {
+      confirmDelete(quizToDelete);
+    }
+  }}
+  onCancel={() => {
+    if (!deletingId) {
+      setPendingDeleteId(null);
+    }
+  }}
+/>
+
     </AppLayout>
   );
 }

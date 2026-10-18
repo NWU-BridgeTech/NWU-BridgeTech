@@ -33,6 +33,11 @@ public class CreateQuizRequest
 
     [Range(0, 100)]
     public short PassingScore { get; set; } = 70;
+
+    [Required]
+    public Guid? LessonId { get; set; }
+
+    public List<SaveQuizQuestionRequest> Questions { get; set; } = new();
 }
 
 public class UpdateQuizRequest
@@ -42,6 +47,10 @@ public class UpdateQuizRequest
 
     [Range(0, 100)]
     public short? PassingScore { get; set; }
+
+    public Guid? LessonId { get; set; }
+
+    public List<SaveQuizQuestionRequest>? Questions { get; set; }
 }
 
 public class QuizListItemResponse
@@ -51,6 +60,7 @@ public class QuizListItemResponse
     public string Title { get; set; } = string.Empty;
     public short PassingScore { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public Guid? LessonId { get; set; }
 }
 
 public class QuizQuestionResponse
@@ -213,3 +223,52 @@ public class QuizRetakeResponse
     public short LastScore { get; set; }
     public short PassingScore { get; set; }
 }
+
+
+public class AdminQuizDetailResponse
+{
+    public Guid QuizId { get; set; }
+    public Guid ModuleId { get; set; }
+    public Guid? LessonId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public short PassingScore { get; set; }
+    public string Status { get; set; } = "Draft";
+
+    public List<AdminQuizQuestionResponse> Questions { get; set; } = new();
+}
+
+public class AdminQuizQuestionResponse
+{
+    public Guid QuestionId { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public string QuestionType { get; set; } = string.Empty;
+    public short OrderIndex { get; set; }
+
+    public List<AdminQuizOptionResponse> Options { get; set; } = new();
+}
+
+public class AdminQuizOptionResponse
+{
+    public Guid OptionId { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public bool IsCorrect { get; set; }
+    public short OrderIndex { get; set; }
+}
+
+
+public class SaveQuizQuestionRequest
+{
+    public Guid? QuestionId { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public QuestionType QuestionType { get; set; }
+    public List<SaveQuizOptionRequest> Options { get; set; } = new();
+}
+
+public class SaveQuizOptionRequest
+{
+    public Guid? OptionId { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public bool IsCorrect { get; set; }
+}
+
+
