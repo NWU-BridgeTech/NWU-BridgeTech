@@ -1,0 +1,99 @@
+.mmd {
+  margin: 12px 0 16px;
+  overflow: hidden;
+  border: 1px solid #d8e2f0;
+  border-radius: 10px;
+  background: #fafbfd;
+  color: #1c2433;
+}
+
+.mmd-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid #d8e2f0;
+  color: #4a5670;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mmd-actions { display: flex; gap: 6px; }
+.mmd-actions button {
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: transparent;
+  color: #2368e8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+.mmd-actions button:hover { background: #e6eefc; }
+.mmd-actions button:focus-visible { outline: 2px solid #2368e8; outline-offset: 1px; }
+.mmd-canvas { width: 100%; overflow: hidden; padding: 8px 0; }
+.mmd-canvas svg { display: block; width: 100%; min-height: 0; height: auto; max-width: 100%; margin: 0; }
+.mmd-canvas svg .nodeLabel,
+.mmd-canvas svg .edgeLabel,
+.mmd-canvas svg .messageText,
+.mmd-canvas svg text { color: #111827 !important; fill: #111827 !important; }
+.mmd-canvas svg .edgeLabel rect,
+.mmd-canvas svg .labelBkg { fill: #ffffff !important; opacity: 1 !important; }
+.mmd-canvas svg .flowchart-link,
+.mmd-canvas svg .messageLine0,
+.mmd-canvas svg .messageLine1 { stroke: #1f2937 !important; }
+.mmd-canvas svg .flowchart-link,
+.mmd-canvas svg .edgePath path {
+  stroke-dasharray: 8 6;
+  animation: mmd-flow 1.8s linear infinite;
+}
+@keyframes mmd-flow {
+  to { stroke-dashoffset: -28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mmd-canvas svg .flowchart-link,
+  .mmd-canvas svg .edgePath path { animation: none; }
+}
+.mmd-status { padding: 18px 16px; color: #4a5670; font-size: 13px; }
+.mmd-error { color: #a1281f; }
+.mmd-source {
+  margin: 0;
+  overflow-x: auto;
+  padding: 14px 16px;
+  background: #f0f3f9;
+  color: #1c2433;
+  font: 13px/1.55 Consolas, "Courier New", monospace;
+}
+.mmd-source-error {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0c8c4;
+  background: #fff3f1;
+  color: #8f2119;
+  font: 12px/1.45 Consolas, "Courier New", monospace;
+}
+
+:root[data-theme="dark"] .mmd { border-color: #3f4b5f; background: #111827; }
+.mmd-dark { border-color: #4a4a4a; background: #171717; color: #f8fafc; }
+.mmd-dark .mmd-bar { border-bottom-color: #3f3f46; color: #e5e7eb; }
+.mmd-dark .mmd-actions button { color: #93c5fd; }
+.mmd-dark .mmd-actions button:hover { background: #1f2937; }
+.mmd-dark .mmd-status { color: #d1d5db; }
+.mmd-dark .mmd-source { background: #0b1220; color: #e5e7eb; }
+.mmd-dark .mmd-source-error { border-bottom-color: #7f1d1d; background: #2b1215; color: #fecaca; }
+.mmd-dark .mmd-canvas svg .nodeLabel,
+.mmd-dark .mmd-canvas svg .edgeLabel,
+.mmd-dark .mmd-canvas svg .messageText,
+.mmd-dark .mmd-canvas svg text { color: #f8fafc !important; fill: #f8fafc !important; }
+.mmd-dark .mmd-canvas svg .edgeLabel rect,
+.mmd-dark .mmd-canvas svg .labelBkg { fill: #292929 !important; }
+.mmd-dark .mmd-canvas svg { background: #171717 !important; }
+.mmd-dark .mmd-canvas svg .node rect,
+.mmd-dark .mmd-canvas svg .node polygon,
+.mmd-dark .mmd-canvas svg .node circle,
+.mmd-dark .mmd-canvas svg .node path { fill: #292929 !important; stroke: #a3a3a3 !important; }
+.mmd-dark .mmd-canvas svg .cluster rect { fill: #202020 !important; stroke: #737373 !important; }
+.mmd-dark .mmd-canvas svg .edgeLabel,
+.mmd-dark .mmd-canvas svg .edgeLabel text { color: #f8fafc !important; fill: #f8fafc !important; }
+.mmd-dark .mmd-canvas svg .flowchart-link,
+.mmd-dark .mmd-canvas svg .messageLine0,
+.mmd-dark .mmd-canvas svg .messageLine1 { stroke: #d1d5db !important; }

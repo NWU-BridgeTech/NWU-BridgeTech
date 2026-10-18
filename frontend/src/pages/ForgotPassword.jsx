@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
@@ -7,6 +7,8 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const teamLogin = searchParams.get("team") === "1";
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -45,10 +47,14 @@ export default function ForgotPassword() {
         { email: email.trim() },
         "Unable to send reset code.",
       );
-      setSuccess("If an account exists for that email, we've sent a password reset code.");
+      setSuccess(
+        "If an account exists for that email, we've sent a password reset code.",
+      );
       setStep(2);
     } catch (requestError) {
-      setError(requestError.message || "Unable to send reset code. Please try again.");
+      setError(
+        requestError.message || "Unable to send reset code. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -86,10 +92,11 @@ export default function ForgotPassword() {
         "Unable to reset your password.",
       );
       setSuccess("Password reset successfully.");
-      setTimeout(() => navigate("/login"), 1500);
+      setTimeout(() => navigate(teamLogin ? "/team-login" : "/login"), 1500);
     } catch (requestError) {
       setError(
-        requestError.message || "Unable to reset your password. Please try again.",
+        requestError.message ||
+          "Unable to reset your password. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -98,8 +105,16 @@ export default function ForgotPassword() {
 
   const messages = (
     <>
-      {error && <div className="au-alert error" role="alert">{error}</div>}
-      {success && <div className="au-alert ok" role="status">{success}</div>}
+      {error && (
+        <div className="au-alert error" role="alert">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="au-alert ok" role="status">
+          {success}
+        </div>
+      )}
     </>
   );
 
@@ -227,7 +242,10 @@ export default function ForgotPassword() {
       )}
 
       <p className="au-switch">
-        Remembered it? <Link to="/login">Back to sign in</Link>
+        Remembered it?{" "}
+        <Link to={teamLogin ? "/team-login" : "/login"}>
+          {teamLogin ? "Back to Team Login" : "Back to sign in"}
+        </Link>
       </p>
     </AuthShell>
   );

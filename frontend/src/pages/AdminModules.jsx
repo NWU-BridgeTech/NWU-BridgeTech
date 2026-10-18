@@ -1,15 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
-import { initialModules } from "../data/adminData";
+import {
+  createModule,
+  deleteModule,
+  getAdminModules,
+  updateModule,
+} from "../utils/adminApi";
 import "./Admin.css";
 import "./AdminModules.css";
 
-export default function AdminModules() {
-  const [modules, setModules] = useState(initialModules);
+// Converts a module from the API into the shape this page displays.
+function toModuleRow(module) {
+  return {
+    id: module.moduleId,
+    title: module.title,
+    description: module.description ?? "",
+    level: module.level,
+    status: module.status,
+    lessons: module.lessonCount,
+    students: module.studentCount,
+  };
+}
+
+export default function AdminModules({ readOnly = false }) {
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [editingModule, setEditingModule] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
+
+  // Load every module (drafts included) from the database when the page opens.
+  useEffect(() => {
+    let cancelled = false;
+
+    getAdminModules()
+      .then((data) => {
+        if (!cancelled) setModules(data.map(toModuleRow));
+      })
+      .catch((error) => {
+        if (!cancelled) setMessage(`Could not load modules: ${error.message}`);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const publishedCount = modules.filter(
     (module) => module.status === "Published",
@@ -23,7 +64,29 @@ export default function AdminModules() {
     return matchesSearch && (status === "All" || module.status === status);
   });
 
-  function saveModule(event) {
+  async function removeModule(module) {
+    if (
+      !window.confirm(
+        `Remove "${module.title}"? This also removes its lessons and cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(module.id);
+    setMessage("");
+    try {
+      await deleteModule(module.id);
+      setModules((current) => current.filter((item) => item.id !== module.id));
+      setMessage(`${module.title} removed.`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function saveModule(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const title = form.get("title").trim();
@@ -32,29 +95,40 @@ export default function AdminModules() {
       setMessage("Enter a module title and description.");
       return;
     }
-    const savedModule = {
-      ...editingModule,
-      id: editingModule.id ?? Date.now(),
+
+    const details = {
       title,
       description,
       level: form.get("level"),
       status: form.get("status"),
     };
-    if (editingModule.id) {
-      setModules(
-        modules.map((module) =>
-          module.id === savedModule.id ? savedModule : module,
-        ),
-      );
-    } else {
-      setModules([...modules, savedModule]);
+
+    setSaving(true);
+    setMessage("");
+    try {
+      if (editingModule.id) {
+        const updated = toModuleRow(
+          await updateModule(editingModule.id, details),
+        );
+        setModules((current) =>
+          current.map((module) =>
+            module.id === updated.id ? updated : module,
+          ),
+        );
+      } else {
+        const created = toModuleRow(await createModule(details));
+        setModules((current) => [...current, created]);
+      }
+      setSearch("");
+      setStatus("All");
+      setEditingModule(null);
+      setMessage(`${title} saved.`);
+    } catch (error) {
+      // Keep the form open so the admin can fix the problem and try again.
+      setMessage(error.message);
+    } finally {
+      setSaving(false);
     }
-    setSearch("");
-    setStatus("All");
-    setEditingModule(null);
-    setMessage(
-      `${title} saved locally. Changes reset when you leave this page or reload.`,
-    );
   }
 
   return (
@@ -64,10 +138,10 @@ export default function AdminModules() {
           <h1>Modules</h1>
           <p>Organise learning content and manage module availability.</p>
         </div>
-        <button
+        {!readOnly && <button
           className="btn blue"
           type="button"
-          disabled={!!editingModule}
+          disabled={!!editingModule || loading}
           onClick={() => {
             setMessage("");
             setEditingModule({
@@ -81,14 +155,14 @@ export default function AdminModules() {
           }}
         >
           Create module
-        </button>
+        </button>}
       </header>
 
       <div className="content modules-page">
         <p className="modules-message" role="status">
-          {!editingModule && message}
+          {loading ? "Loading modules..." : !editingModule && message}
         </p>
-        {editingModule && (
+        {!readOnly && editingModule && (
           <section
             className="card module-editor"
             aria-labelledby="module-editor-heading"
@@ -96,13 +170,14 @@ export default function AdminModules() {
             <h2 id="module-editor-heading">
               {editingModule.id ? "Edit module" : "Create module"}
             </h2>
-            <p className="sub">Changes are kept while this page is open.</p>
+            <p className="sub">Changes are saved to the database.</p>
             <form key={editingModule.id ?? "new"} onSubmit={saveModule}>
               <label htmlFor="module-title">Module title</label>
               <input
                 id="module-title"
                 name="title"
                 required
+                minLength={3}
                 maxLength={100}
                 defaultValue={editingModule.title}
                 autoFocus
@@ -148,12 +223,13 @@ export default function AdminModules() {
                 {message}
               </p>
               <div className="module-form-actions">
-                <button className="btn blue" type="submit">
-                  Save module
+                <button className="btn blue" type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save module"}
                 </button>
                 <button
                   className="btn"
                   type="button"
+                  disabled={saving}
                   onClick={() => {
                     setEditingModule(null);
                     setMessage("");
@@ -207,16 +283,16 @@ export default function AdminModules() {
                 <th scope="col">Lessons</th>
                 <th scope="col">Students</th>
                 <th scope="col">Status</th>
-                <th scope="col">Action</th>
+                {!readOnly && <th scope="col">Action</th>}
               </tr>
             </thead>
             <tbody>
               {visibleModules.map((module) => (
                 <tr key={module.id}>
-                  <td>
+                  {!readOnly && <td>
                     <strong>{module.title}</strong>
                     <p>{module.description}</p>
-                  </td>
+                  </td>}
                   <td>{module.level}</td>
                   <td>{module.lessons}</td>
                   <td>{module.students}</td>
@@ -231,7 +307,7 @@ export default function AdminModules() {
                     <button
                       className="module-edit"
                       type="button"
-                      disabled={!!editingModule}
+                      disabled={!!editingModule || deletingId === module.id}
                       aria-label={`Edit ${module.title}`}
                       onClick={() => {
                         setEditingModule(module);
@@ -240,12 +316,20 @@ export default function AdminModules() {
                     >
                       Edit
                     </button>
+                    <button
+                      className="module-edit assessment-danger"
+                      type="button"
+                      disabled={!!editingModule || deletingId === module.id}
+                      onClick={() => removeModule(module)}
+                    >
+                      {deletingId === module.id ? "Removing..." : "Remove"}
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {visibleModules.length === 0 && (
+          {!loading && visibleModules.length === 0 && (
             <div className="modules-empty">
               <h3>No modules found</h3>
               <p>Try a different search or status.</p>

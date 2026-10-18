@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getToken } from "../utils/authStorage";
+import QuizResultModal from "../components/student/QuizResultModal";
 
 const BACKEND_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5174";
@@ -8,6 +9,7 @@ const BACKEND_URL =
 const QuizRunner = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [quiz, setQuiz] = useState(null);
   const [attemptId, setAttemptId] = useState(null);
@@ -16,6 +18,7 @@ const QuizRunner = () => {
   const [submitting, setSubmitting] = useState(false);
   const [quizError, setQuizError] = useState(null);
   const [attemptError, setAttemptError] = useState(null);
+  const [quizResult, setQuizResult] = useState(null);
 
   const getAuthHeaders = () => {
     const token = getToken();
@@ -140,12 +143,96 @@ const QuizRunner = () => {
         );
       }
 
-      await response.json();
-      navigate("/quizzes");
+      const result = await response.json();
+
+      const score = Number(result.score ?? result.Score);
+      const passingScore = Number(
+        result.passingScore ??
+          result.PassingScore ??
+          quiz.passingScore ??
+          quiz.PassingScore,
+      );
+
+      const passed =
+        typeof (result.passed ?? result.Passed) === "boolean"
+          ? (result.passed ?? result.Passed)
+          : score >= passingScore;
+
+      if (passed) {
+        const passedQuizIds = JSON.parse(
+          sessionStorage.getItem("passedQuizIds") || "[]",
+        );
+
+        if (!passedQuizIds.includes(quizId)) {
+          sessionStorage.setItem(
+            "passedQuizIds",
+            JSON.stringify([...passedQuizIds, quizId]),
+          );
+        }
+      }
+
+      setQuizResult({
+        passed,
+        score,
+        passingScore,
+
+        moduleId:
+          location.state?.moduleId ??
+          quiz.moduleId ??
+          quiz.ModuleId ??
+          result.moduleId ??
+          result.ModuleId,
+
+        lessonId:
+          location.state?.lessonId ??
+          quiz.lessonId ??
+          quiz.LessonId ??
+          result.lessonId ??
+          result.LessonId,
+      });
     } catch (err) {
       alert(`Submission Error: ${err.message}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleQuizResultContinue = () => {
+    if (!quizResult) return;
+
+    if (quizResult.passed) {
+      const { moduleId, lessonId } = quizResult;
+
+      console.log("Quiz passed. Navigating to lesson:", {
+        moduleId,
+        lessonId,
+      });
+
+      if (!moduleId || !lessonId) {
+        console.error("Missing lesson information:", {
+          quizResult,
+          quiz,
+          locationState: location.state,
+        });
+
+        alert("The quiz was passed, but its lesson could not be identified.");
+        return;
+      }
+
+      // Return to the lesson content page.
+      navigate(`/modules/${moduleId}/lessons/${lessonId}`, {
+        replace: true,
+      });
+    } else {
+      // Failed quiz: return to assessments for a retake.
+      navigate("/student/assessments", {
+        replace: true,
+        state: {
+          quizSubmitted: true,
+          quizId,
+          passed: false,
+        },
+      });
     }
   };
 
@@ -215,13 +302,20 @@ const QuizRunner = () => {
         <div className="pt-4">
           <button
             type="submit"
-            disabled={submitting || !attemptId}
+            disabled={submitting || !attemptId || quizResult !== null}
             className="w-full bg-blue-600 text-white font-medium py-3 px-6 rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition"
           >
             {submitting ? "Submitting..." : "Submit Answers"}
           </button>
         </div>
       </form>
+
+      {quizResult && (
+        <QuizResultModal
+          result={quizResult}
+          onContinue={handleQuizResultContinue}
+        />
+      )}
     </div>
   );
 };

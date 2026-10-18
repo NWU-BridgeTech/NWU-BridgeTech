@@ -49,7 +49,7 @@ export default function LessonView() {
     if (lesson.completed) {
       lesson.nextLessonId
         ? goToLesson(lesson.nextLessonId)
-        : navigate("/courses"); // adjust to your courses route
+        : navigate("/student/courses");
       return;
     }
 
@@ -61,7 +61,7 @@ export default function LessonView() {
       });
       lesson.nextLessonId
         ? goToLesson(lesson.nextLessonId)
-        : navigate("/courses");
+        : navigate("/student/courses");
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -113,11 +113,11 @@ export default function LessonView() {
             <div className="lesson-progress-bar">
               <div
                 className="lesson-progress-fill"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${Math.max(0, progressPercent)}%` }}
               />
             </div>
             <span className="lesson-progress-label">
-              Lesson {lesson.lessonNumber} of {lesson.lessonTotal}
+              Lesson {lesson.lessonNumber || "-"} of {lesson.lessonTotal}
             </span>
           </div>
         </section>
@@ -169,15 +169,22 @@ export default function LessonView() {
         <div className="lesson-footer-card">
           {lesson.quiz ? (
             <div className="lesson-quiz-group">
-              <Link
-                to={`/quizzes/${lesson.quiz.quizId}`}
-                className="lesson-quiz-btn"
-              >
-                {lesson.quiz.bestScore == null
-                  ? "Take the Quiz"
-                  : "Retake the Quiz"}
-              </Link>
-              
+              {lesson.quiz.passed ? (
+                <span className="lesson-quiz-passed">Quiz passed</span>
+              ) : (
+                <Link
+                  to={`/quizzes/${lesson.quiz.quizId}`}
+                  state={{
+                    moduleId: moduleId ?? lesson.moduleId,
+                    lessonId: lesson.lessonId ?? lessonId,
+                  }}
+                  className="lesson-quiz-btn"
+                >
+                  {lesson.quiz.bestScore == null
+                    ? "Take the Quiz"
+                    : "Retake the Quiz"}
+                </Link>
+              )}
             </div>
           ) : (
             <span />

@@ -14,6 +14,13 @@ public class ExerciseResponse
     public JsonElement? VerificationCriteria { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public int ProgressPercentage { get; set; }
+    public string? Outcomes { get; set; }
+
+    public string ModuleTitle { get; set; } = string.Empty;
+
+    public bool Completed { get; set; }
+
+    public DateTimeOffset? CompletedAt { get; set; }
 }
 
 public class CreateExerciseRequest

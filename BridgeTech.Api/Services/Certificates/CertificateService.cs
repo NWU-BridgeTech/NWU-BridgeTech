@@ -1,5 +1,6 @@
 using BridgeTech.Api.Data;
 using BridgeTech.Api.Domain.Entities;
+using BridgeTech.Api.Domain.Enums;
 using BridgeTech.Api.DTOs.Certificates;
 using Microsoft.EntityFrameworkCore;
 using BridgeTech.Api.Services.Notifications;
@@ -23,8 +24,86 @@ public sealed class CertificateService(
     public async Task<IReadOnlyList<CertificateListItemResponse>> GetAllAsync(CancellationToken ct = default) =>
         (await Query().OrderByDescending(x => x.IssuedAt).ToListAsync(ct)).Select(ToList).ToList();
 
-    public async Task<IReadOnlyList<CertificateListItemResponse>> GetByUserAsync(Guid userId, CancellationToken ct = default) =>
-        (await Query().Where(x => x.UserId == userId).OrderByDescending(x => x.IssuedAt).ToListAsync(ct)).Select(ToList).ToList();
+    public async Task<IReadOnlyList<CertificateListItemResponse>> GetByUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        var enrollments = await db.Enrollments
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .ToListAsync(ct);
+
+        var publishedLessonCounts = await db.Lessons
+            .AsNoTracking()
+            .Where(x => x.Status == ContentStatus.Published)
+            .GroupBy(x => x.ModuleId)
+            .Select(x => new { ModuleId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.ModuleId, x => x.Count, ct);
+
+        var completedLessonCounts = await db.LessonProgress
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.Completed && x.Lesson.Status == ContentStatus.Published)
+            .GroupBy(x => x.Lesson.ModuleId)
+            .Select(x => new { ModuleId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.ModuleId, x => x.Count, ct);
+
+        var completedEnrollments = enrollments
+            .Where(x => publishedLessonCounts.TryGetValue(x.ModuleId, out var total)
+                && total > 0
+                && completedLessonCounts.GetValueOrDefault(x.ModuleId) >= total)
+            .Select(x => new { x.EnrollmentId, x.ModuleId, x.CompletedAt })
+            .ToList();
+
+        var staleCompletedEnrollments = enrollments
+            .Where(x => publishedLessonCounts.TryGetValue(x.ModuleId, out var total)
+                && total > 0
+                && completedLessonCounts.GetValueOrDefault(x.ModuleId) >= total
+                && (x.Status != EnrollmentStatus.Completed || x.CompletedAt is null))
+            .ToList();
+
+        if (staleCompletedEnrollments.Count > 0)
+        {
+            var completedAt = DateTimeOffset.UtcNow;
+            foreach (var enrollment in staleCompletedEnrollments)
+            {
+                enrollment.Status = EnrollmentStatus.Completed;
+                enrollment.ProgressPercent = 100;
+                enrollment.CompletedAt ??= completedAt;
+            }
+
+            db.Enrollments.UpdateRange(staleCompletedEnrollments);
+            await db.SaveChangesAsync(ct);
+
+            completedEnrollments = await db.Enrollments
+                .AsNoTracking()
+                .Where(x => x.UserId == userId && x.Status == EnrollmentStatus.Completed && x.CompletedAt != null)
+                .Select(x => new { x.EnrollmentId, x.ModuleId, x.CompletedAt })
+                .ToListAsync(ct);
+        }
+
+        var existingModuleIds = await db.Certificates
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Select(x => x.ModuleId)
+            .ToListAsync(ct);
+
+        var missingEnrollments = completedEnrollments
+            .Where(x => !existingModuleIds.Contains(x.ModuleId))
+            .ToList();
+
+        if (missingEnrollments.Count > 0)
+        {
+            foreach (var enrollment in missingEnrollments)
+            {
+                await IssueForCompletionAsync(userId, enrollment.ModuleId, ct);
+            }
+        }
+
+        return (await Query()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.IssuedAt)
+            .ToListAsync(ct))
+            .Select(ToList)
+            .ToList();
+    }
 
     public async Task<CertificateResponse> IssueForCompletionAsync(Guid userId, Guid moduleId, CancellationToken ct = default)
     {
@@ -33,7 +112,12 @@ public sealed class CertificateService(
 
         var user = await db.Users.AsNoTracking().SingleAsync(x => x.UserId == userId, ct);
         var module = await db.Modules.AsNoTracking().SingleAsync(x => x.ModuleId == moduleId, ct);
-        var issuedAt = DateTimeOffset.UtcNow;
+        var completedAt = await db.Enrollments
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.ModuleId == moduleId)
+            .Select(x => x.CompletedAt)
+            .SingleOrDefaultAsync(ct);
+        var issuedAt = completedAt ?? DateTimeOffset.UtcNow;
         var certificate = new Certificate
         {
             CertificateId = Guid.NewGuid(),
@@ -46,7 +130,25 @@ public sealed class CertificateService(
         certificate.CertificateHash = Sign(certificate, user.FirstName + " " + user.LastName, module.Title);
         db.Certificates.Add(certificate);
         await db.SaveChangesAsync(ct);
-        await notificationService.NotifyAsync(userId, "certificate_issued", "Certificate issued", $"Your certificate for {module.Title} is ready.", certificate.CertificateId, ct);
+        try
+        {
+            await notificationService.NotifyAsync(
+                userId,
+                "certificate_issued",
+                "Certificate issued",
+                $"Your certificate for {module.Title} is ready in the Certificates tab.",
+                certificate.CertificateId,
+                ct);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Certificate {CertificateNumber} was issued, but the in-app notification failed for user {UserId}.",
+                certificate.CertificateNumber,
+                userId);
+        }
+
         certificate.User = user;
         certificate.Module = module;
         var response = ToResponse(certificate)!;

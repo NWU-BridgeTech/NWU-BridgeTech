@@ -24,6 +24,7 @@ public class QuizService : IQuizService
             QuizId = q.QuizId,
             Title = q.Title,
             ModuleId = q.ModuleId,
+            LessonId = q.LessonId,
             PassingScore = q.PassingScore,
             Questions = q.Questions
                 .OrderBy(quest => quest.OrderIndex)
@@ -58,7 +59,6 @@ public class QuizService : IQuizService
             .OrderBy(_ => Random.Shared.Next())
             .ToList();
 
-       
         for (short i = 0; i < question.Options.Count; i++)
         {
             question.Options[i].OrderIndex = i;
@@ -166,7 +166,6 @@ public class QuizService : IQuizService
     var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
     if (quiz is null) return null;
 
-    
     var existing = await _context.QuizAttempts
         .Where(a => a.UserId == userId && a.QuizId == quiz.QuizId && a.CompletedAt == null)
         .OrderByDescending(a => a.StartedAt)
@@ -213,7 +212,7 @@ public class QuizService : IQuizService
         .FirstOrDefaultAsync(a => a.AttemptId == request.AttemptId.Value && a.UserId == userId, cancellationToken);
 
     if (attempt is null) return null;
-    if (attempt.CompletedAt is not null) return null; 
+    if (attempt.CompletedAt is not null) return null;
 
     int correct = 0;
     var answeredQuestions = new HashSet<Guid>();
@@ -222,7 +221,7 @@ public class QuizService : IQuizService
     foreach (var answerReq in request.Answers)
     {
         if (answerReq.QuestionId is null || answerReq.OptionId is null) continue;
-        if (!answeredQuestions.Add(answerReq.QuestionId.Value)) continue; 
+        if (!answeredQuestions.Add(answerReq.QuestionId.Value)) continue;
 
         var question = attempt.Quiz.Questions.FirstOrDefault(q => q.QuestionId == answerReq.QuestionId.Value);
         if (question is null) continue;
@@ -242,7 +241,6 @@ public class QuizService : IQuizService
         });
     }
 
-    
     int totalQuestions = attempt.Quiz.Questions.Count;
     int percent = totalQuestions == 0 ? 0 : (int)Math.Round(correct * 100.0 / totalQuestions);
 
@@ -289,13 +287,25 @@ public async Task<IReadOnlyList<QuizRetakeResponse>> GetQuizzesToRetakeAsync(Gui
     var attempts = await _context.QuizAttempts
         .AsNoTracking()
         .Where(a => a.UserId == userId && a.CompletedAt != null)
-        .Select(a => new { a.QuizId, a.Score, a.Passed, CompletedAt = a.CompletedAt!.Value })
+        .Select(a => new
+        {
+            a.QuizId,
+            a.Score,
+            a.Passed,
+            a.Quiz.PassingScore,
+            CompletedAt = a.CompletedAt!.Value
+        })
         .ToListAsync(cancellationToken);
+
+    var passedQuizIds = attempts
+        .Where(a => a.Passed == true || (a.Score ?? 0) >= a.PassingScore)
+        .Select(a => a.QuizId)
+        .ToHashSet();
 
     var lastScoreByFailedQuiz = attempts
         .GroupBy(a => a.QuizId)
         .Select(g => g.OrderByDescending(a => a.CompletedAt).First())
-        .Where(a => a.Passed != true)
+        .Where(a => !passedQuizIds.Contains(a.QuizId))
         .ToDictionary(a => a.QuizId, a => a.Score ?? 0);
 
     if (lastScoreByFailedQuiz.Count == 0) return Array.Empty<QuizRetakeResponse>();

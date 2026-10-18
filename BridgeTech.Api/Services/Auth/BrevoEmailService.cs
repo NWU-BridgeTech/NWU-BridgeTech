@@ -36,6 +36,35 @@ public sealed class BrevoEmailService(
             $"Hi {firstName},\n\nWelcome to BridgeTech! Your email has been verified and your account is ready.\n\nStart learning at http://localhost:5173/home\n\nThe BridgeTech team",
             cancellationToken: cancellationToken);
 
+    public Task SendStaffInvitationAsync(
+        string email,
+        string firstName,
+        string invitationUrl,
+        CancellationToken cancellationToken = default) =>
+        SendAsync(
+            email,
+            "You're invited to the BridgeTech team",
+            $"Hi {firstName},\n\nYou've been invited to join the BridgeTech team. Accept your invitation and set your password here:\n{invitationUrl}\n\nThis link expires in 7 days and can only be used once.\n\nThe BridgeTech team",
+            cancellationToken: cancellationToken);
+
+    public Task SendAdministratorInvitationAsync(
+        string email,
+        string firstName,
+        string roleName,
+        string setPasswordUrl,
+        string signInUrl,
+        CancellationToken cancellationToken = default) =>
+        SendAsync(
+            email,
+            "You've been added to BridgeTech",
+            $"Hi {firstName},\n\nYou've been added to BridgeTech as {roleName}.\n\n" +
+            $"To set your password:\n1. Open {setPasswordUrl}\n" +
+            $"2. Enter this email address ({email}) to receive a code\n" +
+            $"3. Enter the code and choose a password\n\n" +
+            $"Then sign in at {signInUrl}.\n\n" +
+            "If you weren't expecting this email you can ignore it.\n\nThe BridgeTech team",
+            cancellationToken: cancellationToken);
+
     public Task SendCertificateEmailAsync(
         string email,
         string firstName,

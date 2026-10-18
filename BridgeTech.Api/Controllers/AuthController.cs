@@ -2,6 +2,8 @@ using BridgeTech.Api.DTOs.Auth;
 using BridgeTech.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -179,6 +181,55 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("team-login")]
+    public async Task<IActionResult> TeamLogin(
+        LoginRequest request)
+    {
+        try
+        {
+            var response =
+                await _authService.LoginTeamAsync(request);
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new
+            {
+                code = ex.Data["Code"] ?? "UNAUTHORIZED",
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(new
+            {
+                code = ex.Data["Code"] ?? "UNAUTHORIZED",
+                message = ex.Message
+            });
+        }
+    }
+
+    [HttpPost("accept-invitation")]
+    public async Task<IActionResult> AcceptInvitation(
+        AcceptStaffInvitationRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _authService.AcceptStaffInvitationAsync(request, cancellationToken);
+            return Ok(new { message = "Invitation accepted. You can now sign in to Team Login." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin(
         GoogleLoginRequest request)
@@ -228,5 +279,18 @@ public class AuthController : ControllerBase
                 message = ex.Message
             });
         }
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userId, out var id))
+        {
+            await _authService.LogoutAsync(id, cancellationToken);
+        }
+
+        return NoContent();
     }
 }

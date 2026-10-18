@@ -20,10 +20,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<QuizAnswer> QuizAnswers => Set<QuizAnswer>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<ExerciseSubmission> ExerciseSubmissions => Set<ExerciseSubmission>();
+    public DbSet<ExerciseCompletion> ExerciseCompletions => Set<ExerciseCompletion>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<Badge> Badges => Set<Badge>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<LessonProgress> LessonProgress => Set<LessonProgress>();
+    public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
+    public DbSet<Report> Reports => Set<Report>();
+    public DbSet<StaffActivity> StaffActivities => Set<StaffActivity>();
+    public DbSet<LearningChatMessage> LearningChatMessages => Set<LearningChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

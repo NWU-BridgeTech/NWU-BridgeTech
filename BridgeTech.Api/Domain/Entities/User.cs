@@ -19,6 +19,8 @@ public class User
     public string? GithubRepository { get; set; }
     public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset? LastLoginAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public bool EmailVerified { get; set; }
@@ -36,5 +38,9 @@ public class User
     public ICollection<ExerciseSubmission> ExerciseSubmissions { get; set; } = new List<ExerciseSubmission>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+    public ICollection<Badge> Badges { get; set; } = new List<Badge>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<Report> Reports { get; set; } = new List<Report>();
+    public ICollection<StaffActivity> StaffActivities { get; set; } = new List<StaffActivity>();
+    public UserPreference? Preferences { get; set; }
 }

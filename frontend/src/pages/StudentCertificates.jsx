@@ -106,7 +106,7 @@ export default function StudentCertificates() {
                     </span>
                     <h3>{certificate.moduleTitle || "Completed module"}</h3>
                     <p>
-                      Issued{" "}
+                      Completed{" "}
                       <time dateTime={certificate.issuedAt}>
                         {formatDate(certificate.issuedAt)}
                       </time>
@@ -118,12 +118,6 @@ export default function StudentCertificates() {
                     aria-label={`View certificate: ${certificate.moduleTitle || "Completed module"}`}
                   >
                     View details <span aria-hidden="true">→</span>
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={() => downloadCertificate("pdf")}
-                  >
-                    Download PDF
                   </button>
                 </li>
               ))}
@@ -185,7 +179,7 @@ export default function StudentCertificates() {
                   <dd>BridgeTech</dd>
                 </div>
                 <div>
-                  <dt>Issue date</dt>
+                  <dt>Completion date</dt>
                   <dd>
                     <time dateTime={selectedCertificate.issuedAt}>
                       {formatDate(selectedCertificate.issuedAt)}
@@ -203,19 +197,13 @@ export default function StudentCertificates() {
                 </p>
                 <div className="certificate-download-actions">
                   <button
-                    className="btn blue"
+                    className="btn certificate-download-button certificate-download-primary"
                     onClick={() => downloadCertificate("png")}
                   >
                     Download PNG
                   </button>
                   <button
-                    className="btn"
-                    onClick={() => downloadCertificate("jpeg")}
-                  >
-                    Download JPEG
-                  </button>
-                  <button
-                    className="btn"
+                    className="btn certificate-download-button certificate-download-secondary"
                     onClick={() => downloadCertificate("pdf")}
                   >
                     Download PDF

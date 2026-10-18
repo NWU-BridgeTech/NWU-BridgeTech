@@ -18,12 +18,19 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using BridgeTech.Api.Services.Enrollments;
 using BridgeTech.Api.Services.Lessons;
+using BridgeTech.Api.Services.Badges;
+using BridgeTech.Api.Services.Admin;
+using BridgeTech.Api.Services.AdminDashboard;
+using BridgeTech.Api.Services.Reports;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.Configure<GitHubApiOptions>(builder.Configuration.GetSection("GitHub"));
+builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddDataProtection();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -43,8 +50,14 @@ builder.Services.AddHttpClient<IEmailService, BrevoEmailService>(client =>
 });
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IGitHubService, GitHubService>();
+builder.Services.AddScoped<ILearningInsightsService, LearningInsightsService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
+builder.Services.AddScoped<IAdministratorService, AdministratorService>();
+builder.Services.AddScoped<IAdminStudentService, AdminStudentService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAdminReportService, AdminReportService>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -108,7 +121,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        var configuredOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>();
+        var allowedOrigins = configuredOrigins is { Length: > 0 }
+            ? configuredOrigins
+            : ["http://localhost:5173", "http://127.0.0.1:5173"];
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

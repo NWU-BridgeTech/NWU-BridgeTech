@@ -1,0 +1,77 @@
+.signout-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f3f7ff, #eaf2ff);
+}
+
+.signout-modal {
+  width: min(100%, 420px);
+  padding: 28px;
+  border: 1px solid #dfe8f5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(23, 35, 61, 0.16);
+}
+
+.signout-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 12px;
+  background: #fff1f1;
+  color: #b42318;
+}
+
+.signout-eyebrow {
+  margin: 20px 0 5px;
+  color: #5274b1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.signout-modal h1 {
+  margin: 0;
+  color: #17233d;
+  font-size: 22px;
+  letter-spacing: -0.4px;
+}
+
+.signout-modal > p:not(.signout-eyebrow) {
+  margin: 10px 0 0;
+  color: #657a9f;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.signout-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.signout-actions button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.signout-cancel {
+  border: 1px solid #d5e0ef;
+  background: #fff;
+  color: #17233d;
+}
+
+.signout-confirm {
+  border: 1px solid #b42318;
+  background: #b42318;
+  color: #fff;
+}

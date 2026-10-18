@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BridgeTech.Api.Common.Options;
+using BridgeTech.Api.DTOs.GitHub;
 using BridgeTech.Api.Services.GitHub;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,13 +32,64 @@ public sealed class GitHubController : ControllerBase
     }
 
     [Authorize]
+    [HttpDelete("connection")]
+    public async Task<IActionResult> Disconnect(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.DisconnectUserAsync(userId, cancellationToken);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             return Unauthorized();
 
-        return Ok(new { username = await _githubService.GetUsernameAsync(userId, cancellationToken) });
+        var username = await _githubService.GetUsernameAsync(userId, cancellationToken);
+        var repository = await _githubService.GetRepositoryAsync(userId, cancellationToken);
+        IReadOnlyList<GitHubRepositoryResponse> repositories = [];
+        var authorizationRequired = false;
+        try
+        {
+            repositories = await _githubService.GetRepositoriesAsync(userId, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            authorizationRequired = true;
+        }
+
+        return Ok(new { username, repository, repositories, authorizationRequired });
+    }
+
+    [Authorize]
+    [HttpPut("repository")]
+    public async Task<IActionResult> LinkRepository(
+        [FromBody] LinkGitHubRepositoryRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        var repository = await _githubService.LinkRepositoryAsync(
+            userId, request.FullName, cancellationToken);
+        return repository is null
+            ? NotFound(new { message = "That repository is not available to your connected GitHub account." })
+            : Ok(new { repository });
+    }
+
+    [Authorize]
+    [HttpDelete("repository")]
+    public async Task<IActionResult> UnlinkRepository(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.UnlinkRepositoryAsync(userId, cancellationToken);
+        return NoContent();
     }
 
     [AllowAnonymous]
@@ -55,7 +107,10 @@ public sealed class GitHubController : ControllerBase
         }
         catch (Exception exception) when (exception is InvalidOperationException or HttpRequestException)
         {
-            return Redirect($"{redirectUrl}?github=error&message={Uri.EscapeDataString(exception.Message)}");
+            var result = exception.Message.Contains("already connected", StringComparison.OrdinalIgnoreCase)
+                ? "account-conflict"
+                : "error";
+            return Redirect($"{redirectUrl}?github={result}&message={Uri.EscapeDataString(exception.Message)}");
         }
     }
 }
