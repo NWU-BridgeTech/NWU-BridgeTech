@@ -4,6 +4,7 @@ import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminAdministrators.css";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 const STAFF_ROLES = [
@@ -87,8 +88,11 @@ export default function AdminAdministrators() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resendingId, setResendingId] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [message, setMessage] = useState("");
+  const [staffToDelete, setStaffToDelete] = useState(null);
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
   const isSuperAdmin = currentUser?.role === "SuperAdmin";
   const availableRoles =
@@ -208,6 +212,50 @@ export default function AdminAdministrators() {
     }
   }
 
+function viewStaff(staff) {
+  setSelectedStaff(staff);
+}
+
+async function deleteInstructor(staff) {
+  // Admins may only manage instructors.
+  if (!isSuperAdmin && staff.role !== "Instructor") {
+    setMessage("You can only remove instructor accounts.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete ${staff.name}?`
+  );
+
+  if (!confirmed) return;
+
+  setDeletingId(staff.id);
+  setMessage("");
+
+  try {
+    await staffRequest(
+      `/api/users/staff/${staff.id}`,
+      { method: "DELETE" }
+    );
+
+    setAdministrators((current) =>
+      current.filter((item) => item.id !== staff.id)
+    );
+
+    if (selectedStaff?.id === staff.id) {
+      setSelectedStaff(null);
+    }
+
+    setMessage(`${staff.name} has been removed.`);
+  } catch (error) {
+    setMessage(
+      error.message || "Unable to delete instructor."
+    );
+  } finally {
+    setDeletingId(null);
+  }
+}
+
   return (
     <AppLayout>
       <header className="top dashboard-header modules-header">
@@ -307,7 +355,9 @@ export default function AdminAdministrators() {
           </section>
         )}
         <section className="card" aria-labelledby="administrator-list-heading">
-          <h2 id="administrator-list-heading">All team accounts</h2>
+          <h2 id="administrator-list-heading">
+            {isSuperAdmin ? "All team accounts" : "All instructors"}
+          </h2>
           <p className="sub">
             {loadError
               ? "Team account list is unavailable."
@@ -316,7 +366,7 @@ export default function AdminAdministrators() {
           <div className="module-toolbar">
             <div className="module-search">
               <label htmlFor="administrator-search">
-                Search administrators
+                {isSuperAdmin ? "Search team accounts" : "Search instructors"}
               </label>
               <input
                 id="administrator-search"
@@ -326,21 +376,32 @@ export default function AdminAdministrators() {
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="administrator-role-filter">Role</label>
-              <select
-                id="administrator-role-filter"
-                value={role}
-                onChange={(event) => setRole(event.target.value)}
-              >
-                <option value="All">All roles</option>
-                {STAFF_ROLES.map((staffRole) => (
-                  <option key={staffRole.value} value={staffRole.value}>
-                    {staffRole.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            
+            {isSuperAdmin && (
+              <div>
+                <label htmlFor="administrator-role-filter">
+                  Role
+                </label>
+
+                <select
+                  id="administrator-role-filter"
+                  value={role}
+                  onChange={(event) => setRole(event.target.value)}
+                >
+                  <option value="All">All roles</option>
+
+                  {STAFF_ROLES.map((staffRole) => (
+                    <option
+                      key={staffRole.value}
+                      value={staffRole.value}
+                    >
+                      {staffRole.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label htmlFor="administrator-status-filter">Status</label>
               <select
@@ -354,48 +415,92 @@ export default function AdminAdministrators() {
               </select>
             </div>
           </div>
+          
           <table className="modules-table">
             <thead>
               <tr>
-                <th scope="col">Team member</th>
+                <th scope="col">
+                  {isSuperAdmin ? "Team member" : "Instructor"}
+                </th>
+
                 <th scope="col">Role</th>
-                <th scope="col">Last active</th>
                 <th scope="col">Status</th>
                 <th scope="col">Action</th>
               </tr>
             </thead>
+
             <tbody>
               {visibleAdmins.map((admin) => (
                 <tr key={admin.id}>
+                  {/* INSTRUCTOR NAME AND EMAIL */}
                   <td>
                     <strong>{admin.name}</strong>
                     <p>{admin.email}</p>
                   </td>
+
+                  {/* ROLE */}
                   <td>
-                    {admin.status === "Pending" && (
-                      <button
-                        className="module-edit"
-                        type="button"
-                        disabled={resendingId === admin.id}
-                        onClick={() => resendInvitation(admin)}
-                      >
-                        {resendingId === admin.id ? "Sending..." : "Resend invitation"}
-                      </button>
-                    )}
+                    {STAFF_ROLES.find(
+                      (staffRole) => staffRole.value === admin.role
+                    )?.label || admin.role}
                   </td>
-                  <td>{STAFF_ROLES.find((staffRole) => staffRole.value === admin.role)?.label || admin.role}</td>
-                  <td>{admin.lastActive}</td>
+
+                  {/* STATUS */}
                   <td>
                     <span
-                      className={`module-status ${admin.status === "Active" ? "published" : "administrator-inactive"}`}
+                      className={`module-status ${
+                        admin.status === "Active"
+                          ? "published"
+                          : "administrator-inactive"
+                      }`}
                     >
                       {admin.status}
                     </span>
+                  </td>
+
+                  {/* ACTION BUTTONS */}
+                  <td>
+                    <div className="instructor-actions">
+                      <button
+                        className="module-edit"
+                        type="button"
+                        onClick={() => viewStaff(admin)}
+                      >
+                        View
+                      </button>
+
+                      
+                    <button
+                      className="module-edit assessment-danger"
+                      type="button"
+                      disabled={deletingId === admin.id}
+                      onClick={() => setStaffToDelete(admin)}
+                    >
+                      {deletingId === admin.id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+
+
+                      {admin.status === "Pending" && (
+                        <button
+                          className="module-edit"
+                          type="button"
+                          disabled={resendingId === admin.id}
+                          onClick={() => resendInvitation(admin)}
+                        >
+                          {resendingId === admin.id
+                            ? "Sending..."
+                            : "Resend invitation"}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
           {!loading && !loadError && visibleAdmins.length === 0 && (
             <div className="modules-empty">
               <h3>No administrators found</h3>
@@ -426,7 +531,79 @@ export default function AdminAdministrators() {
             ))}
           </div>
         </section>
+
+        
+        {/* ============================================
+            VIEW INSTRUCTOR / STAFF DETAILS
+        ============================================ */}
+
+        {selectedStaff && (
+          <section
+            className="card instructor-details-panel"
+            aria-labelledby="instructor-details-heading"
+          >
+            <div className="instructor-details-header">
+              <h2 id="instructor-details-heading">
+                {selectedStaff.role === "Instructor"
+                  ? "Instructor details"
+                  : "Staff details"}
+              </h2>
+
+              <button
+                type="button"
+                className="module-edit"
+                onClick={() => setSelectedStaff(null)}
+              >
+                Close
+              </button>
+            </div>
+
+            <dl className="instructor-details-list">
+              <div>
+                <dt>Full name</dt>
+                <dd>{selectedStaff.name}</dd>
+              </div>
+
+              <div>
+                <dt>Email address</dt>
+                <dd>{selectedStaff.email}</dd>
+              </div>
+
+              <div>
+                <dt>Role</dt>
+                <dd>{selectedStaff.role}</dd>
+              </div>
+
+              <div>
+                <dt>Account status</dt>
+                <dd>{selectedStaff.status}</dd>
+              </div>
+            </dl>
+          </section>
+        )}
+
       </div>
+      
+      <ConfirmDeleteModal
+        open={staffToDelete !== null}
+        title="Delete staff account?"
+        message={
+          staffToDelete
+            ? `Are you sure you want to delete ${staffToDelete.name} (${staffToDelete.email})? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete account"
+        loading={deletingId !== null}
+        onCancel={() => setStaffToDelete(null)}
+        onConfirm={async () => {
+          if (!staffToDelete) return;
+
+          const staff = staffToDelete;
+          await deleteInstructor(staff);
+          setStaffToDelete(null);
+        }}
+      />
+
     </AppLayout>
   );
 }

@@ -188,6 +188,8 @@
 }
 
 .admin-page .admin-notification-popover {
+  right: 0;
+  left: auto;
   max-height: min(470px, calc(100vh - 120px));
 }
 

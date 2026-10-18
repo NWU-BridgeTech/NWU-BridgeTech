@@ -428,4 +428,75 @@
     display: block;
     padding-top: 12px;
   }
+
+  
+  /* ============================================
+    INSTRUCTOR ACTION BUTTONS
+  ============================================ */
+
+  .admin-page .instructor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .admin-page .instructor-actions button {
+    white-space: nowrap;
+  }
+
+  /* ============================================
+    INSTRUCTOR DETAILS PANEL
+  ============================================ */
+
+  .admin-page .instructor-details-panel {
+    margin-top: 22px;
+    padding: 24px;
+  }
+
+  .admin-page .instructor-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .admin-page .instructor-details-header h2 {
+    margin: 0;
+  }
+
+  .admin-page .instructor-details-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin: 0;
+  }
+
+  .admin-page .instructor-details-list dt {
+    font-size: 13px;
+    font-weight: 500;
+    color: #687384;
+    margin-bottom: 6px;
+  }
+
+  .admin-page .instructor-details-list dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #202733;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 650px) {
+    .admin-page .instructor-details-list {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-page .instructor-actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
 }

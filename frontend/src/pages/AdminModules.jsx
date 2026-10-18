@@ -15,6 +15,7 @@ import {
 } from "../utils/instructorContentApi";
 import "./Admin.css";
 import "./AdminModules.css";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 // Converts a module from the API into the shape this page displays.
 function toModuleRow(module) {
@@ -38,6 +39,7 @@ export default function AdminModules({ readOnly = false }) {
   const [status, setStatus] = useState("All");
   const [editingModule, setEditingModule] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [moduleToDelete, setModuleToDelete] = useState(null);
   const [message, setMessage] = useState("");
 
   // Instructor read-only view is scoped to modules attributed to the signed-in instructor.
@@ -117,18 +119,29 @@ export default function AdminModules({ readOnly = false }) {
       return;
     }
 
-    setDeletingId(module.id);
-    setMessage("");
-    try {
-      await deleteModule(module.id);
-      setModules((current) => current.filter((item) => item.id !== module.id));
-      setMessage(`${module.title} removed.`);
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setDeletingId(null);
-    }
+async function removeModule(module) {
+  if (!module || deletingId !== null) return;
+
+  setDeletingId(module.id);
+  setMessage("");
+
+  try {
+    await deleteModule(module.id);
+
+    setModules((current) =>
+      current.filter((item) => item.id !== module.id)
+    );
+
+    setMessage(`${module.title} removed.`);
+    setModuleToDelete(null);
+  } catch (error) {
+    setMessage(error.message || "Unable to remove module.");
+    setModuleToDelete(null);
+  } finally {
+    setDeletingId(null);
   }
+}
+
 
   async function saveModule(event) {
     event.preventDefault();
@@ -140,14 +153,12 @@ export default function AdminModules({ readOnly = false }) {
       return;
     }
 
-    const details = {
-      title,
-      description,
-      status: form.get("status"),
-    };
-    if (!readOnly) {
-      details.level = form.get("level");
-    }
+  const details = {
+  title,
+  description,
+  level: editingModule.level || "Beginner",
+  status: form.get("status"),
+};
 
     setSaving(true);
     setMessage("");
@@ -260,43 +271,28 @@ export default function AdminModules({ readOnly = false }) {
                 rows={3}
                 defaultValue={editingModule.description}
               />
-              <div className="module-form-row">
-                {!readOnly && <div>
-                  <label htmlFor="module-level">Level</label>
-                  <select
-                    id="module-level"
-                    name="level"
-                    defaultValue={editingModule.level}
-                  >
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
-                  </select>
-                </div>}
-                <div>
-                  <label htmlFor="module-status">Status</label>
-                  <select
-                    id="module-status"
-                    name="status"
-                    defaultValue={editingModule.status}
-                  >
-                    <option>Draft</option>
-                    <option
-                      disabled={readOnly
-                        ? !editingModule.publishedLessons
-                        : !editingModule.lessons}
-                    >
-                      Published
-                    </option>
-                  </select>
-                  {readOnly && !editingModule.publishedLessons && (
-                    <p className="sub">Publish at least one lesson before publishing this module.</p>
-                  )}
-                  {!readOnly && !editingModule.lessons && (
-                    <p className="sub">Add lessons before publishing.</p>
-                  )}
-                </div>
-              </div>
+             
+<div className="module-status-field">
+  <label htmlFor="module-status">Status</label>
+
+  <select
+    id="module-status"
+    name="status"
+    defaultValue={editingModule.status}
+  >
+    <option>Draft</option>
+    <option disabled={!editingModule.lessons}>
+      Published
+    </option>
+  </select>
+
+  {!editingModule.lessons && (
+    <p className="sub">
+      Add lessons before publishing.
+    </p>
+  )}
+</div>
+
               <p className="modules-message" role="status">
                 {message}
               </p>
@@ -355,60 +351,80 @@ export default function AdminModules({ readOnly = false }) {
               </select>
             </div>
           </div>
-          <table className="modules-table">
-            <thead>
-              <tr>
-                <th scope="col">Module</th>
-                {!readOnly && <th scope="col">Level</th>}
-                <th scope="col">Lessons</th>
-                <th scope="col">Students</th>
-                <th scope="col">Status</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleModules.map((module) => (
-                <tr key={module.id}>
-                  <td>
-                    <strong>{module.title}</strong>
-                    <p>{module.description}</p>
-                  </td>
-                  {!readOnly && <td>{module.level}</td>}
-                  <td>{module.lessons}</td>
-                  <td>{module.students}</td>
-                  <td>
-                    <span
-                      className={`module-status ${module.status === "Published" ? "published" : "draft"}`}
-                    >
-                      {module.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="module-edit"
-                      type="button"
-                      disabled={!!editingModule || deletingId === module.id}
-                      aria-label={`Edit ${module.title}`}
-                      onClick={() => {
-                        setEditingModule(module);
-                        setMessage("");
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="module-edit assessment-danger"
-                      type="button"
-                      disabled={!!editingModule || deletingId === module.id}
-                      onClick={() => readOnly ? removeInstructorModule(module) : removeModule(module)}
-                    >
-                      {deletingId === module.id ? "Removing..." : "Remove"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+     
+<table className="modules-table">
+  <thead>
+    <tr>
+      <th scope="col">Module</th>
+      <th scope="col">Lessons</th>
+      <th scope="col">Students</th>
+      <th scope="col">Status</th>
+      {!readOnly && <th scope="col">Action</th>}
+    </tr>
+  </thead>
+
+  <tbody>
+    {visibleModules.map((module) => (
+      <tr key={module.id}>
+        <td>
+          <strong>{module.title}</strong>
+          <p>{module.description}</p>
+        </td>
+
+        <td>{module.lessons}</td>
+
+        <td>{module.students}</td>
+
+        <td>
+          <span
+            className={`module-status ${
+              module.status === "Published"
+                ? "published"
+                : "draft"
+            }`}
+          >
+            {module.status}
+          </span>
+        </td>
+
+        {!readOnly && (
+          <td>
+            <button
+              className="module-edit"
+              type="button"
+              disabled={
+                !!editingModule ||
+                deletingId === module.id
+              }
+              aria-label={`Edit ${module.title}`}
+              onClick={() => {
+                setEditingModule(module);
+                setMessage("");
+              }}
+            >
+              Edit
+            </button>
+
+            <button
+              className="module-edit assessment-danger"
+              type="button"
+              disabled={
+                !!editingModule ||
+                deletingId === module.id
+              }
+              onClick={() => setModuleToDelete(module)}
+            >
+              {deletingId === module.id
+                ? "Removing..."
+                : "Remove"}
+            </button>
+          </td>
+        )}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
           {!loading && visibleModules.length === 0 && (
             <div className="modules-empty">
               <h3>{readOnly && modules.length === 0 ? "No modules created yet" : "No modules found"}</h3>
@@ -440,7 +456,23 @@ export default function AdminModules({ readOnly = false }) {
             Showing {visibleModules.length} of {modules.length} modules
           </p>
         </section>
+      
       </div>
+
+      <ConfirmDeleteModal
+        open={moduleToDelete !== null}
+        title="Remove module?"
+        message={
+          moduleToDelete
+            ? `Are you sure you want to remove "${moduleToDelete.title}"? This also removes its lessons and may affect related records. This action cannot be undone.`
+            : ""
+        }
+        confirmText="Remove module"
+        loading={deletingId !== null}
+        onCancel={() => setModuleToDelete(null)}
+        onConfirm={() => removeModule(moduleToDelete)}
+      />
     </AppLayout>
+
   );
 }

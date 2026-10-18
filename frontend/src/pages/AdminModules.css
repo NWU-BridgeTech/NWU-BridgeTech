@@ -163,3 +163,18 @@
   gap: 10px;
   margin-top: 24px;
 }
+.admin-page .module-status-field {
+  width: 100%;
+  max-width: 440px;
+  margin-top: 4px;
+}
+
+.admin-page .module-status-field select {
+  width: 100%;
+}
+
+.admin-page .module-status-field .sub {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #687384;
+}
