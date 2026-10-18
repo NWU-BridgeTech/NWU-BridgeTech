@@ -8,6 +8,7 @@ import {
 } from "../utils/adminApi";
 import "./Admin.css";
 import "./AdminModules.css";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 // Converts a module from the API into the shape this page displays.
 function toModuleRow(module) {
@@ -30,6 +31,7 @@ export default function AdminModules({ readOnly = false }) {
   const [status, setStatus] = useState("All");
   const [editingModule, setEditingModule] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [moduleToDelete, setModuleToDelete] = useState(null);
   const [message, setMessage] = useState("");
 
   // Load every module (drafts included) from the database when the page opens.
@@ -64,27 +66,30 @@ export default function AdminModules({ readOnly = false }) {
     return matchesSearch && (status === "All" || module.status === status);
   });
 
-  async function removeModule(module) {
-    if (
-      !window.confirm(
-        `Remove "${module.title}"? This also removes its lessons and cannot be undone.`,
-      )
-    ) {
-      return;
-    }
 
-    setDeletingId(module.id);
-    setMessage("");
-    try {
-      await deleteModule(module.id);
-      setModules((current) => current.filter((item) => item.id !== module.id));
-      setMessage(`${module.title} removed.`);
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setDeletingId(null);
-    }
+async function removeModule(module) {
+  if (!module || deletingId !== null) return;
+
+  setDeletingId(module.id);
+  setMessage("");
+
+  try {
+    await deleteModule(module.id);
+
+    setModules((current) =>
+      current.filter((item) => item.id !== module.id)
+    );
+
+    setMessage(`${module.title} removed.`);
+    setModuleToDelete(null);
+  } catch (error) {
+    setMessage(error.message || "Unable to remove module.");
+    setModuleToDelete(null);
+  } finally {
+    setDeletingId(null);
   }
+}
+
 
   async function saveModule(event) {
     event.preventDefault();
@@ -330,7 +335,7 @@ export default function AdminModules({ readOnly = false }) {
                 !!editingModule ||
                 deletingId === module.id
               }
-              onClick={() => removeModule(module)}
+              onClick={() => setModuleToDelete(module)}
             >
               {deletingId === module.id
                 ? "Removing..."
@@ -363,7 +368,23 @@ export default function AdminModules({ readOnly = false }) {
             Showing {visibleModules.length} of {modules.length} modules
           </p>
         </section>
+      
       </div>
+
+      <ConfirmDeleteModal
+        open={moduleToDelete !== null}
+        title="Remove module?"
+        message={
+          moduleToDelete
+            ? `Are you sure you want to remove "${moduleToDelete.title}"? This also removes its lessons and may affect related records. This action cannot be undone.`
+            : ""
+        }
+        confirmText="Remove module"
+        loading={deletingId !== null}
+        onCancel={() => setModuleToDelete(null)}
+        onConfirm={() => removeModule(moduleToDelete)}
+      />
     </AppLayout>
+
   );
 }

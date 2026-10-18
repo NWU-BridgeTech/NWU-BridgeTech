@@ -4,6 +4,7 @@ import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminAdministrators.css";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
 const STAFF_ROLES = [
@@ -91,6 +92,7 @@ export default function AdminAdministrators() {
   const [deletingId, setDeletingId] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [message, setMessage] = useState("");
+  const [staffToDelete, setStaffToDelete] = useState(null);
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
   const isSuperAdmin = currentUser?.role === "SuperAdmin";
   const availableRoles =
@@ -467,16 +469,18 @@ async function deleteInstructor(staff) {
                         View
                       </button>
 
-                      <button
-                        className="module-edit assessment-danger"
-                        type="button"
-                        disabled={deletingId === admin.id}
-                        onClick={() => deleteInstructor(admin)}
-                      >
-                        {deletingId === admin.id
-                          ? "Deleting..."
-                          : "Delete"}
-                      </button>
+                      
+                    <button
+                      className="module-edit assessment-danger"
+                      type="button"
+                      disabled={deletingId === admin.id}
+                      onClick={() => setStaffToDelete(admin)}
+                    >
+                      {deletingId === admin.id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+
 
                       {admin.status === "Pending" && (
                         <button
@@ -579,6 +583,27 @@ async function deleteInstructor(staff) {
         )}
 
       </div>
+      
+      <ConfirmDeleteModal
+        open={staffToDelete !== null}
+        title="Delete staff account?"
+        message={
+          staffToDelete
+            ? `Are you sure you want to delete ${staffToDelete.name} (${staffToDelete.email})? This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete account"
+        loading={deletingId !== null}
+        onCancel={() => setStaffToDelete(null)}
+        onConfirm={async () => {
+          if (!staffToDelete) return;
+
+          const staff = staffToDelete;
+          await deleteInstructor(staff);
+          setStaffToDelete(null);
+        }}
+      />
+
     </AppLayout>
   );
 }
