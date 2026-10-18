@@ -34,7 +34,16 @@ public sealed class InstructorModuleContentResponse
     public int AttachedQuizzes { get; set; }
     public double? AverageQuizScore { get; set; }
     public int ModuleExerciseCount { get; set; }
+    public IReadOnlyList<InstructorExerciseResponse> Exercises { get; set; } = [];
     public IReadOnlyList<InstructorLessonResponse> Lessons { get; set; } = [];
+}
+
+public sealed class InstructorExerciseResponse
+{
+    public Guid ExerciseId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Instructions { get; set; }
+    public string? Outcomes { get; set; }
 }
 
 public sealed class InstructorLessonResponse
@@ -126,6 +135,9 @@ public sealed class AddInstructorExerciseRequest
     [Required, StringLength(200, MinimumLength = 3)]
     public string Title { get; set; } = string.Empty;
 
-    [StringLength(2000)]
-    public string? Description { get; set; }
+    [StringLength(10000)]
+    public string? Instructions { get; set; }
+
+    [StringLength(5000)]
+    public string? Outcomes { get; set; }
 }

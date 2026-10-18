@@ -1137,10 +1137,6 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.Property<byte[]>("ProfilePicture")
-                        .HasColumnType("bytea")
-                        .HasColumnName("profile_picture");
-
                     b.Property<bool>("NotifyNewSubmissions")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1159,11 +1155,9 @@ namespace BridgeTech.Api.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("notify_quiz_completions");
 
-                    b.Property<bool>("NotifyStudentsFallingBehind")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("notify_students_falling_behind");
+                    b.Property<byte[]>("ProfilePicture")
+                        .HasColumnType("bytea")
+                        .HasColumnName("profile_picture");
 
                     b.Property<string>("ProfilePictureContentType")
                         .HasMaxLength(100)

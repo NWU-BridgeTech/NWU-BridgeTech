@@ -328,8 +328,6 @@ public class UsersController(
             preference.NotifyNewSubmissions = request.NotifyNewSubmissions.Value;
         if (request.NotifyQuizCompletions.HasValue)
             preference.NotifyQuizCompletions = request.NotifyQuizCompletions.Value;
-        if (request.NotifyStudentsFallingBehind.HasValue)
-            preference.NotifyStudentsFallingBehind = request.NotifyStudentsFallingBehind.Value;
         if (request.NotifyPlatformUpdates.HasValue)
             preference.NotifyPlatformUpdates = request.NotifyPlatformUpdates.Value;
         preference.UpdatedAt = DateTimeOffset.UtcNow;
@@ -405,7 +403,6 @@ public class UsersController(
             pictureUrl,
             preference?.NotifyNewSubmissions ?? true,
             preference?.NotifyQuizCompletions ?? true,
-            preference?.NotifyStudentsFallingBehind ?? true,
             preference?.NotifyPlatformUpdates ?? true);
     }
 

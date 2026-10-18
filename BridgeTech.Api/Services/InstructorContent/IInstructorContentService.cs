@@ -16,5 +16,8 @@ public interface IInstructorContentService
     Task<InstructorQuizPreviewResponse?> AddQuizAsync(Guid instructorId, Guid lessonId, AddInstructorQuizRequest request, CancellationToken cancellationToken = default);
     Task<InstructorQuizQuestionResponse?> AddQuizQuestionAsync(Guid instructorId, Guid quizId, InstructorQuizQuestionRequest request, CancellationToken cancellationToken = default);
     Task<InstructorQuizQuestionResponse?> UpdateQuizQuestionAsync(Guid instructorId, Guid quizId, int questionIndex, InstructorQuizQuestionRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteQuizQuestionAsync(Guid instructorId, Guid quizId, int questionIndex, CancellationToken cancellationToken = default);
     Task<bool?> AddExerciseAsync(Guid instructorId, Guid moduleId, AddInstructorExerciseRequest request, CancellationToken cancellationToken = default);
+    Task<InstructorExerciseResponse?> UpdateExerciseAsync(Guid instructorId, Guid moduleId, Guid exerciseId, AddInstructorExerciseRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteExerciseAsync(Guid instructorId, Guid moduleId, Guid exerciseId, CancellationToken cancellationToken = default);
 }

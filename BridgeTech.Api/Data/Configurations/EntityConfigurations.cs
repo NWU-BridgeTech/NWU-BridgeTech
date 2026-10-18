@@ -81,7 +81,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             builder.Property(x => x.Theme).HasMaxLength(10).HasDefaultValue("light").IsRequired();
             builder.Property(x => x.NotifyNewSubmissions).HasDefaultValue(true).IsRequired();
             builder.Property(x => x.NotifyQuizCompletions).HasDefaultValue(true).IsRequired();
-            builder.Property(x => x.NotifyStudentsFallingBehind).HasDefaultValue(true).IsRequired();
             builder.Property(x => x.NotifyPlatformUpdates).HasDefaultValue(true).IsRequired();
             builder.Property(x => x.ProfilePicture).HasColumnType("bytea");
             builder.Property(x => x.ProfilePictureContentType).HasMaxLength(100);

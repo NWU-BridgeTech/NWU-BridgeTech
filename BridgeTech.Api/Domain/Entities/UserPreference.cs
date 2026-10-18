@@ -6,7 +6,6 @@ public class UserPreference
     public string Theme { get; set; } = "light";
     public bool NotifyNewSubmissions { get; set; } = true;
     public bool NotifyQuizCompletions { get; set; } = true;
-    public bool NotifyStudentsFallingBehind { get; set; } = true;
     public bool NotifyPlatformUpdates { get; set; } = true;
     public byte[]? ProfilePicture { get; set; }
     public string? ProfilePictureContentType { get; set; }

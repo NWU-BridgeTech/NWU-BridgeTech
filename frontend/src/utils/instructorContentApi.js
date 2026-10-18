@@ -70,9 +70,28 @@ export function updateInstructorQuizQuestion(quizId, questionIndex, question) {
   });
 }
 
+export function deleteInstructorQuizQuestion(quizId, questionIndex) {
+  return apiFetch(`/instructor/content/quizzes/${quizId}/questions/${questionIndex}`, {
+    method: "DELETE",
+  });
+}
+
 export function addInstructorExercise(moduleId, exercise) {
   return apiFetch(`/instructor/content/modules/${moduleId}/exercises`, {
     method: "POST",
     body: JSON.stringify(exercise),
+  });
+}
+
+export function updateInstructorExercise(moduleId, exerciseId, exercise) {
+  return apiFetch(`/instructor/content/modules/${moduleId}/exercises/${exerciseId}`, {
+    method: "PUT",
+    body: JSON.stringify(exercise),
+  });
+}
+
+export function deleteInstructorExercise(moduleId, exerciseId) {
+  return apiFetch(`/instructor/content/modules/${moduleId}/exercises/${exerciseId}`, {
+    method: "DELETE",
   });
 }

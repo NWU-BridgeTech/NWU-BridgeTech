@@ -6,7 +6,6 @@ public sealed record UserPreferenceResponse(
     string? ProfilePictureUrl,
     bool NotifyNewSubmissions = true,
     bool NotifyQuizCompletions = true,
-    bool NotifyStudentsFallingBehind = true,
     bool NotifyPlatformUpdates = true);
 
 /// <summary>Updates the authenticated user's appearance preferences.</summary>
@@ -17,6 +16,5 @@ public sealed record UpdateUserPreferenceRequest
 
     public bool? NotifyNewSubmissions { get; init; }
     public bool? NotifyQuizCompletions { get; init; }
-    public bool? NotifyStudentsFallingBehind { get; init; }
     public bool? NotifyPlatformUpdates { get; init; }
 }

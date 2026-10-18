@@ -13,6 +13,7 @@ import {
   FileText,
   Pencil,
   Plus,
+  Trash2,
   X,
 } from "lucide-react";
 import AppLayout from "../layouts/AppLayout";
@@ -22,9 +23,12 @@ import {
   addInstructorQuizQuestion,
   createInstructorLesson,
   createInstructorModule,
+  deleteInstructorExercise,
+  deleteInstructorQuizQuestion,
   getInstructorModuleContent,
   getInstructorModules,
   moveInstructorLesson,
+  updateInstructorExercise,
   updateInstructorLesson,
   updateInstructorQuizQuestion,
 } from "../utils/instructorContentApi";
@@ -94,13 +98,16 @@ export default function InstructorLessonsQuizzes() {
   const [questionDraft, setQuestionDraft] = useState(createEmptyQuizQuestion);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(null);
   const [exerciseOpen, setExerciseOpen] = useState(false);
+  const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [moduleEditorOpen, setModuleEditorOpen] = useState(false);
   const [moduleDraft, setModuleDraft] = useState({ title: "" });
-  const [exerciseDraft, setExerciseDraft] = useState({ title: "", description: "" });
+  const [exerciseDraft, setExerciseDraft] = useState({ title: "", instructions: "", outcomes: "" });
+  const [expandedExercisesLessonId, setExpandedExercisesLessonId] = useState("");
   const [expandedLessonId, setExpandedLessonId] = useState("");
 
   const selectedModule = modules.find((module) => module.moduleId === selectedModuleId);
   const lessons = moduleContent?.lessons ?? [];
+  const exercises = moduleContent?.exercises ?? [];
   const exerciseCount = moduleContent?.moduleExerciseCount ?? 0;
   const averageQuizScore = moduleContent?.averageQuizScore ?? null;
 
@@ -329,6 +336,24 @@ export default function InstructorLessonsQuizzes() {
     }
   }
 
+  async function deleteQuizQuestion(quiz, lessonId, questionIndex) {
+    const confirmed = window.confirm(
+      "Delete this quiz question? Its answer options and any recorded student answers will also be permanently deleted.",
+    );
+    if (!confirmed) return;
+
+    setMessage("");
+    setPageError("");
+    try {
+      await deleteInstructorQuizQuestion(quiz.quizId, questionIndex);
+      await refreshSelectedModule();
+      setExpandedLessonId(lessonId);
+      setMessage(`Question deleted from "${quiz.title}".`);
+    } catch (error) {
+      setPageError(`Could not delete the question: ${error.message}`);
+    }
+  }
+
   function openQuestionEditor(quiz, lessonId, questionIndex = null) {
     setQuestionQuiz({ quiz, lessonId });
     setEditingQuestionIndex(questionIndex);
@@ -352,19 +377,59 @@ export default function InstructorLessonsQuizzes() {
     setIsSaving(true);
     setPageError("");
     try {
-      await addInstructorExercise(selectedModuleId, {
+      const exercise = {
         title: exerciseDraft.title.trim(),
-        description: exerciseDraft.description.trim() || null,
-      });
+        instructions: exerciseDraft.instructions.trim() || null,
+        outcomes: exerciseDraft.outcomes.trim() || null,
+      };
+      if (editingExerciseId) {
+        await updateInstructorExercise(selectedModuleId, editingExerciseId, exercise);
+      } else {
+        await addInstructorExercise(selectedModuleId, exercise);
+      }
       await refreshSelectedModule();
       setExerciseOpen(false);
-      setExerciseDraft({ title: "", description: "" });
-      setMessage("Exercise added to the module.");
+      setEditingExerciseId(null);
+      setExerciseDraft({ title: "", instructions: "", outcomes: "" });
+      setMessage(editingExerciseId ? "Exercise updated." : "Exercise added to the module.");
     } catch (error) {
       setPageError(`Could not add the exercise: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function deleteExercise(exercise) {
+    const confirmed = window.confirm(
+      `Delete "${exercise.title}"? Student submissions and exercise completion records will also be permanently deleted.`,
+    );
+    if (!confirmed) return;
+
+    setMessage("");
+    setPageError("");
+    try {
+      await deleteInstructorExercise(selectedModuleId, exercise.exerciseId);
+      await refreshSelectedModule();
+      setMessage(`"${exercise.title}" was deleted.`);
+    } catch (error) {
+      setPageError(`Could not delete the exercise: ${error.message}`);
+    }
+  }
+
+  function openNewExercise() {
+    setEditingExerciseId(null);
+    setExerciseDraft({ title: "", instructions: "", outcomes: "" });
+    setExerciseOpen(true);
+  }
+
+  function openEditExercise(exercise) {
+    setEditingExerciseId(exercise.exerciseId);
+    setExerciseDraft({
+      title: exercise.title,
+      instructions: exercise.instructions ?? "",
+      outcomes: exercise.outcomes ?? "",
+    });
+    setExerciseOpen(true);
   }
 
   function updateQuizQuestion(questionIndex, updates) {
@@ -457,15 +522,26 @@ export default function InstructorLessonsQuizzes() {
                     <h2 id="instructor-lesson-list-heading">{moduleContent.moduleTitle}</h2>
                     <p>{lessons.length} {lessons.length === 1 ? "lesson" : "lessons"} · {exerciseCount} {exerciseCount === 1 ? "module exercise" : "module exercises"}</p>
                   </div>
-                  <button
-                    className="btn blue instructor-lessons-new-button"
-                    type="button"
-                    disabled={!selectedModuleId}
-                    onClick={openNewLesson}
-                  >
-                    <Plus size={17} aria-hidden="true" />
-                    New lesson
-                  </button>
+                  <div className="instructor-lessons-list-actions">
+                    <button
+                      className="btn blue instructor-lessons-new-button"
+                      type="button"
+                      disabled={!selectedModuleId}
+                      onClick={openNewLesson}
+                    >
+                      <Plus size={17} aria-hidden="true" />
+                      New lesson
+                    </button>
+                    <button
+                      className="btn instructor-lessons-new-button"
+                      type="button"
+                      disabled={!selectedModuleId}
+                      onClick={openNewExercise}
+                    >
+                      <Dumbbell size={16} aria-hidden="true" />
+                      Add module exercise
+                    </button>
+                  </div>
                 </div>
 
                 <section className="instructor-lessons-stats" aria-label="Module progress summary">
@@ -500,7 +576,9 @@ export default function InstructorLessonsQuizzes() {
                 <div className="instructor-lessons-cards">
                   {lessons.map((lesson, index) => {
                     const isExpanded = expandedLessonId === lesson.lessonId;
+                    const areExercisesExpanded = expandedExercisesLessonId === lesson.lessonId;
                     const isPublished = lesson.status === "Published";
+                    const hasQuiz = lesson.quizzes.length > 0;
                     return (
                       <article className="instructor-lesson-card" key={lesson.lessonId}>
                         <div className="instructor-lesson-card-main">
@@ -525,12 +603,23 @@ export default function InstructorLessonsQuizzes() {
                                 aria-expanded={isExpanded}
                               >
                                 <BookOpen size={14} aria-hidden="true" />
-                                {lesson.quizzes.length} {lesson.quizzes.length === 1 ? "quiz" : "quizzes"}
+                                {hasQuiz ? "1 quiz" : "No quiz"}
                               </button>
-                              <span className="instructor-lesson-metadata-badge" title="Exercises are attached at module level">
+                              <button
+                                className="instructor-lesson-metadata-badge"
+                                type="button"
+                                onClick={() => setExpandedExercisesLessonId(
+                                  areExercisesExpanded ? "" : lesson.lessonId,
+                                )}
+                                aria-expanded={areExercisesExpanded}
+                                aria-controls={`module-exercises-${lesson.lessonId}`}
+                              >
                                 <Dumbbell size={14} aria-hidden="true" />
                                 {exerciseCount} module {exerciseCount === 1 ? "exercise" : "exercises"}
-                              </span>
+                                {areExercisesExpanded
+                                  ? <ChevronUp size={13} aria-hidden="true" />
+                                  : <ChevronDown size={13} aria-hidden="true" />}
+                              </button>
                               <span className="instructor-lesson-duration">
                                 <Clock3 size={14} aria-hidden="true" />
                                 {lesson.durationMinutes} min
@@ -583,6 +672,49 @@ export default function InstructorLessonsQuizzes() {
                           )}
                         </div>
 
+                        {areExercisesExpanded && (
+                          <section
+                            className="instructor-lesson-exercises-expanded"
+                            id={`module-exercises-${lesson.lessonId}`}
+                            aria-label={`Module exercises for ${lesson.title}`}
+                          >
+                            <h4><Dumbbell size={15} aria-hidden="true" /> Module exercises</h4>
+                            {exercises.length > 0 ? (
+                              <div className="instructor-module-exercise-list">
+                                {exercises.map((exercise) => (
+                                  <article className="instructor-module-exercise" key={exercise.exerciseId}>
+                                    <div>
+                                      <h3>{exercise.title}</h3>
+                                      <p>{exercise.instructions || "No instructions provided."}</p>
+                                      <p><strong>Expected outcomes:</strong> {exercise.outcomes || "None provided."}</p>
+                                    </div>
+                                    <div className="instructor-module-exercise-actions">
+                                      <button
+                                        type="button"
+                                        className="instructor-content-secondary"
+                                        onClick={() => openEditExercise(exercise)}
+                                      >
+                                        <Pencil size={14} aria-hidden="true" />
+                                        Edit
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="instructor-content-secondary instructor-content-danger"
+                                        onClick={() => deleteExercise(exercise)}
+                                      >
+                                        <Trash2 size={14} aria-hidden="true" />
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </article>
+                                ))}
+                              </div>
+                            ) : (
+                              <p>No exercises have been added to this module yet.</p>
+                            )}
+                          </section>
+                        )}
+
                         {isPublished && isExpanded && (
                           <div className="instructor-lesson-expanded">
                             <section>
@@ -632,7 +764,18 @@ export default function InstructorLessonsQuizzes() {
                                   >
                                     {quiz.questions.map((question, questionIndex) => (
                                       <div className="instructor-lesson-preview-question" key={`${quiz.quizId}-q-${questionIndex}`}>
-                                        <p>{questionIndex + 1}. {question.questionText}</p>
+                                        <div className="instructor-lesson-preview-question-heading">
+                                          <p>{questionIndex + 1}. {question.questionText}</p>
+                                          <button
+                                            type="button"
+                                            className="instructor-quiz-delete-question"
+                                            aria-label={`Delete question ${questionIndex + 1}`}
+                                            onClick={() => deleteQuizQuestion(quiz, lesson.lessonId, questionIndex)}
+                                          >
+                                            <Trash2 size={13} aria-hidden="true" />
+                                            Delete
+                                          </button>
+                                        </div>
                                         <ul>{question.options.map((option, optionIndex) => <li key={`${quiz.quizId}-o-${optionIndex}`}>{option.text}</li>)}</ul>
                                       </div>
                                     ))}
@@ -647,23 +790,18 @@ export default function InstructorLessonsQuizzes() {
                           <>
                             <div className="instructor-lesson-draft-actions">
                               <span>Draft lesson · quick actions</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setQuizLesson(lesson);
-                                  setQuizDraft(createEmptyQuiz());
-                                }}
-                              >
-                                <Plus size={14} aria-hidden="true" />
-                                Add quiz
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setExerciseOpen(true)}
-                              >
-                                <Plus size={14} aria-hidden="true" />
-                                Add exercise
-                              </button>
+                              {lesson.quizzes.length === 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setQuizLesson(lesson);
+                                    setQuizDraft(createEmptyQuiz());
+                                  }}
+                                >
+                                  <Plus size={14} aria-hidden="true" />
+                                  Add quiz
+                                </button>
+                              )}
                             </div>
                             {lesson.quizzes.length > 0 && (
                               <div className="instructor-lesson-draft-quizzes">
@@ -682,13 +820,23 @@ export default function InstructorLessonsQuizzes() {
                                     {quiz.questions.map((question, questionIndex) => (
                                       <div className="instructor-draft-quiz-question" key={`${quiz.quizId}-question-${questionIndex}`}>
                                         <span>Q{questionIndex + 1}: {question.questionText}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => openQuestionEditor(quiz, lesson.lessonId, questionIndex)}
-                                        >
-                                          <Pencil size={13} aria-hidden="true" />
-                                          Edit question
-                                        </button>
+                                        <div className="instructor-draft-quiz-question-actions">
+                                          <button
+                                            type="button"
+                                            onClick={() => openQuestionEditor(quiz, lesson.lessonId, questionIndex)}
+                                          >
+                                            <Pencil size={13} aria-hidden="true" />
+                                            Edit question
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="instructor-quiz-delete-question"
+                                            onClick={() => deleteQuizQuestion(quiz, lesson.lessonId, questionIndex)}
+                                          >
+                                            <Trash2 size={13} aria-hidden="true" />
+                                            Delete
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
@@ -943,14 +1091,15 @@ export default function InstructorLessonsQuizzes() {
         <div className="instructor-content-modal-backdrop">
           <section className="instructor-content-modal" role="dialog" aria-modal="true" aria-labelledby="instructor-exercise-editor-title">
             <header>
-              <div><h2 id="instructor-exercise-editor-title">Add module exercise</h2><p>Exercises are attached to the module, not an individual lesson.</p></div>
+              <div><h2 id="instructor-exercise-editor-title">{editingExerciseId ? "Edit module exercise" : "Add module exercise"}</h2><p>Exercises are attached to the module, not an individual lesson.</p></div>
               <button type="button" aria-label="Close exercise form" onClick={() => setExerciseOpen(false)}><X size={18} /></button>
             </header>
             <form onSubmit={saveExercise}>
               <label>Exercise title<input required minLength={3} maxLength={200} value={exerciseDraft.title} onChange={(event) => setExerciseDraft({ ...exerciseDraft, title: event.target.value })} /></label>
-              <label>Description<textarea maxLength={2000} rows={4} value={exerciseDraft.description} onChange={(event) => setExerciseDraft({ ...exerciseDraft, description: event.target.value })} /></label>
-              <p className="instructor-lessons-hint">This quick action creates a Git commit-check exercise. You can configure verification details in the exercise management page.</p>
-              <footer><button type="button" className="instructor-content-secondary" onClick={() => setExerciseOpen(false)}>Cancel</button><button type="submit" className="instructor-content-primary" disabled={isSaving}>{isSaving ? "Saving…" : "Add exercise"}</button></footer>
+              <label>Exercise instructions<textarea maxLength={10000} rows={5} value={exerciseDraft.instructions} onChange={(event) => setExerciseDraft({ ...exerciseDraft, instructions: event.target.value })} placeholder="Explain the task and what students should submit." /></label>
+              <label>Expected outcomes<textarea maxLength={5000} rows={4} value={exerciseDraft.outcomes} onChange={(event) => setExerciseDraft({ ...exerciseDraft, outcomes: event.target.value })} placeholder="List what students should achieve or demonstrate." /></label>
+              <p className="instructor-lessons-hint">This creates a Git commit-check exercise. You can configure verification details in the exercise management page.</p>
+              <footer><button type="button" className="instructor-content-secondary" onClick={() => setExerciseOpen(false)}>Cancel</button><button type="submit" className="instructor-content-primary" disabled={isSaving}>{isSaving ? "Saving…" : editingExerciseId ? "Save changes" : "Add exercise"}</button></footer>
             </form>
           </section>
         </div>

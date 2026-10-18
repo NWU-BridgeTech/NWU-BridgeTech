@@ -213,6 +213,25 @@ public sealed class InstructorContentController(IInstructorContentService servic
         }
     }
 
+    [HttpDelete("quizzes/{quizId:guid}/questions/{questionIndex:int}")]
+    public async Task<IActionResult> DeleteQuizQuestion(
+        Guid quizId,
+        int questionIndex,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetInstructorId(out var instructorId))
+        {
+            return Unauthorized();
+        }
+        if (questionIndex < 0)
+        {
+            return BadRequest(new { message = "Question index must be zero or greater." });
+        }
+        var deleted = await service.DeleteQuizQuestionAsync(
+            instructorId, quizId, questionIndex, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+
     [HttpPost("modules/{moduleId:guid}/exercises")]
     public async Task<IActionResult> AddExercise(
         Guid moduleId,
@@ -225,6 +244,37 @@ public sealed class InstructorContentController(IInstructorContentService servic
         }
         var created = await service.AddExerciseAsync(instructorId, moduleId, request, cancellationToken);
         return created is null ? NotFound() : NoContent();
+    }
+
+    [HttpPut("modules/{moduleId:guid}/exercises/{exerciseId:guid}")]
+    public async Task<IActionResult> UpdateExercise(
+        Guid moduleId,
+        Guid exerciseId,
+        AddInstructorExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetInstructorId(out var instructorId))
+        {
+            return Unauthorized();
+        }
+        var updated = await service.UpdateExerciseAsync(
+            instructorId, moduleId, exerciseId, request, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpDelete("modules/{moduleId:guid}/exercises/{exerciseId:guid}")]
+    public async Task<IActionResult> DeleteExercise(
+        Guid moduleId,
+        Guid exerciseId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetInstructorId(out var instructorId))
+        {
+            return Unauthorized();
+        }
+        var deleted = await service.DeleteExerciseAsync(
+            instructorId, moduleId, exerciseId, cancellationToken);
+        return deleted ? NoContent() : NotFound();
     }
 
     private bool TryGetInstructorId(out Guid instructorId) =>

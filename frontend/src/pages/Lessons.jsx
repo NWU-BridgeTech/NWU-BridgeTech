@@ -134,9 +134,9 @@ export default function LessonView() {
 
           {lesson.videoUrl ? (
             <aside className="lesson-side-card">
-              <h3>Lesson video</h3>
+              <h3>Video Summary</h3>
               <p className="lesson-side-label">
-                Watch the lesson video before starting the quiz
+                Watch the video summary before starting the quiz
               </p>
 
               <a
@@ -148,7 +148,7 @@ export default function LessonView() {
                 {thumbnail ? (
                   <img
                     src={thumbnail}
-                    alt={`Video for ${lesson.title}`}
+                    alt={`Video summary for ${lesson.title}`}
                     className="lesson-video-thumbnail"
                   />
                 ) : (
@@ -158,9 +158,9 @@ export default function LessonView() {
             </aside>
           ) : (
             <aside className="lesson-side-card">
-              <h3>Lesson video</h3>
+              <h3>Video Summary</h3>
               <p className="lesson-side-label">
-                No video linked to this lesson.
+                No video summary available for this lesson.
               </p>
             </aside>
           )}

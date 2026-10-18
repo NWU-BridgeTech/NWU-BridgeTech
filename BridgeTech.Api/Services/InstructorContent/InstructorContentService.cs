@@ -198,7 +198,16 @@ public sealed class InstructorContentService(AppDbContext db) : IInstructorConte
                                 }).ToList()
                         }).ToList()
                 }).ToList(),
-                Exercises = item.Exercises.Count
+                Exercises = item.Exercises
+                    .OrderBy(exercise => exercise.CreatedAt)
+                    .Select(exercise => new InstructorExerciseResponse
+                    {
+                        ExerciseId = exercise.ExerciseId,
+                        Title = exercise.Title,
+                        Instructions = exercise.Description,
+                        Outcomes = exercise.Outcomes
+                    })
+                    .ToList()
             })
             .SingleAsync(cancellationToken);
 
@@ -246,7 +255,8 @@ public sealed class InstructorContentService(AppDbContext db) : IInstructorConte
             TotalLessons = module.Lessons.Count,
             AttachedQuizzes = module.Quizzes.Count,
             AverageQuizScore = completedScores.Count == 0 ? null : completedScores.Average(),
-            ModuleExerciseCount = module.Exercises,
+            ModuleExerciseCount = module.Exercises.Count,
+            Exercises = module.Exercises,
             Lessons = module.Lessons.Select(lesson => new InstructorLessonResponse
             {
                 LessonId = lesson.LessonId,
@@ -385,6 +395,10 @@ public sealed class InstructorContentService(AppDbContext db) : IInstructorConte
         if (lesson is null || !await OwnsModuleAsync(instructorId, lesson.ModuleId, cancellationToken))
         {
             return null;
+        }
+        if (await db.Quizzes.AnyAsync(item => item.LessonId == lessonId, cancellationToken))
+        {
+            throw new InvalidOperationException("A lesson can only have one quiz.");
         }
         if (request.Questions.Count == 0 || request.Questions.Count > short.MaxValue)
         {
@@ -594,6 +608,39 @@ public sealed class InstructorContentService(AppDbContext db) : IInstructorConte
         };
     }
 
+    public async Task<bool> DeleteQuizQuestionAsync(
+        Guid instructorId,
+        Guid quizId,
+        int questionIndex,
+        CancellationToken cancellationToken = default)
+    {
+        var quiz = await db.Quizzes.SingleOrDefaultAsync(item => item.QuizId == quizId, cancellationToken);
+        if (quiz is null || !await OwnsModuleAsync(instructorId, quiz.ModuleId, cancellationToken))
+        {
+            return false;
+        }
+
+        var questions = await db.QuizQuestions
+            .Where(item => item.QuizId == quizId)
+            .OrderBy(item => item.OrderIndex)
+            .ToListAsync(cancellationToken);
+        if (questionIndex < 0 || questionIndex >= questions.Count)
+        {
+            return false;
+        }
+
+        db.QuizQuestions.Remove(questions[questionIndex]);
+        var remainingQuestions = questions
+            .Where((_, index) => index != questionIndex)
+            .ToList();
+        for (var index = 0; index < remainingQuestions.Count; index++)
+        {
+            remainingQuestions[index].OrderIndex = checked((short)index);
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<bool?> AddExerciseAsync(
         Guid instructorId,
         Guid moduleId,
@@ -610,10 +657,69 @@ public sealed class InstructorContentService(AppDbContext db) : IInstructorConte
             ExerciseId = Guid.NewGuid(),
             ModuleId = moduleId,
             Title = request.Title.Trim(),
-            Description = request.Description?.Trim(),
+            Description = request.Instructions?.Trim(),
+            Outcomes = request.Outcomes?.Trim(),
             VerificationType = VerificationType.CommitCheck,
             CreatedAt = DateTimeOffset.UtcNow
         });
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<InstructorExerciseResponse?> UpdateExerciseAsync(
+        Guid instructorId,
+        Guid moduleId,
+        Guid exerciseId,
+        AddInstructorExerciseRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await OwnsModuleAsync(instructorId, moduleId, cancellationToken))
+        {
+            return null;
+        }
+
+        var exercise = await db.Exercises.SingleOrDefaultAsync(
+            item => item.ExerciseId == exerciseId && item.ModuleId == moduleId,
+            cancellationToken);
+        if (exercise is null)
+        {
+            return null;
+        }
+
+        exercise.Title = request.Title.Trim();
+        exercise.Description = request.Instructions?.Trim();
+        exercise.Outcomes = request.Outcomes?.Trim();
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new InstructorExerciseResponse
+        {
+            ExerciseId = exercise.ExerciseId,
+            Title = exercise.Title,
+            Instructions = exercise.Description,
+            Outcomes = exercise.Outcomes
+        };
+    }
+
+    public async Task<bool> DeleteExerciseAsync(
+        Guid instructorId,
+        Guid moduleId,
+        Guid exerciseId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await OwnsModuleAsync(instructorId, moduleId, cancellationToken))
+        {
+            return false;
+        }
+
+        var exercise = await db.Exercises.SingleOrDefaultAsync(
+            item => item.ExerciseId == exerciseId && item.ModuleId == moduleId,
+            cancellationToken);
+        if (exercise is null)
+        {
+            return false;
+        }
+
+        db.Exercises.Remove(exercise);
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }
