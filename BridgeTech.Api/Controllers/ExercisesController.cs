@@ -2,6 +2,7 @@ using BridgeTech.Api.Services.Exercises;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using BridgeTech.Api.DTOs.Exercises;
 
 namespace BridgeTech.Api.Controllers;
 
@@ -12,19 +13,82 @@ namespace BridgeTech.Api.Controllers;
 public class ExercisesController(IExerciseService service) : ControllerBase
 {
     [HttpGet]
-    // Returns all exercise definitions ordered by creation time.
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
     public async Task<IActionResult> GetExercises(CancellationToken cancellationToken)
     {
         return Ok(await service.GetAllAsync(cancellationToken));
     }
 
     [HttpGet("{exerciseId:guid}")]
-    // Returns one exercise definition needed by the learner.
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
     public async Task<IActionResult> GetExercise(Guid exerciseId, CancellationToken cancellationToken)
     {
         var exercise = await service.GetByIdAsync(exerciseId, cancellationToken);
 
         return exercise is null ? NotFound() : Ok(exercise);
+    }
+    [HttpPost]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateExercise(
+        [FromBody] CreateExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var exercise = await service.CreateAsync(
+            request,
+            cancellationToken
+        );
+
+        return CreatedAtAction(
+            nameof(GetExercise),
+            new { exerciseId = exercise.ExerciseId },
+            exercise
+        );
+    }
+
+    [HttpPut("{exerciseId:guid}")]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateExercise(
+        Guid exerciseId,
+        [FromBody] UpdateExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var exercise = await service.UpdateAsync(
+            exerciseId,
+            request,
+            cancellationToken
+        );
+
+        if (exercise is null)
+        {
+            return NotFound(new
+            {
+                message = "Exercise not found."
+            });
+        }
+
+        return Ok(exercise);
+    }
+
+    [HttpDelete("{exerciseId:guid}")]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> DeleteExercise(
+        Guid exerciseId,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(
+            exerciseId,
+            cancellationToken
+        );
+
+        if (!deleted)
+        {
+            return NotFound(new
+            {
+                message = "Exercise not found."
+            });
+        }
+
+        return NoContent();
     }
 
     [HttpPost("{exerciseId:guid}/submissions")]

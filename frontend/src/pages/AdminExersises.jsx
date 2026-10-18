@@ -187,7 +187,7 @@ export default function AdminExersises({ readOnly = false }) {
               <textarea id="exercise-description" rows={6} maxLength={2000}
                 value={editingExercise.description}
                 onChange={(event) => setEditingExercise((current) => ({ ...current, description: event.target.value }))}
-                placeholder="Explain the task students need to complete." />
+                placeholder="Instruction 1 # Instruction 2 # Instruction 3" />
 
               <label htmlFor="exercise-outcomes">Learning outcomes</label>
               <textarea id="exercise-outcomes" rows={4}

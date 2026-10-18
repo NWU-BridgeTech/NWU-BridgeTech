@@ -35,6 +35,9 @@ public class CreateExerciseRequest
     [StringLength(2000)]
     public string? Description { get; set; }
 
+    // Learning outcomes
+    public string? Outcomes { get; set; }
+
     [Required]
     [EnumDataType(typeof(VerificationType))]
     public VerificationType VerificationType { get; set; }
@@ -49,6 +52,9 @@ public class UpdateExerciseRequest
 
     [StringLength(2000)]
     public string? Description { get; set; }
+
+    // Learning outcomes
+    public string? Outcomes { get; set; }
 
     public VerificationType? VerificationType { get; set; }
 

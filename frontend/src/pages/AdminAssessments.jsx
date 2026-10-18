@@ -84,7 +84,10 @@ function toPayload(draft) {
     questions: draft.questions.map((question) => ({
       questionId: question.questionId,
       questionText: question.questionText.trim(),
-      questionType: question.questionType,
+      questionType:
+      question.questionType === "SingleChoice"
+        ? 0
+        : Number(question.questionType),
       options: question.options.map((option) => ({
         optionId: option.optionId,
         optionText: option.optionText.trim(),
