@@ -1,6 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import { apiFetch } from "../utils/apiClient";
 import {
   createLesson,
   getAdminLessons,
@@ -32,7 +34,18 @@ function toLessonRow(lesson) {
   };
 }
 
+// Same source the other admin pages use for the signed-in user.
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminLessons({ readOnly = false }) {
+  // Admins and instructors can create and edit lessons; everyone else is read-only.
+  const canManage = !readOnly || getCurrentUser()?.role === "Instructor";
   const [modules, setModules] = useState([]);
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +55,16 @@ export default function AdminLessons({ readOnly = false }) {
   const [status, setStatus] = useState("All");
   const [editingLesson, setEditingLesson] = useState(null);
   const [message, setMessage] = useState("");
+  // Holds a lesson that is waiting for the "Publish" confirmation.
+  const [pendingPublish, setPendingPublish] = useState(null);
+
+  const cancelPublish = useCallback(() => setPendingPublish(null), []);
+
+  // Holds a lesson that is waiting for the "Delete" confirmation.
+  const [lessonToDelete, setLessonToDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const cancelDelete = useCallback(() => setLessonToDelete(null), []);
 
   // Load every module and lesson (drafts included) when the page opens.
   useEffect(() => {
@@ -102,11 +125,21 @@ export default function AdminLessons({ readOnly = false }) {
 
     const form = new FormData(event.currentTarget);
 
-    const title = form.get("title").trim();
     const description = form.get("description").trim();
     const content = form.get("content").trim();
     const lessonStatus = form.get("status");
     const moduleId = form.get("moduleId");
+
+    // New lessons follow the naming used by the existing ones: "Lesson 6: Topic".
+    // If the author already typed "Lesson 6: ...", keep it as written.
+    let title = form.get("title").trim();
+
+    if (title && !editingLesson.id && !/^lesson\s+\d+\s*:/i.test(title)) {
+      const nextNumber =
+        lessons.filter((lesson) => lesson.moduleId === moduleId).length + 1;
+
+      title = `Lesson ${nextNumber}: ${title}`;
+    }
 
     const parentModule = modules.find(
       (module) => module.id === moduleId
@@ -135,6 +168,19 @@ export default function AdminLessons({ readOnly = false }) {
       status: lessonStatus,
     };
 
+    // Going live (new lesson, or a draft being published) asks for confirmation first.
+    const isPublishing =
+      lessonStatus === "Published" && editingLesson.status !== "Published";
+
+    if (isPublishing) {
+      setPendingPublish({ title, details, moduleId });
+      return;
+    }
+
+    await commitLesson({ title, details, moduleId });
+  }
+
+  async function commitLesson({ title, details, moduleId }) {
     setSaving(true);
     setMessage("");
 
@@ -171,6 +217,24 @@ export default function AdminLessons({ readOnly = false }) {
     }
   }
 
+  async function deleteLesson(lesson) {
+    setDeletingId(lesson.id);
+    setMessage("");
+
+    try {
+      await apiFetch(`/lessons/${lesson.id}`, { method: "DELETE" });
+
+      setLessons((current) =>
+        current.filter((item) => item.id !== lesson.id)
+      );
+      setMessage(`${lesson.title} deleted.`);
+    } catch (error) {
+      setMessage(error.message || "Could not delete the lesson.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <AppLayout>
       {/* PAGE HEADER */}
@@ -182,7 +246,7 @@ export default function AdminLessons({ readOnly = false }) {
           </p>
         </div>
 
-        {!readOnly && (
+        {canManage && (
           <button
             className="btn blue"
             type="button"
@@ -225,8 +289,8 @@ export default function AdminLessons({ readOnly = false }) {
           </p>
         )}
 
-        {/* CREATE / EDIT LESSON - ADMIN ONLY */}
-        {!readOnly && editingLesson && (
+        {/* CREATE / EDIT LESSON - ADMINS AND INSTRUCTORS */}
+        {canManage && editingLesson && (
           <section
             className="card module-editor"
             aria-labelledby="lesson-editor-heading"
@@ -256,8 +320,16 @@ export default function AdminLessons({ readOnly = false }) {
                 minLength={3}
                 maxLength={100}
                 defaultValue={editingLesson.title}
+                placeholder="e.g. Branching Strategies & Workflows"
                 autoFocus
               />
+
+              {!editingLesson.id && (
+                <p className="sub">
+                  The "Lesson N:" prefix is added for you, like the other
+                  lessons.
+                </p>
+              )}
 
               <label htmlFor="lesson-description">
                 Short description
@@ -325,7 +397,7 @@ export default function AdminLessons({ readOnly = false }) {
                 rows={7}
                 maxLength={20000}
                 defaultValue={editingLesson.content}
-                placeholder="Write the lesson instructions and learning material here."
+                placeholder="Write the lesson material here. Leave a blank line between paragraphs, like the other lessons."
               />
 
               <label htmlFor="lesson-status">
@@ -473,7 +545,7 @@ export default function AdminLessons({ readOnly = false }) {
                   Module
                 </th>
 
-                {!readOnly && (
+                {canManage && (
                   <th scope="col">
                     Duration
                   </th>
@@ -483,7 +555,7 @@ export default function AdminLessons({ readOnly = false }) {
                   Status
                 </th>
 
-                {!readOnly && (
+                {canManage && (
                   <th scope="col">
                     Action
                   </th>
@@ -512,8 +584,8 @@ export default function AdminLessons({ readOnly = false }) {
                     )?.title ?? "Unknown module"}
                   </td>
 
-                  {/* DURATION - ADMIN ONLY */}
-                  {!readOnly && (
+                  {/* DURATION */}
+                  {canManage && (
                     <td>
                       {lesson.duration} min
                     </td>
@@ -532,21 +604,33 @@ export default function AdminLessons({ readOnly = false }) {
                     </span>
                   </td>
 
-                  {/* EDIT BUTTON - ADMIN ONLY */}
-                  {!readOnly && (
+                  {/* EDIT AND DELETE BUTTONS */}
+                  {canManage && (
                     <td>
-                      <button
-                        className="module-edit"
-                        type="button"
-                        disabled={!!editingLesson}
-                        aria-label={`Edit ${lesson.title}`}
-                        onClick={() => {
-                          setEditingLesson(lesson);
-                          setMessage("");
-                        }}
-                      >
-                        Edit
-                      </button>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          className="module-edit"
+                          type="button"
+                          disabled={!!editingLesson}
+                          aria-label={`Edit ${lesson.title}`}
+                          onClick={() => {
+                            setEditingLesson(lesson);
+                            setMessage("");
+                          }}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          className="module-edit assessment-danger"
+                          type="button"
+                          disabled={!!editingLesson || deletingId === lesson.id}
+                          aria-label={`Delete ${lesson.title}`}
+                          onClick={() => setLessonToDelete(lesson)}
+                        >
+                          {deletingId === lesson.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -583,6 +667,33 @@ export default function AdminLessons({ readOnly = false }) {
           </p>
         </section>
       </div>
+
+      <ConfirmDeleteModal
+        open={!!pendingPublish}
+        title="Publish this lesson?"
+        message={`"${pendingPublish?.title}" will become visible to students in its module.`}
+        confirmText="Publish"
+        variant="success"
+        loading={saving}
+        onCancel={cancelPublish}
+        onConfirm={async () => {
+          await commitLesson(pendingPublish);
+          setPendingPublish(null);
+        }}
+      />
+
+      <ConfirmDeleteModal
+        open={!!lessonToDelete}
+        title="Delete this lesson?"
+        message={`"${lessonToDelete?.title}" will be permanently deleted. This can't be undone.`}
+        confirmText="Delete"
+        loading={deletingId !== null}
+        onCancel={cancelDelete}
+        onConfirm={async () => {
+          await deleteLesson(lessonToDelete);
+          setLessonToDelete(null);
+        }}
+      />
     </AppLayout>
   );
 }

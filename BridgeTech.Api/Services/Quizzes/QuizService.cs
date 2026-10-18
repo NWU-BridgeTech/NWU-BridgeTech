@@ -59,7 +59,6 @@ public class QuizService : IQuizService
             .OrderBy(_ => Random.Shared.Next())
             .ToList();
 
-
         for (short i = 0; i < question.Options.Count; i++)
         {
             question.Options[i].OrderIndex = i;
@@ -265,7 +264,6 @@ foreach (var questionRequest in request.Questions)
     var quiz = await _context.Quizzes.FindAsync(new object[] { request.QuizId.Value }, cancellationToken);
     if (quiz is null) return null;
 
-
     var existing = await _context.QuizAttempts
         .Where(a => a.UserId == userId && a.QuizId == quiz.QuizId && a.CompletedAt == null)
         .OrderByDescending(a => a.StartedAt)
@@ -340,7 +338,6 @@ foreach (var questionRequest in request.Questions)
             IsCorrect = isCorrect
         });
     }
-
 
     int totalQuestions = attempt.Quiz.Questions.Count;
     int percent = totalQuestions == 0 ? 0 : (int)Math.Round(correct * 100.0 / totalQuestions);
