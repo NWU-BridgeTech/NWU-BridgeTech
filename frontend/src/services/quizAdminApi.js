@@ -1,24 +1,31 @@
 import { apiFetch } from "../utils/apiClient";
 
+
 export async function listCourseOutline() {
-  const modules = await apiFetch("/modules");
-  return Promise.all(
-    modules.map(async (module) => {
-      const lessons = await apiFetch(`/modules/${module.moduleId}/lessons`);
-      return {
-        moduleId: module.moduleId,
-        title: module.title,
-        status: module.status ?? "Published",
-        lessons: lessons.map((lesson) => ({
-          lessonId: lesson.lessonId,
-          title: lesson.title,
-          orderIndex: lesson.orderIndex,
-          status: lesson.status ?? "Published",
-        })),
-      };
-    }),
-  );
+  // Load modules and staff-accessible lessons.
+  const [modules, lessons] = await Promise.all([
+    apiFetch("/modules/admin"),
+    apiFetch("/lessons/admin"),
+  ]);
+
+  // Group lessons under their corresponding modules.
+  return modules.map((module) => ({
+    moduleId: module.moduleId,
+    title: module.title,
+    status: module.status ?? "Draft",
+
+    lessons: lessons
+      .filter((lesson) => lesson.moduleId === module.moduleId)
+      .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+      .map((lesson) => ({
+        lessonId: lesson.lessonId,
+        title: lesson.title,
+        orderIndex: lesson.orderIndex,
+        status: lesson.status ?? "Draft",
+      })),
+  }));
 }
+
 
 export async function listQuizzes() {
   return apiFetch("/admin/quizzes");
