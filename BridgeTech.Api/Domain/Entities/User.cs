@@ -10,15 +10,37 @@ public class User
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
+    public string? PhoneNumber { get; set; }
+    public string? Address { get; set; }
+    public string? University { get; set; }
     public string PasswordHash { get; set; } = null!;
     public string? GithubUsername { get; set; }
+    public string? GithubAccessToken { get; set; }
+    public string? GithubRepository { get; set; }
+    public bool AccountSetupRequired { get; set; }
     public UserRole Role { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTimeOffset? LastLoginAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public bool EmailVerified { get; set; }
+    public string? VerificationCode { get; set; }
+    public DateTimeOffset? VerificationCodeExpiresAt { get; set; }
+    public int VerificationAttempts { get; set; }
+    public DateTimeOffset? LastCodeSentAt { get; set; }
+    public string? PasswordResetCode { get; set; }
+    public DateTimeOffset? PasswordResetCodeExpiresAt { get; set; }
+    public int PasswordResetAttempts { get; set; }
+    public DateTimeOffset? PasswordResetLastSentAt { get; set; }
 
     // Navigation collections allow EF Core to load the user's activity and awards.
     public ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
     public ICollection<ExerciseSubmission> ExerciseSubmissions { get; set; } = new List<ExerciseSubmission>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+    public ICollection<Badge> Badges { get; set; } = new List<Badge>();
+    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<Report> Reports { get; set; } = new List<Report>();
+    public ICollection<StaffActivity> StaffActivities { get; set; } = new List<StaffActivity>();
+    public UserPreference? Preferences { get; set; }
 }

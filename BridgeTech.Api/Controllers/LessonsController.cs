@@ -1,0 +1,125 @@
+using System.Security.Claims;
+using BridgeTech.Api.DTOs.Lessons;
+using BridgeTech.Api.Services.Lessons;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using BridgeTech.Api.Common.Exceptions;
+
+namespace BridgeTech.Api.Controllers;
+
+[ApiController]
+[Route("api")]
+[Authorize]
+public class LessonsController(ILessonService service) : ControllerBase
+{
+    [HttpGet("modules/{moduleId:guid}/lessons")]
+    public async Task<IActionResult> GetLessonsForModule(
+        Guid moduleId, CancellationToken cancellationToken)
+    {
+        var result = await service.GetLessonsForModuleAsync(moduleId, GetUserId(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("lessons/{lessonId:guid}")]
+    public async Task<IActionResult> GetLesson(
+        Guid lessonId, CancellationToken cancellationToken)
+    {
+        var lesson = await service.GetByIdAsync(lessonId, GetUserId(), cancellationToken);
+        return lesson is null ? NotFound() : Ok(lesson);
+    }
+
+    [HttpPost("lessons/{lessonId:guid}/complete")]
+    public async Task<IActionResult> MarkComplete(
+        Guid lessonId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await service.MarkCompleteAsync(lessonId, GetUserId(), cancellationToken);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (QuizNotPassedException ex)
+        {
+            return Conflict(new { code = "QUIZ_NOT_PASSED", message = ex.Message });
+        }
+    }
+
+    // Admin: every lesson in every module (drafts included).
+    [HttpGet("lessons/admin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> GetLessonsForAdmin(CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetAllForAdminAsync(cancellationToken));
+    }
+
+    [HttpPost("modules/{moduleId:guid}/lessons")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> CreateLesson(
+        Guid moduleId, [FromBody] CreateLessonRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var lesson = await service.CreateAsync(moduleId, request, cancellationToken);
+            return CreatedAtAction(nameof(GetLesson), new { lessonId = lesson.LessonId }, lesson);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // Admin: update a lesson. Only the fields that are sent are changed.
+    [HttpPut("lessons/{lessonId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> UpdateLesson(
+        Guid lessonId, [FromBody] UpdateLessonRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var lesson = await service.UpdateAsync(lessonId, request, cancellationToken);
+            return lesson is null ? NotFound() : Ok(lesson);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+    
+    [HttpDelete("lessons/{lessonId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> DeleteLesson(
+        Guid lessonId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deleted = await service.DeleteAsync(lessonId, cancellationToken);
+            return deleted ? Ok(new { deleted = true }) : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+
+    private Guid GetUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(idClaim, out var id)
+            ? id
+            : throw new UnauthorizedAccessException("User id claim missing or invalid.");
+    }
+
+    [HttpGet("modules/{moduleId:guid}/lessons/current")]
+    public async Task<IActionResult> GetCurrentLesson(Guid moduleId, CancellationToken ct)
+    {
+        var result = await service.GetCurrentForModuleAsync(moduleId, GetUserId(), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpGet("lessons/{lessonId:guid}/view")]
+    public async Task<IActionResult> GetLessonView(Guid lessonId, CancellationToken ct)
+    {
+        var result = await service.GetViewAsync(lessonId, GetUserId(), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+}

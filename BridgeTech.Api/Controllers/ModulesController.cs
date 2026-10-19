@@ -1,14 +1,17 @@
-using BridgeTech.Api.Data;
+using BridgeTech.Api.DTOs.Modules;
+using BridgeTech.Api.Services.Modules;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/modules")]
+[Authorize]
 // Handles HTTP requests for learning modules. Database access remains in the
 // injected context so the controller does not create connections manually.
-public class ModulesController(AppDbContext dbContext) : ControllerBase
+public class ModulesController(IModuleService service) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetModules(
@@ -16,12 +19,80 @@ public class ModulesController(AppDbContext dbContext) : ControllerBase
     {
         // AsNoTracking is appropriate for a read-only endpoint because EF Core
         // does not need to monitor entities that will not be updated here.
-        var modules = await dbContext.Modules
-            .AsNoTracking()
-            // The order matches the module order_index column in PostgreSQL.
-            .OrderBy(module => module.OrderIndex)
-            .ToListAsync(cancellationToken);
+        return Ok(await service.GetAllAsync(cancellationToken));
+    }
 
-        return Ok(modules);
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailableModules(CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetAvailableForUserAsync(GetUserId(), cancellationToken));
+    }
+
+    // Admin: every module (drafts included) with lesson and student counts.
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin,SuperAdmin,Instructor")]
+    public async Task<IActionResult> GetModulesForAdmin(CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetAllForAdminAsync(cancellationToken));
+    }
+
+    // Admin: one module's full details.
+    [HttpGet("{moduleId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> GetModule(Guid moduleId, CancellationToken cancellationToken)
+    {
+        var module = await service.GetByIdAsync(moduleId, cancellationToken);
+        return module is null ? NotFound() : Ok(module);
+    }
+
+    // Admin: create a new module.
+    [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateModule(
+        [FromBody] CreateModuleRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var module = await service.CreateAsync(request, cancellationToken);
+            return CreatedAtAction(nameof(GetModule), new { moduleId = module.ModuleId }, module);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // Admin: update an existing module. Only the fields that are sent are changed.
+    [HttpPut("{moduleId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateModule(
+        Guid moduleId, [FromBody] UpdateModuleRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var module = await service.UpdateAsync(moduleId, request, cancellationToken);
+            return module is null ? NotFound() : Ok(module);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{moduleId:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<IActionResult> DeleteModule(
+        Guid moduleId, CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(moduleId, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    private Guid GetUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(idClaim, out var id)
+            ? id
+            : throw new UnauthorizedAccessException("User id claim missing or invalid.");
     }
 }

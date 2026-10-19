@@ -24,6 +24,44 @@ namespace BridgeTech.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Badge", b =>
+                {
+                    b.Property<Guid>("BadgeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("badge_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("AwardedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("awarded_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("BadgeId")
+                        .HasName("pk_badges");
+
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_badges_lesson_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_badges_user_id");
+
+                    b.HasIndex("UserId", "LessonId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_badges_user_id_lesson_id");
+
+                    b.ToTable("badges", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Certificate", b =>
                 {
                     b.Property<Guid>("CertificateId")
@@ -38,6 +76,12 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnName("certificate_hash")
                         .IsFixedLength();
 
+                    b.Property<string>("CertificateNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("certificate_number");
+
                     b.Property<DateTimeOffset>("IssuedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -47,6 +91,14 @@ namespace BridgeTech.Api.Migrations
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Valid")
+                        .HasColumnName("status");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -58,6 +110,10 @@ namespace BridgeTech.Api.Migrations
                     b.HasIndex("CertificateHash")
                         .IsUnique()
                         .HasDatabaseName("ix_certificates_certificate_hash");
+
+                    b.HasIndex("CertificateNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_certificates_certificate_number");
 
                     b.HasIndex("ModuleId")
                         .HasDatabaseName("ix_certificates_module_id");
@@ -148,6 +204,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
 
+                    b.Property<string>("Outcomes")
+                        .HasColumnType("text")
+                        .HasColumnName("outcomes");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -174,6 +234,41 @@ namespace BridgeTech.Api.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("VerificationCriteria"), "gin");
 
                     b.ToTable("exercises", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseCompletion", b =>
+                {
+                    b.Property<Guid>("CompletionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("completion_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exercise_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("CompletionId")
+                        .HasName("pk_exercise_completions");
+
+                    b.HasIndex("ExerciseId")
+                        .HasDatabaseName("ix_exercise_completions_exercise_id");
+
+                    b.HasIndex("UserId", "ExerciseId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_exercise_completions_user_id_exercise_id");
+
+                    b.ToTable("exercise_completions", "public");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseSubmission", b =>
@@ -230,6 +325,45 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("exercise_submissions", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LearningChatMessage", b =>
+                {
+                    b.Property<Guid>("LearningChatMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("learning_chat_message_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("LearningChatMessageId")
+                        .HasName("pk_learning_chat_messages");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_learning_chat_messages_user_id_created_at");
+
+                    b.ToTable("learning_chat_messages", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Lesson", b =>
                 {
                     b.Property<Guid>("LessonId")
@@ -248,6 +382,15 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<short>("DurationMinutes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("duration_minutes");
+
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
                         .HasColumnName("module_id");
@@ -257,6 +400,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("smallint")
                         .HasDefaultValue((short)0)
                         .HasColumnName("order_index");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
+                        .HasColumnName("status");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -279,6 +426,45 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("lessons", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LessonProgress", b =>
+                {
+                    b.Property<Guid>("ProgressId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("progress_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("Completed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("completed");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("ProgressId")
+                        .HasName("pk_lesson_progress");
+
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_lesson_progress_lesson_id");
+
+                    b.HasIndex("UserId", "LessonId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_lesson_progress_user_id_lesson_id");
+
+                    b.ToTable("lesson_progress", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Module", b =>
                 {
                     b.Property<Guid>("ModuleId")
@@ -297,11 +483,19 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<short>("Level")
+                        .HasColumnType("smallint")
+                        .HasColumnName("level");
+
                     b.Property<short>("OrderIndex")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("smallint")
                         .HasDefaultValue((short)0)
                         .HasColumnName("order_index");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
+                        .HasColumnName("status");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -324,6 +518,147 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("modules", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("related_entity_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("UserId", "IsRead")
+                        .HasDatabaseName("idx_notifications_user_unread");
+
+                    b.ToTable("notifications", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.PendingRegistration", b =>
+                {
+                    b.Property<Guid>("PendingRegistrationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("pending_registration_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("AccountSetupRequired")
+                        .HasColumnType("boolean")
+                        .HasColumnName("account_setup_required");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("GithubUsername")
+                        .HasMaxLength(39)
+                        .HasColumnType("character varying(39)")
+                        .HasColumnName("github_username");
+
+                    b.Property<DateTimeOffset>("LastCodeSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_code_sent_at");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("username");
+
+                    b.Property<int>("VerificationAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("verification_attempts");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("verification_code");
+
+                    b.Property<DateTimeOffset>("VerificationCodeExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verification_code_expires_at");
+
+                    b.HasKey("PendingRegistrationId")
+                        .HasName("pk_pending_registrations");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pending_registrations_email");
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pending_registrations_username");
+
+                    b.HasIndex("VerificationCodeExpiresAt")
+                        .HasDatabaseName("ix_pending_registrations_verification_code_expires_at");
+
+                    b.ToTable("pending_registrations", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Quiz", b =>
                 {
                     b.Property<Guid>("QuizId")
@@ -337,6 +672,10 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
 
                     b.Property<Guid>("ModuleId")
                         .HasColumnType("uuid")
@@ -354,6 +693,9 @@ namespace BridgeTech.Api.Migrations
 
                     b.HasKey("QuizId")
                         .HasName("pk_quizzes");
+
+                    b.HasIndex("LessonId")
+                        .HasDatabaseName("ix_quizzes_lesson_id");
 
                     b.HasIndex("ModuleId")
                         .HasDatabaseName("ix_quizzes_module_id");
@@ -529,6 +871,149 @@ namespace BridgeTech.Api.Migrations
                     b.ToTable("quiz_questions", "public");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Report", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("report_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("DataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data_json");
+
+                    b.Property<DateTimeOffset>("GeneratedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("GeneratedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("generated_by_user_id");
+
+                    b.Property<string>("ReportType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("report_type");
+
+                    b.Property<int>("RowCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("row_count");
+
+                    b.HasKey("ReportId")
+                        .HasName("pk_reports");
+
+                    b.HasIndex("GeneratedAt")
+                        .HasDatabaseName("ix_reports_generated_at");
+
+                    b.HasIndex("GeneratedByUserId")
+                        .HasDatabaseName("ix_reports_generated_by_user_id");
+
+                    b.ToTable("reports", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.StaffActivity", b =>
+                {
+                    b.Property<Guid>("StaffActivityId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_activity_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ActivityType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("activity_type");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ended_at");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
+
+                    b.Property<Guid?>("ModuleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("module_id");
+
+                    b.Property<string>("ModuleTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("module_title");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("StaffActivityId")
+                        .HasName("pk_staff_activities");
+
+                    b.HasIndex("StartedAt")
+                        .HasDatabaseName("ix_staff_activities_started_at");
+
+                    b.HasIndex("UserId", "StartedAt")
+                        .HasDatabaseName("ix_staff_activities_user_id_started_at");
+
+                    b.ToTable("staff_activities", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.SupportTicket", b =>
+                {
+                    b.Property<Guid>("SupportTicketId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("support_ticket_id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<short>("Category")
+                        .HasColumnType("smallint")
+                        .HasColumnName("category");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<short>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)0)
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("SupportTicketId")
+                        .HasName("pk_support_tickets");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_support_tickets_user_id");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_support_tickets_status_created_at");
+
+                    b.ToTable("support_tickets", "public");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -536,6 +1021,17 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("AccountSetupRequired")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("account_setup_required");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -549,16 +1045,44 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("character varying(254)")
                         .HasColumnName("email");
 
+                    b.Property<bool>("EmailVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("email_verified");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)")
                         .HasColumnName("first_name");
 
+                    b.Property<string>("GithubAccessToken")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("github_access_token");
+
+                    b.Property<string>("GithubRepository")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("github_repository");
+
                     b.Property<string>("GithubUsername")
                         .HasMaxLength(39)
                         .HasColumnType("character varying(39)")
                         .HasColumnName("github_username");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("LastCodeSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_code_sent_at");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -572,9 +1096,38 @@ namespace BridgeTech.Api.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password_hash");
 
+                    b.Property<int>("PasswordResetAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("password_reset_attempts");
+
+                    b.Property<string>("PasswordResetCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("password_reset_code");
+
+                    b.Property<DateTimeOffset?>("PasswordResetCodeExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_reset_code_expires_at");
+
+                    b.Property<DateTimeOffset?>("PasswordResetLastSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_reset_last_sent_at");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("phone_number");
+
                     b.Property<short>("Role")
                         .HasColumnType("smallint")
                         .HasColumnName("role");
+
+                    b.Property<string>("University")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("university");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -587,6 +1140,21 @@ namespace BridgeTech.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("username");
+
+                    b.Property<int>("VerificationAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("verification_attempts");
+
+                    b.Property<string>("VerificationCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("verification_code");
+
+                    b.Property<DateTimeOffset?>("VerificationCodeExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verification_code_expires_at");
 
                     b.HasKey("UserId")
                         .HasName("pk_users");
@@ -607,6 +1175,41 @@ namespace BridgeTech.Api.Migrations
                         .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.UserPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<byte[]>("ProfilePicture")
+                        .HasColumnType("bytea")
+                        .HasColumnName("profile_picture");
+
+                    b.Property<string>("ProfilePictureContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("profile_picture_content_type");
+
+                    b.Property<string>("Theme")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("light")
+                        .HasColumnName("theme");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_user_preferences");
+
+                    b.ToTable("user_preferences", "public");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.VideoSummary", b =>
@@ -648,6 +1251,27 @@ namespace BridgeTech.Api.Migrations
                         .HasDatabaseName("ix_video_summaries_lesson_id");
 
                     b.ToTable("video_summaries", "public");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Badge", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
+                        .WithMany("Badges")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_badges_lessons_lesson_id");
+
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany("Badges")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_badges_users_user_id");
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Certificate", b =>
@@ -704,6 +1328,27 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Module");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseCompletion", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exercise_completions_exercises_exercise_id");
+
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exercise_completions_users_user_id");
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.ExerciseSubmission", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.Exercise", "Exercise")
@@ -725,6 +1370,18 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LearningChatMessage", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_learning_chat_messages_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Lesson", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.Module", "Module")
@@ -737,14 +1394,54 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Module");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.LessonProgress", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_lesson_progress_lessons_lesson_id");
+
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_lesson_progress_users_user_id");
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Quiz", b =>
                 {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .HasConstraintName("fk_quizzes_lessons_lesson_id");
+
                     b.HasOne("BridgeTech.Api.Domain.Entities.Module", "Module")
                         .WithMany("Quizzes")
                         .HasForeignKey("ModuleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_quizzes_modules_module_id");
+
+                    b.Navigation("Lesson");
 
                     b.Navigation("Module");
                 });
@@ -833,6 +1530,54 @@ namespace BridgeTech.Api.Migrations
                     b.Navigation("Quiz");
                 });
 
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Report", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "GeneratedByUser")
+                        .WithMany("Reports")
+                        .HasForeignKey("GeneratedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_users_generated_by_user_id");
+
+                    b.Navigation("GeneratedByUser");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.StaffActivity", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany("StaffActivities")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_activities_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.SupportTicket", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_support_tickets_users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BridgeTech.Api.Domain.Entities.UserPreference", b =>
+                {
+                    b.HasOne("BridgeTech.Api.Domain.Entities.User", "User")
+                        .WithOne("Preferences")
+                        .HasForeignKey("BridgeTech.Api.Domain.Entities.UserPreference", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_preferences_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.VideoSummary", b =>
                 {
                     b.HasOne("BridgeTech.Api.Domain.Entities.Lesson", "Lesson")
@@ -852,6 +1597,8 @@ namespace BridgeTech.Api.Migrations
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.Lesson", b =>
                 {
+                    b.Navigation("Badges");
+
                     b.Navigation("VideoSummaries");
                 });
 
@@ -894,13 +1641,23 @@ namespace BridgeTech.Api.Migrations
 
             modelBuilder.Entity("BridgeTech.Api.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Badges");
+
                     b.Navigation("Certificates");
 
                     b.Navigation("Enrollments");
 
                     b.Navigation("ExerciseSubmissions");
 
+                    b.Navigation("Notifications");
+
+                    b.Navigation("Preferences");
+
                     b.Navigation("QuizAttempts");
+
+                    b.Navigation("Reports");
+
+                    b.Navigation("StaffActivities");
                 });
 #pragma warning restore 612, 618
         }

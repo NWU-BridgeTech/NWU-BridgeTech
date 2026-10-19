@@ -1,0 +1,27 @@
+/* Builds on Admin.css and AdminModules.css so the practical-work page
+   matches the existing Lessons management UI. */
+.admin-exercises-page .module-list { min-width: 0; }
+.admin-exercises-page .module-toolbar { margin-top: 18px; }
+.admin-exercises-editor { margin-bottom: 22px; }
+.admin-exercises-editor form { display: flex; flex-direction: column; }
+.admin-exercises-editor textarea { resize: vertical; min-height: 96px; }
+.admin-exercises-editor .module-form-actions { margin-top: 18px; }
+.admin-exercises-table-scroll { width: 100%; overflow-x: auto; }
+.admin-exercises-table { width: 100%; min-width: 560px; }
+.admin-exercises-table th:last-child { width: 160px; }
+.admin-exercises-table td { vertical-align: middle; }
+.admin-exercises-table td:first-child { max-width: 480px; }
+.admin-exercises-table td:first-child p {
+  margin: 6px 0 0;
+  color: #667085;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.admin-exercises-actions { white-space: nowrap; }
+.admin-exercises-actions .module-edit + .module-edit { margin-left: 8px; }
+@media (max-width: 720px) {
+  .admin-exercises-table { min-width: 500px; }
+  .admin-exercises-editor { padding: 18px; }
+}

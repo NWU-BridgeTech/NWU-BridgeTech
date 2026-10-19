@@ -1,10 +1,13 @@
 import {
   Award,
+  BadgeCheck,
   BookOpen,
   ClipboardCheck,
   Code2,
   GitBranch,
   LayoutDashboard,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import NavigationSidebar from "./NavigationSidebar";
 
@@ -32,10 +35,26 @@ const groups = [
         icon: Award,
       },
       {
+        label: "Badges",
+        path: "/student/badges",
+        icon: BadgeCheck,
+      },
+      {
         label: "GitHub activity",
         path: "/student/github",
         icon: GitBranch,
       },
+      {
+        label: "Blui AI summary",
+        path: "/student/ai-summary",
+        icon: Sparkles,
+      },
+    ],
+  },
+  {
+    label: "Support",
+    items: [
+      { label: "Feedback", path: "/student/feedback", icon: MessageSquare },
     ],
   },
 ];

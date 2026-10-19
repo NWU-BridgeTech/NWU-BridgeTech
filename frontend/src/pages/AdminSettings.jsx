@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "../layouts/AppLayout";
 import {
   adminNotificationOptions,
@@ -11,9 +11,31 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState(initialAdminSettings);
   const [savedSettings, setSavedSettings] = useState(initialAdminSettings);
   const [message, setMessage] = useState("");
+  const [profileLoading, setProfileLoading] = useState(true);
   const hasChanges = Object.keys(settings).some(
     (key) => settings[key] !== savedSettings[key],
   );
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5174"}/api/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load your profile.");
+        const profile = await response.json();
+        const nextSettings = {
+          ...initialAdminSettings,
+          name: `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim(),
+          email: profile.email ?? "",
+          role: profile.role ?? initialAdminSettings.role,
+        };
+        setSettings(nextSettings);
+        setSavedSettings(nextSettings);
+      })
+      .catch((error) => setMessage(error.message))
+      .finally(() => setProfileLoading(false));
+  }, []);
 
   function updateSetting(key, value) {
     setSettings({ ...settings, [key]: value });
@@ -65,7 +87,8 @@ export default function AdminSettings() {
                   autoComplete="name"
                   required
                   maxLength={100}
-                  value={settings.name}
+                  value={profileLoading ? "Loading..." : settings.name}
+                  readOnly={profileLoading}
                   onChange={(event) =>
                     updateSetting("name", event.target.value)
                   }
@@ -80,7 +103,8 @@ export default function AdminSettings() {
                   autoComplete="email"
                   required
                   maxLength={254}
-                  value={settings.email}
+                  value={profileLoading ? "Loading..." : settings.email}
+                  readOnly={profileLoading}
                   onChange={(event) =>
                     updateSetting("email", event.target.value)
                   }

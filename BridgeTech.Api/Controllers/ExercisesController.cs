@@ -1,57 +1,94 @@
-using BridgeTech.Api.Data;
-using BridgeTech.Api.Domain.Entities;
+using BridgeTech.Api.Services.Exercises;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using BridgeTech.Api.DTOs.Exercises;
 
 namespace BridgeTech.Api.Controllers;
 
 [ApiController]
 [Route("api/exercises")]
+[Authorize]
 // Provides exercise instructions and records learner repository submissions.
-public class ExercisesController(AppDbContext dbContext) : ControllerBase
+public class ExercisesController(IExerciseService service) : ControllerBase
 {
     [HttpGet]
-    // Returns all exercise definitions ordered by creation time.
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
     public async Task<IActionResult> GetExercises(CancellationToken cancellationToken)
     {
-        var exercises = await dbContext.Exercises
-            .AsNoTracking()
-            .OrderBy(exercise => exercise.CreatedAt)
-            .Select(exercise => new
-            {
-                exercise.ExerciseId,
-                exercise.ModuleId,
-                exercise.Title,
-                exercise.Description,
-                exercise.VerificationType,
-                exercise.VerificationCriteria,
-                exercise.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        return Ok(exercises);
+        return Ok(await service.GetAllAsync(cancellationToken));
     }
 
     [HttpGet("{exerciseId:guid}")]
-    // Returns one exercise definition needed by the learner.
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
     public async Task<IActionResult> GetExercise(Guid exerciseId, CancellationToken cancellationToken)
     {
-        var exercise = await dbContext.Exercises
-            .AsNoTracking()
-            .Where(exercise => exercise.ExerciseId == exerciseId)
-            .Select(exercise => new
-            {
-                exercise.ExerciseId,
-                exercise.ModuleId,
-                exercise.Title,
-                exercise.Description,
-                exercise.VerificationType,
-                exercise.VerificationCriteria,
-                exercise.CreatedAt
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+        var exercise = await service.GetByIdAsync(exerciseId, cancellationToken);
 
         return exercise is null ? NotFound() : Ok(exercise);
+    }
+    [HttpPost]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> CreateExercise(
+        [FromBody] CreateExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var exercise = await service.CreateAsync(
+            request,
+            cancellationToken
+        );
+
+        return CreatedAtAction(
+            nameof(GetExercise),
+            new { exerciseId = exercise.ExerciseId },
+            exercise
+        );
+    }
+
+    [HttpPut("{exerciseId:guid}")]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> UpdateExercise(
+        Guid exerciseId,
+        [FromBody] UpdateExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var exercise = await service.UpdateAsync(
+            exerciseId,
+            request,
+            cancellationToken
+        );
+
+        if (exercise is null)
+        {
+            return NotFound(new
+            {
+                message = "Exercise not found."
+            });
+        }
+
+        return Ok(exercise);
+    }
+
+    [HttpDelete("{exerciseId:guid}")]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    public async Task<IActionResult> DeleteExercise(
+        Guid exerciseId,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(
+            exerciseId,
+            cancellationToken
+        );
+
+        if (!deleted)
+        {
+            return NotFound(new
+            {
+                message = "Exercise not found."
+            });
+        }
+
+        return NoContent();
     }
 
     [HttpPost("{exerciseId:guid}/submissions")]
@@ -61,26 +98,16 @@ public class ExercisesController(AppDbContext dbContext) : ControllerBase
         SubmitExerciseRequest request,
         CancellationToken cancellationToken)
     {
-        var exerciseExists = await dbContext.Exercises
-            .AsNoTracking()
-            .AnyAsync(exercise => exercise.ExerciseId == exerciseId, cancellationToken);
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
 
-        if (!exerciseExists)
+        var submission = await service.CreateSubmissionAsync(exerciseId, userId, request.GithubRepoUrl, cancellationToken);
+        if (submission is null)
         {
             return NotFound();
         }
-
-        var submission = new ExerciseSubmission
-        {
-            SubmissionId = Guid.NewGuid(),
-            ExerciseId = exerciseId,
-            UserId = request.UserId,
-            GithubRepoUrl = request.GithubRepoUrl,
-            SubmittedAt = DateTimeOffset.UtcNow
-        };
-
-        dbContext.ExerciseSubmissions.Add(submission);
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(
             nameof(GetSubmission),
@@ -92,12 +119,78 @@ public class ExercisesController(AppDbContext dbContext) : ControllerBase
     // Returns the current verification status of a submission.
     public async Task<IActionResult> GetSubmission(Guid submissionId, CancellationToken cancellationToken)
     {
-        var submission = await dbContext.ExerciseSubmissions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.SubmissionId == submissionId, cancellationToken);
+        var submission = await service.GetSubmissionAsync(submissionId, cancellationToken);
 
         return submission is null ? NotFound() : Ok(submission);
     }
+
+    private Guid? CurrentUserId()
+{
+    var value = User.FindFirstValue(
+        ClaimTypes.NameIdentifier
+    );
+
+    return Guid.TryParse(value, out var id)
+        ? id
+        : null;
+}
+
+
+[HttpGet("my")]
+public async Task<IActionResult> GetMyExercises(
+    CancellationToken cancellationToken)
+{
+    var userId = CurrentUserId();
+
+    if (userId is null)
+    {
+        return Unauthorized();
+    }
+
+    var exercises = await service.GetMyExercisesAsync(
+        userId.Value,
+        cancellationToken
+    );
+
+    return Ok(exercises);
+}
+
+
+[HttpPost("{exerciseId:guid}/complete")]
+public async Task<IActionResult> CompleteExercise(
+    Guid exerciseId,
+    CancellationToken cancellationToken)
+{
+    var userId = CurrentUserId();
+
+    if (userId is null)
+    {
+        return Unauthorized();
+    }
+
+    var completion = await service.MarkCompletedAsync(
+        userId.Value,
+        exerciseId,
+        cancellationToken
+    );
+
+    if (completion is null)
+    {
+        return NotFound(new
+        {
+            message =
+                "Exercise not found in your registered modules."
+        });
+    }
+
+    return Ok(new
+    {
+        exerciseId = completion.ExerciseId,
+        completed = true,
+        completedAt = completion.CompletedAt
+    });
+}
+
 }
 
 // Request body used when a learner submits an exercise repository.

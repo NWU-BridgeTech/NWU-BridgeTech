@@ -29,8 +29,14 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.FirstName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.LastName).HasMaxLength(254).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(30);
+        builder.Property(x => x.Address).HasMaxLength(500);
+        builder.Property(x => x.University).HasMaxLength(200);
         builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
         builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.GithubAccessToken).HasMaxLength(2000);
+        builder.Property(x => x.GithubRepository).HasMaxLength(200);
+        builder.Property(x => x.AccountSetupRequired).HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Role).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
@@ -38,6 +44,67 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.Username).IsUnique();
         builder.HasIndex(x => x.GithubUsername).HasFilter("github_username IS NOT NULL");
         builder.HasIndex(x => x.Role);
+        builder.Property(x => x.EmailVerified).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.VerificationCode).HasMaxLength(6);
+        builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
+        builder.Property(x => x.EmailVerified).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.PasswordResetAttempts).HasDefaultValue(0).IsRequired();
+        builder.Property(x => x.VerificationCode).HasMaxLength(6);
+        builder.Property(x => x.PasswordResetCode).HasMaxLength(6);
+    }
+
+    internal sealed class LearningChatMessageConfiguration : IEntityTypeConfiguration<LearningChatMessage>
+    {
+        public void Configure(EntityTypeBuilder<LearningChatMessage> builder)
+        {
+            EntityConfigurationHelpers.ConfigureId(builder, "learning_chat_messages", nameof(LearningChatMessage.LearningChatMessageId));
+            builder.Property(x => x.Role).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Content).HasMaxLength(20000).IsRequired();
+            builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+            builder.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(x => new { x.UserId, x.CreatedAt });
+        }
+    }
+
+    internal sealed class UserPreferenceConfiguration : IEntityTypeConfiguration<UserPreference>
+    {
+        public void Configure(EntityTypeBuilder<UserPreference> builder)
+        {
+            builder.ToTable("user_preferences");
+            builder.HasKey(x => x.UserId);
+            builder.Property(x => x.Theme).HasMaxLength(10).HasDefaultValue("light").IsRequired();
+            builder.Property(x => x.ProfilePicture).HasColumnType("bytea");
+            builder.Property(x => x.ProfilePictureContentType).HasMaxLength(100);
+            builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()").IsRequired();
+            builder.HasOne(x => x.User)
+                .WithOne(x => x.Preferences)
+                .HasForeignKey<UserPreference>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        internal sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
+        {
+            public void Configure(EntityTypeBuilder<Report> builder)
+            {
+                EntityConfigurationHelpers.ConfigureId(builder, "reports", nameof(Report.ReportId));
+                builder.Property(x => x.ReportType).HasMaxLength(100).IsRequired();
+                builder.Property(x => x.RowCount).IsRequired();
+                builder.Property(x => x.DataJson).HasColumnType("jsonb").IsRequired();
+                builder.Property(x => x.GeneratedAt).HasDefaultValueSql("now()").IsRequired();
+                builder.HasOne(x => x.GeneratedByUser)
+                    .WithMany(x => x.Reports)
+                    .HasForeignKey(x => x.GeneratedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                builder.HasIndex(x => x.GeneratedByUserId);
+                builder.HasIndex(x => x.GeneratedAt);
+            }
+        }
     }
 }
 
@@ -49,9 +116,26 @@ internal sealed class ModuleConfiguration : IEntityTypeConfiguration<Module>
         EntityConfigurationHelpers.ConfigureId(builder, "modules", nameof(Module.ModuleId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
+        builder.Property(x => x.Level).HasConversion<short>().IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasIndex(x => x.OrderIndex);
+    }
+
+    internal sealed class StaffActivityConfiguration : IEntityTypeConfiguration<StaffActivity>
+    {
+        public void Configure(EntityTypeBuilder<StaffActivity> builder)
+        {
+            EntityConfigurationHelpers.ConfigureId(builder, "staff_activities", nameof(StaffActivity.StaffActivityId));
+            builder.Property(x => x.ActivityType).HasMaxLength(40).IsRequired();
+            builder.Property(x => x.Location).HasMaxLength(200);
+            builder.Property(x => x.ModuleTitle).HasMaxLength(200);
+            builder.HasIndex(x => new { x.UserId, x.StartedAt });
+            builder.HasIndex(x => x.StartedAt);
+            builder.HasOne(x => x.User).WithMany(x => x.StaffActivities)
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }
 
@@ -63,6 +147,9 @@ internal sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         EntityConfigurationHelpers.ConfigureId(builder, "lessons", nameof(Lesson.LessonId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.OrderIndex).HasDefaultValue((short)0).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
+        builder.Property(x => x.DurationMinutes).IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().IsRequired();
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         builder.HasOne(x => x.Module).WithMany(x => x.Lessons).HasForeignKey(x => x.ModuleId).OnDelete(DeleteBehavior.Cascade);
@@ -162,6 +249,7 @@ internal sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         // JSONB keeps verification rules flexible for different GitHub checks.
         EntityConfigurationHelpers.ConfigureId(builder, "exercises", nameof(Exercise.ExerciseId));
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Outcomes).HasColumnName("outcomes").HasColumnType("text");           
         builder.Property(x => x.VerificationType).HasConversion<short>().IsRequired();
         builder.Property(x => x.VerificationCriteria).HasColumnType("jsonb");
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
@@ -170,6 +258,54 @@ internal sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
         builder.HasIndex(x => x.VerificationCriteria).HasMethod("gin");
     }
 }
+
+internal sealed class ExerciseCompletionConfiguration
+    : IEntityTypeConfiguration<ExerciseCompletion>
+{
+    public void Configure(
+        EntityTypeBuilder<ExerciseCompletion> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(
+            builder,
+            "exercise_completions",
+            nameof(ExerciseCompletion.CompletionId)
+        );
+
+        builder.Property(x => x.CompletionId)
+            .HasColumnName("completion_id");
+
+        builder.Property(x => x.UserId)
+            .HasColumnName("user_id")
+            .IsRequired();
+
+        builder.Property(x => x.ExerciseId)
+            .HasColumnName("exercise_id")
+            .IsRequired();
+
+        builder.Property(x => x.CompletedAt)
+            .HasColumnName("completed_at")
+            .HasDefaultValueSql("now()")
+            .IsRequired();
+
+        builder.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Exercise)
+            .WithMany()
+            .HasForeignKey(x => x.ExerciseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => new
+        {
+            x.UserId,
+            x.ExerciseId
+        })
+        .IsUnique();
+    }
+}
+
 
 internal sealed class ExerciseSubmissionConfiguration : IEntityTypeConfiguration<ExerciseSubmission>
 {
@@ -210,12 +346,88 @@ internal sealed class CertificateConfiguration : IEntityTypeConfiguration<Certif
     {
         // A certificate is unique per user/module and by its public verification hash.
         EntityConfigurationHelpers.ConfigureId(builder, "certificates", nameof(Certificate.CertificateId));
+        builder.Property(x => x.CertificateNumber).HasMaxLength(40).IsRequired();
         builder.Property(x => x.CertificateHash).HasColumnType("char(64)").IsFixedLength().IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).HasDefaultValue("Valid").IsRequired();
         builder.Property(x => x.IssuedAt).HasDefaultValueSql("now()").IsRequired();
         builder.HasOne(x => x.User).WithMany(x => x.Certificates).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(x => x.Module).WithMany(x => x.Certificates).HasForeignKey(x => x.ModuleId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(x => new { x.UserId, x.ModuleId }).IsUnique();
         builder.HasIndex(x => x.CertificateHash).IsUnique();
+        builder.HasIndex(x => x.CertificateNumber).IsUnique();
         builder.HasIndex(x => x.UserId);
+    }
+}
+
+internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notification>
+{
+    public void Configure(EntityTypeBuilder<Notification> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "notifications", nameof(Notification.Id));
+        builder.Property(x => x.Type).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.IsRead).HasDefaultValue(false).IsRequired();
+        builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany(x => x.Notifications).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.IsRead }).HasDatabaseName("idx_notifications_user_unread");
+    }
+}
+
+internal sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
+{
+    public void Configure(EntityTypeBuilder<Badge> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "badges", nameof(Badge.BadgeId));
+        builder.Property(x => x.AwardedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany(x => x.Badges).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany(x => x.Badges).HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.UserId);
+    }
+}
+
+internal sealed class PendingRegistrationConfiguration : IEntityTypeConfiguration<PendingRegistration>
+{
+    public void Configure(EntityTypeBuilder<PendingRegistration> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "pending_registrations", nameof(PendingRegistration.PendingRegistrationId));
+        builder.Property(x => x.Username).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.FirstName).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.LastName).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.Email).HasMaxLength(254).IsRequired();
+        builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
+        builder.Property(x => x.GithubUsername).HasMaxLength(39);
+        builder.Property(x => x.VerificationCode).HasMaxLength(6).IsRequired();
+        builder.Property(x => x.VerificationAttempts).HasDefaultValue(0).IsRequired();
+        builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.Username).IsUnique();
+        builder.HasIndex(x => x.VerificationCodeExpiresAt);
+    }
+}
+
+internal sealed class LessonProgressConfiguration : IEntityTypeConfiguration<LessonProgress>
+{
+    public void Configure(EntityTypeBuilder<LessonProgress> builder)
+    {
+        // One progress row per user/lesson pair; drives per-lesson completion state.
+        EntityConfigurationHelpers.ConfigureId(builder, "lesson_progress", nameof(LessonProgress.ProgressId));
+        builder.Property(x => x.Completed).HasDefaultValue(false).IsRequired();
+        builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Lesson).WithMany().HasForeignKey(x => x.LessonId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.UserId, x.LessonId }).IsUnique();
+        builder.HasIndex(x => x.LessonId);
+    }
+}
+internal sealed class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
+{
+    public void Configure(EntityTypeBuilder<SupportTicket> builder)
+    {
+        EntityConfigurationHelpers.ConfigureId(builder, "support_tickets", nameof(SupportTicket.SupportTicketId));
+        builder.Property(x => x.Category).HasConversion<short>().IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(2000).IsRequired();
+        builder.Property(x => x.Status).HasConversion<short>().HasDefaultValue(SupportTicketStatus.Open).IsRequired();
+        builder.Property(x => x.CreatedAt).HasDefaultValueSql("now()").IsRequired();
+        builder.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.Status, x.CreatedAt });
     }
 }

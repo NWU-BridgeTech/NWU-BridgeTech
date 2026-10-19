@@ -1,9 +1,9 @@
-import { Link, NavLink } from "react-router-dom";
-import { PanelsTopLeft, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { LogOut, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Sidebar as SidebarRoot,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -11,12 +11,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import "./Sidebar.css";
+import { clearAuthTokens } from "../utils/authStorage";
 
 export default function NavigationSidebar({ groups, homePath, title }) {
   const { state, isMobile, toggleSidebar, setOpenMobile } = useSidebar();
+  const navigate = useNavigate();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signOutClosing, setSignOutClosing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const collapsed = state === "collapsed";
   const toggleLabel = collapsed ? "Expand sidebar" : "Collapse sidebar";
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
@@ -24,6 +30,26 @@ export default function NavigationSidebar({ groups, homePath, title }) {
   function closeMobile() {
     if (isMobile) setOpenMobile(false);
   }
+
+  function closeSignOut() {
+    if (signingOut) return;
+    setSignOutClosing(true);
+    window.setTimeout(() => {
+      setSignOutOpen(false);
+      setSignOutClosing(false);
+    }, 180);
+  }
+
+  useEffect(() => {
+    if (!signOutOpen) return undefined;
+
+    function handleEscape(event) {
+      if (event.key === "Escape") closeSignOut();
+    }
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [signOutOpen]);
 
   return (
     <SidebarRoot collapsible="icon" className="bt-sidebar">
@@ -97,23 +123,72 @@ export default function NavigationSidebar({ groups, homePath, title }) {
           ))}
         </nav>
       </SidebarContent>
-
       <SidebarFooter className="bt-sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
-              tooltip="Public website"
+              tooltip="Sign out"
               className="bt-nav-link"
+              onClick={() => {
+                closeMobile();
+                setSignOutOpen(true);
+              }}
+              aria-label="Sign out"
             >
-              <Link to="/" onClick={closeMobile} aria-label="Public website">
-                <PanelsTopLeft aria-hidden="true" strokeWidth={1.7} />
-                <span>Public website</span>
-              </Link>
+              <LogOut aria-hidden="true" strokeWidth={1.7} />
+              <span>Sign out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      {signOutOpen && (
+        <div
+          className={`bt-signout-backdrop${signOutClosing ? " is-closing" : ""}`}
+          role="presentation"
+        >
+          <section
+            className={`bt-signout-modal${signOutClosing ? " is-closing" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sidebar-signout-heading"
+            aria-describedby="sidebar-signout-description"
+          >
+            <div className="bt-signout-icon" aria-hidden="true">
+              <LogOut size={22} />
+            </div>
+            <p className="bt-signout-eyebrow">ACCOUNT</p>
+            <h2 id="sidebar-signout-heading">Sign out of BridgeTech?</h2>
+            <p id="sidebar-signout-description">
+              You will need to sign in again to access your workspace.
+            </p>
+            <div className="bt-signout-actions">
+              <button
+                type="button"
+                className="bt-signout-cancel"
+                disabled={signingOut}
+                onClick={closeSignOut}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="bt-signout-confirm"
+                disabled={signingOut}
+                onClick={() => {
+                  setSigningOut(true);
+                  setSignOutClosing(true);
+                  window.setTimeout(() => {
+                    clearAuthTokens();
+                    navigate("/", { replace: true });
+                  }, 220);
+                }}
+              >
+                {signingOut ? "Signing out..." : "Sign out"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </SidebarRoot>
   );
 }

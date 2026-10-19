@@ -1,57 +1,79 @@
-.student-practical .practical-heading {
+/* Practical work follows the same visual language as Student Assessments. */
+.student-practical .practical-section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.student-practical .practical-heading h2 {
+.student-practical .practical-section-heading h2 {
   margin: 0;
   font-size: 20px;
   letter-spacing: -0.3px;
 }
 
-.student-practical .practical-heading p {
+.student-practical .practical-section-heading p {
   margin: 8px 0 0;
   color: var(--text-secondary);
 }
 
-.student-practical .practical-summary {
+.student-practical .practical-count {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #edf3ff;
+  color: #315db6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.student-practical .practical-list {
+  display: grid;
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.student-practical .practical-card {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 20px;
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
+  gap: 24px;
+  padding: var(--card-padding);
+  border: 1px solid #e4e8ed;
+  border-radius: 10px;
+  background: #fff;
 }
 
-.student-practical .practical-summary p {
-  margin: 0;
-}
+.student-practical .practical-card-details { flex: 1 1 260px; min-width: 0; }
+.student-practical .practical-module { font-size: 13px; font-weight: 600; color: #315db6; }
+.student-practical .practical-card h3 { margin: 12px 0 0; font-size: 18px; letter-spacing: -0.2px; }
+.student-practical .practical-card-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
 
-.student-practical .exercise-course {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-secondary);
-}
-
-.student-practical .exercise-deadline time {
-  display: block;
-  font-size: 12px;
-  color: #202939;
-}
-
-.student-practical .exercise-overdue {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 11px;
+.student-practical .practical-button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 13px;
   font-weight: 600;
-  color: #a13922;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.student-practical .practical-button-outline { color: #315db6; border-color: #c7d6f3; background: #fff; }
+.student-practical .practical-button-outline:hover { background: #f0f5ff; }
+.student-practical .practical-button-primary { background: #315db6; color: #fff; }
+.student-practical .practical-button-primary:hover { background: #244a96; }
+.student-practical .practical-button:focus-visible,
+.student-practical .practical-dialog-close:focus-visible { outline: 3px solid #93b4fa; outline-offset: 2px; }
+
+.student-practical .practical-completed {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid #e0e5ed;
 }
 
 .student-practical .practical-empty {
@@ -60,35 +82,89 @@
   border-radius: 10px;
   background: #fff;
 }
+.student-practical .practical-empty h3 { margin: 0 0 8px; font-size: 16px; }
+.student-practical .practical-empty p { margin: 0; color: var(--text-secondary); font-size: 13px; }
 
-.student-practical .practical-empty h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
+.student-practical .practical-instructions-dialog {
+  width: min(620px, calc(100% - 32px));
+  max-height: min(85vh, 800px);
+  padding: 0;
+  border: 1px solid #e4e8ed;
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.2);
+  color: #202939;
 }
-
-.student-practical .practical-empty p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.student-practical .practical-note {
-  margin: 16px 0 0;
-}
+.student-practical .practical-instructions-dialog::backdrop { background: rgba(15, 23, 42, 0.55); }
+.student-practical .practical-dialog-content { padding: 28px; }
+.student-practical .practical-dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.student-practical .practical-dialog-heading h2 { margin: 8px 0 0; font-size: 21px; }
+.student-practical .practical-dialog-close { border: 0; background: transparent; font-size: 28px; line-height: 1; cursor: pointer; color: #64748b; }
+.student-practical .practical-dialog-section { margin-top: 26px; }
+.student-practical .practical-dialog-section h3 { margin: 0 0 10px; font-size: 15px; }
+.student-practical .practical-dialog-section p,
+.student-practical .practical-dialog-section li { color: var(--text-secondary); line-height: 1.65; font-size: 14px; white-space: pre-line; }
+.student-practical .practical-dialog-section ul { padding-left: 22px; }
+.student-practical .practical-dialog-footer { display: flex; justify-content: flex-end; margin-top: 30px; }
 
 @media (max-width: 700px) {
-  .student-practical .practical-table tbody tr {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
+  .student-practical .practical-card { flex-direction: column; align-items: stretch; gap: 20px; }
+  .student-practical .practical-card-details { flex-basis: auto; }
+  .student-practical .practical-card-buttons { flex-direction: column; }
+  .student-practical .practical-dialog-content { padding: 20px; }
+}
 
-  .student-practical .practical-table td:last-child {
-    text-align: left;
-  }
 
-  .student-practical .exercise-deadline::before {
-    content: "Deadline";
-    display: block;
-    margin-bottom: 4px;
-    font-size: 11px;
-  }
+.practical-instructions-list {
+  list-style-type: disc;
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.practical-instructions-list li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.practical-instructions-list li:last-child {
+  margin-bottom: 0;
+}
+
+:root[data-theme="dark"] .student-practical .practical-card,
+:root[data-theme="dark"] .student-practical .practical-empty,
+:root[data-theme="dark"] .student-practical .practical-instructions-dialog {
+  border-color: #3f3f3f;
+  background: #242424;
+  color: #f3f4f6;
+}
+
+:root[data-theme="dark"] .student-practical .practical-completed {
+  border-top-color: #3f3f3f;
+}
+
+:root[data-theme="dark"] .student-practical .practical-count {
+  background: #303f59;
+  color: #dbeafe;
+}
+
+:root[data-theme="dark"] .student-practical .practical-module {
+  color: #a9c4fa;
+}
+
+:root[data-theme="dark"] .student-practical .practical-button-outline {
+  border-color: #505050;
+  background: #303030;
+  color: #dbeafe;
+}
+
+:root[data-theme="dark"] .student-practical .practical-button-outline:hover {
+  background: #3a3a3a;
+}
+
+:root[data-theme="dark"] .student-practical .practical-dialog-close {
+  color: #b8b8b8;
+}
+
+:root[data-theme="dark"] .student-practical .practical-dialog-section li {
+  color: #b8c4d6;
 }

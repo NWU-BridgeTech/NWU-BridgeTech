@@ -38,6 +38,36 @@ public class UpdateUserRole
     public string NewRole { get; set; } = string.Empty;
 }
 
+public class UpdateProfileRequest
+{
+    [Required, StringLength(50, MinimumLength = 2)]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Required, StringLength(50, MinimumLength = 2)]
+    public string LastName { get; set; } = string.Empty;
+
+    [Required, EmailAddress, StringLength(254)]
+    public string Email { get; set; } = string.Empty;
+
+    [StringLength(30)]
+    public string? PhoneNumber { get; set; }
+
+    [StringLength(500)]
+    public string? Address { get; set; }
+
+    [StringLength(200)]
+    public string? University { get; set; }
+}
+
+public class ChangePasswordRequest
+{
+    [Required]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required, StringLength(128, MinimumLength = 8)]
+    public string NewPassword { get; set; } = string.Empty;
+}
+
 public class LoginRequest
 {
     [Required]
@@ -56,6 +86,30 @@ public class AuthResponse
     public string Token { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTimeOffset ExpiresAt { get; set; }
+    public DateTimeOffset? VerificationExpiresAt { get; set; }
+}
+
+public class VerificationRequest
+{
+    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+    [Required, RegularExpression("^\\d{6}$")] public string Code { get; set; } = string.Empty;
+}
+
+public class ForgotPasswordRequest
+{
+    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordRequest : VerificationRequest
+{
+    [Required, StringLength(128, MinimumLength = 8)] public string NewPassword { get; set; } = string.Empty;
+}
+
+public class VerificationResponse
+{
+    public DateTimeOffset ExpiresAt { get; set; }
+    public string? Token { get; set; }
+    public string? RefreshToken { get; set; }
 }
 
 public class RefreshTokenRequest

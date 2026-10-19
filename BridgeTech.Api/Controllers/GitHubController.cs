@@ -1,0 +1,116 @@
+using System.Security.Claims;
+using BridgeTech.Api.Common.Options;
+using BridgeTech.Api.DTOs.GitHub;
+using BridgeTech.Api.Services.GitHub;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+
+namespace BridgeTech.Api.Controllers;
+
+[ApiController]
+[Route("api/github")]
+public sealed class GitHubController : ControllerBase
+{
+    private readonly IGitHubService _githubService;
+    private readonly GitHubApiOptions _options;
+
+    public GitHubController(IGitHubService githubService, IOptions<GitHubApiOptions> options)
+    {
+        _githubService = githubService;
+        _options = options.Value;
+    }
+
+    [Authorize]
+    [HttpGet("connect")]
+    public IActionResult Connect()
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        return Ok(new { authorizationUrl = _githubService.CreateAuthorizationUrl(userId) });
+    }
+
+    [Authorize]
+    [HttpDelete("connection")]
+    public async Task<IActionResult> Disconnect(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.DisconnectUserAsync(userId, cancellationToken);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        var username = await _githubService.GetUsernameAsync(userId, cancellationToken);
+        var repository = await _githubService.GetRepositoryAsync(userId, cancellationToken);
+        IReadOnlyList<GitHubRepositoryResponse> repositories = [];
+        var authorizationRequired = false;
+        try
+        {
+            repositories = await _githubService.GetRepositoriesAsync(userId, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            authorizationRequired = true;
+        }
+
+        return Ok(new { username, repository, repositories, authorizationRequired });
+    }
+
+    [Authorize]
+    [HttpPut("repository")]
+    public async Task<IActionResult> LinkRepository(
+        [FromBody] LinkGitHubRepositoryRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        var repository = await _githubService.LinkRepositoryAsync(
+            userId, request.FullName, cancellationToken);
+        return repository is null
+            ? NotFound(new { message = "That repository is not available to your connected GitHub account." })
+            : Ok(new { repository });
+    }
+
+    [Authorize]
+    [HttpDelete("repository")]
+    public async Task<IActionResult> UnlinkRepository(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _githubService.UnlinkRepositoryAsync(userId, cancellationToken);
+        return NoContent();
+    }
+
+    [AllowAnonymous]
+    [HttpGet("callback")]
+    public async Task<IActionResult> Callback([FromQuery] string? code, [FromQuery] string? state, CancellationToken cancellationToken)
+    {
+        var redirectUrl = $"{_options.FrontendUrl.TrimEnd('/')}/student/github";
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state))
+            return Redirect($"{redirectUrl}?github=error&message=GitHub+did+not+return+a+valid+connection+request");
+
+        try
+        {
+            await _githubService.ConnectUserAsync(state, code, cancellationToken);
+            return Redirect($"{redirectUrl}?github=connected");
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or HttpRequestException)
+        {
+            var result = exception.Message.Contains("already connected", StringComparison.OrdinalIgnoreCase)
+                ? "account-conflict"
+                : "error";
+            return Redirect($"{redirectUrl}?github={result}&message={Uri.EscapeDataString(exception.Message)}");
+        }
+    }
+}

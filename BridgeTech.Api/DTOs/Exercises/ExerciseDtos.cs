@@ -14,6 +14,13 @@ public class ExerciseResponse
     public JsonElement? VerificationCriteria { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public int ProgressPercentage { get; set; }
+    public string? Outcomes { get; set; }
+
+    public string ModuleTitle { get; set; } = string.Empty;
+
+    public bool Completed { get; set; }
+
+    public DateTimeOffset? CompletedAt { get; set; }
 }
 
 public class CreateExerciseRequest
@@ -27,6 +34,9 @@ public class CreateExerciseRequest
 
     [StringLength(2000)]
     public string? Description { get; set; }
+
+    // Learning outcomes
+    public string? Outcomes { get; set; }
 
     [Required]
     [EnumDataType(typeof(VerificationType))]
@@ -42,6 +52,9 @@ public class UpdateExerciseRequest
 
     [StringLength(2000)]
     public string? Description { get; set; }
+
+    // Learning outcomes
+    public string? Outcomes { get; set; }
 
     public VerificationType? VerificationType { get; set; }
 
