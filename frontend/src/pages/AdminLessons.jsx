@@ -22,17 +22,20 @@ function toModuleOption(module) {
 }
 
 // Converts a lesson from the API into the shape this page displays.
-function toLessonRow(lesson) {
-  return {
-    id: lesson.lessonId,
-    moduleId: lesson.moduleId,
-    title: lesson.title,
-    description: lesson.description ?? "",
-    content: lesson.content ?? "",
-    duration: lesson.durationMinutes,
-    status: lesson.status,
-  };
-}
+
+  function toLessonRow(lesson) {
+    return {
+      id: lesson.lessonId,
+      moduleId: lesson.moduleId,
+      title: lesson.title,
+      description: lesson.description ?? "",
+      content: lesson.content ?? "",
+      videoUrl: lesson.videoUrl ?? "",
+      duration: lesson.durationMinutes,
+      status: lesson.status,
+    };
+  }
+
 
 // Same source the other admin pages use for the signed-in user.
 function getCurrentUser() {
@@ -42,6 +45,15 @@ function getCurrentUser() {
     return null;
   }
 }
+
+
+async function saveLessonVideoUrl(lessonId, videoUrl) {
+  return apiFetch(`/lessons/${lessonId}/video-url`, {
+    method: "PUT",
+    body: JSON.stringify({ videoUrl }),
+  });
+}
+
 
 export default function AdminLessons({ readOnly = false }) {
   // Admins and instructors can create and edit lessons; everyone else is read-only.
@@ -124,11 +136,12 @@ export default function AdminLessons({ readOnly = false }) {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
-
     const description = form.get("description").trim();
     const content = form.get("content").trim();
+    const videoUrl = form.get("videoUrl").trim();
     const lessonStatus = form.get("status");
     const moduleId = form.get("moduleId");
+
 
     // New lessons follow the naming used by the existing ones: "Lesson 6: Topic".
     // If the author already typed "Lesson 6: ...", keep it as written.
@@ -164,6 +177,7 @@ export default function AdminLessons({ readOnly = false }) {
       title,
       description,
       content,
+      videoUrl,
       durationMinutes: Number(form.get("duration")),
       status: lessonStatus,
     };
@@ -180,42 +194,55 @@ export default function AdminLessons({ readOnly = false }) {
     await commitLesson({ title, details, moduleId });
   }
 
-  async function commitLesson({ title, details, moduleId }) {
-    setSaving(true);
-    setMessage("");
 
-    try {
-      if (editingLesson.id) {
-        const updated = toLessonRow(
-          await updateLesson(editingLesson.id, {
-            ...details,
+    async function commitLesson({ title, details, moduleId }) {
+      setSaving(true);
+      setMessage("");
+
+      try {
+        const { videoUrl, ...lessonDetails } = details;
+        let savedLesson;
+
+        if (editingLesson.id) {
+          const updated = await updateLesson(editingLesson.id, {
+            ...lessonDetails,
             moduleId,
-          })
-        );
+          });
 
-        setLessons((current) =>
-          current.map((lesson) =>
-            lesson.id === updated.id ? updated : lesson
-          )
-        );
-      } else {
-        const created = toLessonRow(
-          await createLesson(moduleId, details)
-        );
+          savedLesson = toLessonRow(updated);
+        } else {
+          const created = await createLesson(moduleId, lessonDetails);
+          savedLesson = toLessonRow(created);
+        }
 
-        setLessons((current) => [...current, created]);
+        // Save the video URL using the lesson's database ID.
+        await saveLessonVideoUrl(savedLesson.id, videoUrl);
+
+        // Keep the URL in the frontend state.
+        savedLesson.videoUrl = videoUrl;
+
+        if (editingLesson.id) {
+          setLessons((current) =>
+            current.map((lesson) =>
+              lesson.id === savedLesson.id ? savedLesson : lesson
+            )
+          );
+        } else {
+          setLessons((current) => [...current, savedLesson]);
+        }
+
+        clearFilters();
+        setEditingLesson(null);
+        setMessage(`${title} saved.`);
+        return true;
+      } catch (error) {
+        setMessage(error.message || "Could not save the lesson.");
+        return false;
+      } finally {
+        setSaving(false);
       }
-
-      clearFilters();
-      setEditingLesson(null);
-      setMessage(`${title} saved.`);
-    } catch (error) {
-      // Keep the form open so the admin can fix the problem.
-      setMessage(error.message);
-    } finally {
-      setSaving(false);
     }
-  }
+
 
   async function deleteLesson(lesson) {
     setDeletingId(lesson.id);
@@ -258,17 +285,20 @@ export default function AdminLessons({ readOnly = false }) {
             onClick={() => {
               setMessage("");
 
-              setEditingLesson({
-                title: "",
-                description: "",
-                content: "",
-                moduleId:
-                  moduleFilter === "All"
-                    ? modules[0].id
-                    : moduleFilter,
-                duration: 20,
-                status: "Draft",
-              });
+              
+        setEditingLesson({
+          title: "",
+          description: "",
+          content: "",
+          videoUrl: "",
+          moduleId:
+            moduleFilter === "All"
+              ? modules[0].id
+              : moduleFilter,
+          duration: 20,
+          status: "Draft",
+        });
+
             }}
           >
             Create lesson
@@ -399,6 +429,25 @@ export default function AdminLessons({ readOnly = false }) {
                 defaultValue={editingLesson.content}
                 placeholder="Write the lesson material here. Leave a blank line between paragraphs, like the other lessons."
               />
+
+              
+              <label htmlFor="lesson-video-url">
+                Lesson video URL
+              </label>
+
+              <input
+                id="lesson-video-url"
+                name="videoUrl"
+                type="url"
+                maxLength={2000}
+                defaultValue={editingLesson.videoUrl ?? ""}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+
+              <p className="sub">
+                Optional. Add a video link for this lesson.
+                You can update it when editing the lesson.
+              </p>
 
               <label htmlFor="lesson-status">
                 Status
@@ -608,18 +657,34 @@ export default function AdminLessons({ readOnly = false }) {
                   {canManage && (
                     <td>
                       <div style={{ display: "flex", gap: "8px" }}>
+                        
                         <button
                           className="module-edit"
                           type="button"
                           disabled={!!editingLesson}
                           aria-label={`Edit ${lesson.title}`}
-                          onClick={() => {
-                            setEditingLesson(lesson);
+                          onClick={async () => {
                             setMessage("");
+
+                            try {
+                              const video = await apiFetch(
+                                `/lessons/${lesson.id}/video-url`
+                              );
+
+                              setEditingLesson({
+                                ...lesson,
+                                videoUrl: video?.videoUrl ?? "",
+                              });
+                            } catch (error) {
+                              setMessage(
+                                `Could not load the lesson video: ${error.message}`
+                              );
+                            }
                           }}
                         >
                           Edit
                         </button>
+
 
                         <button
                           className="module-edit assessment-danger"
@@ -676,10 +741,15 @@ export default function AdminLessons({ readOnly = false }) {
         variant="success"
         loading={saving}
         onCancel={cancelPublish}
+        
         onConfirm={async () => {
-          await commitLesson(pendingPublish);
-          setPendingPublish(null);
+          const saved = await commitLesson(pendingPublish);
+
+          if (saved) {
+            setPendingPublish(null);
+          }
         }}
+
       />
 
       <ConfirmDeleteModal
