@@ -1,5 +1,5 @@
 // API calls used by the admin Modules and Lessons pages.
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");

@@ -5,7 +5,7 @@ import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminStudents.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {

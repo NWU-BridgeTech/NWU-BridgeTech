@@ -5,7 +5,7 @@ import { getToken } from "../utils/authStorage";
 import StudentLayout from "../layouts/StudentLayout";
 import "./Quizzes.css";
 
-const BACKEND_URL = "http://localhost:5174";
+const BACKEND_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 const getAuthHeaders = () => {
   const token = getToken();

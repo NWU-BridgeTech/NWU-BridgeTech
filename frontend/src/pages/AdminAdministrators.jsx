@@ -6,7 +6,7 @@ import "./AdminModules.css";
 import "./AdminAdministrators.css";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 const STAFF_ROLES = [
   { value: "Instructor", label: "Instructor" },
   { value: "Admin", label: "Administrator" },

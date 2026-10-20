@@ -3,7 +3,7 @@ import { Bell, CheckCheck, LogOut, Settings, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import "../pages/Admin.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 function readStoredUser() {
   try {

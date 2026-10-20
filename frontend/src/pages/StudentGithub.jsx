@@ -5,7 +5,7 @@ import StudentLayout from "../layouts/StudentLayout";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
 import "./StudentGithub.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 function normalizeRepository(item) {
   const name = item.name || item.Name || "";

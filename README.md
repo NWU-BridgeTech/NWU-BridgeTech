@@ -257,7 +257,7 @@ dotnet run
 The frontend defaults to:
 
 ```text
-http://localhost:5174
+https://nwu-bridgetech-production.up.railway.app
 ```
 
 Set `VITE_API_URL` when the API is hosted at another address.

@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5174/api"; // match your actual backend port
+const API_BASE = `${import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app"}/api`;
 
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token"); // or wherever the JWT is stored after login

@@ -4,7 +4,7 @@ import { getToken } from "../utils/authStorage";
 import QuizResultModal from "../components/student/QuizResultModal";
 
 const BACKEND_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5174";
+  import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 const QuizRunner = () => {
   const { quizId } = useParams();
