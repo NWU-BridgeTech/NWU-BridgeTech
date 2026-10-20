@@ -110,7 +110,7 @@ function normalizeDashboard(data) {
       count: item.count ?? item.Count ?? 0,
       note: item.note ?? item.Note,
       items: item.items ?? item.Items ?? [],
-    })),
+    })).filter((item) => item.key !== "submissions"),
     recentActivity: activity.map((item) => ({
       ...item,
       id: item.id ?? item.Id,
