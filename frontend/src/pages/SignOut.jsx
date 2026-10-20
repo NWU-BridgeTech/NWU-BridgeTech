@@ -3,7 +3,7 @@ import { clearAuthTokens } from "../utils/authStorage";
 import { LogOut } from "lucide-react";
 import "./SignOut.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 export default function SignOut() {
   const navigate = useNavigate();

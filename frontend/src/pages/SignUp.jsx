@@ -14,7 +14,7 @@ const initialForm = {
 };
 
 const signupDraftKey = "bridgetech-signup-draft";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 const OFFLINE_MSG =
   "Unable to connect to the server. Please make sure the backend is running.";
 

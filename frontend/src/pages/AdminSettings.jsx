@@ -18,7 +18,7 @@ export default function AdminSettings() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5174"}/api/users/me`, {
+    fetch(`${import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app"}/api/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {

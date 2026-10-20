@@ -3,7 +3,7 @@ import { setAuthTokens } from "../utils/authStorage";
 import { Mail } from "lucide-react";
 import "./VerificationModal.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 export default function VerificationModal({
   email,

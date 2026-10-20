@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 export default function useCurrentUser() {
   const [user, setUser] = useState(null);

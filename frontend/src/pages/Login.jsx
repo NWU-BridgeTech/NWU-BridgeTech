@@ -6,7 +6,7 @@ import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5174";
+  import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 const Login = ({ team = false }) => {
   const navigate = useNavigate();

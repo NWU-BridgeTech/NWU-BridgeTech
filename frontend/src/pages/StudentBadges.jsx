@@ -5,7 +5,7 @@ import useCurrentUser from "../hooks/useCurrentUser";
 import { getToken } from "../utils/authStorage";
 import "./StudentBadges.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5174";
+const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString("en-ZA", {
