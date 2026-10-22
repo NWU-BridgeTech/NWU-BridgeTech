@@ -24,10 +24,10 @@ export default function StudentProfile() {
   const [profile, setProfile] = useState(null);
   const [profileMessage, setProfileMessage] = useState("");
   const [profileErrorMessage, setProfileErrorMessage] = useState("");
-  const [password, setPassword] = useState({
-    currentPassword: "",
-    newPassword: "",
-  });
+  const [passwordStep, setPasswordStep] = useState("request");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -167,29 +167,90 @@ export default function StudentProfile() {
     }
   }
 
-  async function changePassword(event) {
-    event.preventDefault();
+  async function postPasswordRequest(path, body, fallbackMessage) {
+    const response = await fetch(`${API_URL}/api/auth/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || fallbackMessage);
+    }
+    return data;
+  }
+
+  async function sendPasswordVerificationCode() {
     setPasswordMessage("");
     setPasswordError("");
-    if (password.newPassword.length < 8) {
-      setPasswordError("Your new password must be at least 8 characters.");
+    const email = user?.email?.trim();
+    if (!email) {
+      setPasswordError("We couldn't find an email address for your account.");
       return;
     }
 
     setSavingPassword(true);
     try {
-      const response = await fetch(`${API_URL}/api/users/me/password`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(password),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok)
-        throw new Error(data?.message || "Unable to change your password.");
-      setPassword({ currentPassword: "", newPassword: "" });
+      await postPasswordRequest(
+        "forgot-password",
+        { email },
+        "Unable to send a verification code.",
+      );
+      setResetCode("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setPasswordStep("verify");
+      setPasswordMessage(
+        `If your account can reset by email, a verification code has been sent to ${email}.`,
+      );
+    } catch (requestError) {
+      setPasswordError(
+        requestError.message || "Unable to send a verification code.",
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  async function changePassword(event) {
+    event.preventDefault();
+    setPasswordMessage("");
+    setPasswordError("");
+    if (!/^\d{6}$/.test(resetCode)) {
+      setPasswordError("Enter the 6-digit verification code from your email.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("Your new password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("Your new passwords don't match.");
+      return;
+    }
+
+    const email = user?.email?.trim();
+    if (!email) {
+      setPasswordError("We couldn't find an email address for your account.");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      await postPasswordRequest(
+        "reset-password",
+        { email, code: resetCode, newPassword },
+        "Unable to reset your password.",
+      );
+      setPasswordStep("complete");
+      setResetCode("");
+      setNewPassword("");
+      setConfirmNewPassword("");
       setPasswordMessage("Password changed successfully.");
     } catch (changeError) {
-      setPasswordError(changeError.message);
+      setPasswordError(
+        changeError.message || "Unable to reset your password.",
+      );
     } finally {
       setSavingPassword(false);
     }
@@ -405,61 +466,158 @@ export default function StudentProfile() {
             >
               <div className="profile-section-heading">
                 <h3 id="security-heading">Security</h3>
-                <p>Change your password using your current password.</p>
+                <p>
+                  Verify your email before changing your password. We&apos;ll
+                  send a 6-digit code to {user?.email}.
+                </p>
               </div>
-              <form
-                className="profile-form security-form"
-                onSubmit={changePassword}
-              >
-                <label>
-                  Current password
-                  <input
-                    type="password"
-                    value={password.currentPassword}
-                    onChange={(event) =>
-                      setPassword({
-                        ...password,
-                        currentPassword: event.target.value,
-                      })
-                    }
-                    required
-                  />
-                </label>
-                <label>
-                  New password
-                  <input
-                    type="password"
-                    minLength="8"
-                    value={password.newPassword}
-                    onChange={(event) =>
-                      setPassword({
-                        ...password,
-                        newPassword: event.target.value,
-                      })
-                    }
-                    required
-                  />
-                </label>
-                <div className="profile-actions wide-field">
-                  <button
-                    className="btn blue"
-                    type="submit"
-                    disabled={savingPassword}
-                  >
-                    {savingPassword ? "Updating..." : "Change password"}
-                  </button>
-                  {passwordMessage ? (
-                    <span className="profile-message success">
-                      {passwordMessage}
-                    </span>
-                  ) : null}
-                  {passwordError ? (
-                    <span className="profile-message error" role="alert">
-                      {passwordError}
-                    </span>
-                  ) : null}
+              {passwordStep === "request" ? (
+                <div className="profile-form security-form">
+                  <div className="profile-actions wide-field">
+                    <button
+                      className="btn blue"
+                      type="button"
+                      onClick={sendPasswordVerificationCode}
+                      disabled={savingPassword || !user?.email}
+                    >
+                      {savingPassword
+                        ? "Sending code..."
+                        : "Email me a verification code"}
+                    </button>
+                    {passwordError ? (
+                      <span className="profile-message error" role="alert">
+                        {passwordError}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </form>
+              ) : null}
+              {passwordStep === "verify" ? (
+                <form
+                  className="profile-form security-form"
+                  onSubmit={changePassword}
+                >
+                  {passwordMessage ? (
+                    <p className="profile-message success wide-field" role="status">
+                      {passwordMessage} Check your inbox and spam folder. The
+                      code expires in 10 minutes.
+                    </p>
+                  ) : null}
+                  <label className="wide-field">
+                    Email verification code
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="[0-9]{6}"
+                      maxLength="6"
+                      value={resetCode}
+                      onChange={(event) =>
+                        setResetCode(
+                          event.target.value.replace(/\D/g, "").slice(0, 6),
+                        )
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    New password
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      minLength="8"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Confirm new password
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      minLength="8"
+                      value={confirmNewPassword}
+                      onChange={(event) =>
+                        setConfirmNewPassword(event.target.value)
+                      }
+                      aria-invalid={
+                        confirmNewPassword.length > 0 &&
+                        confirmNewPassword !== newPassword
+                      }
+                      required
+                    />
+                    {confirmNewPassword.length > 0 &&
+                    confirmNewPassword !== newPassword ? (
+                      <span className="profile-message error">
+                        Your new passwords don&apos;t match.
+                      </span>
+                    ) : null}
+                  </label>
+                  <div className="profile-actions wide-field">
+                    <button
+                      className="btn blue"
+                      type="submit"
+                      disabled={
+                        savingPassword ||
+                        resetCode.length !== 6 ||
+                        newPassword.length < 8 ||
+                        newPassword !== confirmNewPassword
+                      }
+                    >
+                      {savingPassword
+                        ? "Changing password..."
+                        : "Change password"}
+                    </button>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={sendPasswordVerificationCode}
+                      disabled={savingPassword}
+                    >
+                      Send a new code
+                    </button>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={() => {
+                        setPasswordStep("request");
+                        setResetCode("");
+                        setNewPassword("");
+                        setConfirmNewPassword("");
+                        setPasswordMessage("");
+                        setPasswordError("");
+                      }}
+                      disabled={savingPassword}
+                    >
+                      Cancel
+                    </button>
+                    {passwordError ? (
+                      <span className="profile-message error" role="alert">
+                        {passwordError}
+                      </span>
+                    ) : null}
+                  </div>
+                </form>
+              ) : null}
+              {passwordStep === "complete" ? (
+                <div className="profile-actions">
+                  <span className="profile-message success" role="status">
+                    {passwordMessage}
+                  </span>
+                  <button
+                    className="btn"
+                    type="button"
+                    onClick={() => {
+                      setPasswordStep("request");
+                      setPasswordMessage("");
+                      setPasswordError("");
+                    }}
+                  >
+                    Change password again
+                  </button>
+                </div>
+              ) : null}
             </section>
 
             <section

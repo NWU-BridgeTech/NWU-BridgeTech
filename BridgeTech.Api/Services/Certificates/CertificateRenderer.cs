@@ -83,7 +83,7 @@ public sealed class CertificateRenderer(IConfiguration configuration) : ICertifi
     private string VerificationUrl(string certificateNumber)
     {
         var verificationBaseUrl = configuration["Certificates:VerificationBaseUrl"]
-            ?? $"{configuration["GitHub:FrontendUrl"] ?? "http://localhost:5173"}/verify";
+            ?? "https://nwu-bridge-tech.vercel.app/verify";
         return $"{verificationBaseUrl.TrimEnd('/')}/{Uri.EscapeDataString(certificateNumber)}";
     }
 

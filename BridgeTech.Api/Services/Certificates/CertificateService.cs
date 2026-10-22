@@ -118,12 +118,13 @@ public sealed class CertificateService(
             .Select(x => x.CompletedAt)
             .SingleOrDefaultAsync(ct);
         var issuedAt = completedAt ?? DateTimeOffset.UtcNow;
+        var certificateId = Guid.NewGuid();
         var certificate = new Certificate
         {
-            CertificateId = Guid.NewGuid(),
+            CertificateId = certificateId,
             UserId = userId,
             ModuleId = moduleId,
-            CertificateNumber = $"BT-{issuedAt:yyyy}-{RandomNumberGenerator.GetInt32(100000, 999999)}",
+            CertificateNumber = $"BT-{issuedAt:yyyy}-{certificateId:N}",
             IssuedAt = issuedAt,
             Status = "Valid"
         };
@@ -156,7 +157,7 @@ public sealed class CertificateService(
         try
         {
             var pdf = renderer.Render(response, "pdf");
-            var frontendUrl = configuration["GitHub:FrontendUrl"] ?? "http://localhost:5173";
+            var frontendUrl = configuration["GitHub:FrontendUrl"] ?? "https://nwu-bridge-tech.vercel.app";
             await emailService.SendCertificateEmailAsync(
                 user.Email,
                 user.FirstName,

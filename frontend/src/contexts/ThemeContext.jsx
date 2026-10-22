@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { getToken } from "../utils/authStorage";
+import { AUTH_STATE_CHANGED_EVENT, getToken } from "../utils/authStorage";
 import { API_URL } from "@/config";
 const ThemeContext = createContext(null);
 
@@ -23,11 +23,23 @@ export function ThemeProvider({ children }) {
   const [profilePictureUrl, setProfilePictureUrl] = useState(
     getStoredProfilePicture,
   );
+  const [authRevision, setAuthRevision] = useState(0);
   const userSelectedTheme = useRef(false);
 
   const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
-  const isAuthenticated = Boolean(getToken());
+  const token = getToken();
+  const isAuthenticated = Boolean(token);
   const isPublicHomepage = pathname === "/";
+
+  useEffect(() => {
+    function handleAuthStateChanged() {
+      setAuthRevision((revision) => revision + 1);
+    }
+
+    window.addEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+    return () =>
+      window.removeEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && !isPublicHomepage) {
@@ -39,7 +51,6 @@ export function ThemeProvider({ children }) {
   }, [theme, effectiveTheme, isAuthenticated, isPublicHomepage]);
 
   useEffect(() => {
-    const token = getToken();
     if (!token) {
       userSelectedTheme.current = false;
       setProfilePictureUrl(null);
@@ -79,7 +90,7 @@ export function ThemeProvider({ children }) {
       });
 
     return () => controller.abort();
-  }, [isAuthenticated]);
+  }, [token, authRevision]);
 
   function updateProfilePictureUrl(nextProfilePictureUrl) {
     setProfilePictureUrl(nextProfilePictureUrl);
