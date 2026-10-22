@@ -32,6 +32,7 @@ const AdminReports = lazy(() => import("./pages/AdminReports"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const Login = lazy(() => import("./pages/Login"));
 const SignUp = lazy(() => import("./pages/SignUp"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const SignOut = lazy(() => import("./pages/SignOut"));
@@ -63,6 +64,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/team-login" element={<Login team />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/signout" element={<SignOut />} />

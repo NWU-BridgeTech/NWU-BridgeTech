@@ -8,6 +8,7 @@ export default function VerificationModal({
   email,
   initialExpiresAt,
   onVerified,
+  onClose,
 }) {
   const [digits, setDigits] = useState(Array(6).fill(""));
   const [expiresAt, setExpiresAt] = useState(initialExpiresAt);
@@ -157,8 +158,8 @@ export default function VerificationModal({
         )}
         <p className="verification-expiry">
           {secondsLeft
-            ? `Expires in ${time}`
-            : "Code expired. Request a new code to continue."}
+            ? `This code expires in ${time}. You can resend it after the cooldown.`
+            : "This code has expired. Resend a new code to continue."}
         </p>
         <p className="verification-resend">
           Didn't receive code?{" "}
@@ -178,6 +179,16 @@ export default function VerificationModal({
         >
           {busy ? "Verifying..." : "Verify email"}
         </button>
+        {onClose && (
+          <button
+            type="button"
+            className="verification-close"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Use a different email
+          </button>
+        )}
       </div>
     </div>
   );

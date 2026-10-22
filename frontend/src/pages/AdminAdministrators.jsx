@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
@@ -96,6 +96,8 @@ export default function AdminAdministrators() {
   const [loadError, setLoadError] = useState("");
   const [message, setMessage] = useState("");
   const [staffToDelete, setStaffToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const detailsRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
   const isSuperAdmin = currentUser?.role === "SuperAdmin";
   const availableRoles =
@@ -219,13 +221,13 @@ function viewStaff(staff) {
   setSelectedStaff(staff);
 }
 
-async function deleteInstructor(staff) {
-  // Admins may only manage instructors.
-  if (!isSuperAdmin && staff.role !== "Instructor") {
-    setMessage("You can only remove instructor accounts.");
-    return;
+useEffect(() => {
+  if (selectedStaff) {
+    detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+}, [selectedStaff]);
 
+async function deleteInstructor(staff) {
   const confirmed = window.confirm(
     `Are you sure you want to delete ${staff.name}?`
   );
@@ -233,11 +235,12 @@ async function deleteInstructor(staff) {
   if (!confirmed) return;
 
   setDeletingId(staff.id);
+  setDeleteError("");
   setMessage("");
 
   try {
     await staffRequest(
-      `/api/users/staff/${staff.id}`,
+      `/api/admin/administrators/${staff.id}`,
       { method: "DELETE" }
     );
 
@@ -254,6 +257,8 @@ async function deleteInstructor(staff) {
     setMessage(
       error.message || "Unable to delete instructor."
     );
+    setDeleteError(error.message || "Unable to delete the account.");
+    throw error;
   } finally {
     setDeletingId(null);
   }
@@ -467,6 +472,7 @@ async function deleteInstructor(staff) {
                       <button
                         className="module-edit"
                         type="button"
+                        aria-label={`View details for ${admin.name}`}
                         onClick={() => viewStaff(admin)}
                       >
                         View
@@ -542,8 +548,10 @@ async function deleteInstructor(staff) {
 
         {selectedStaff && (
           <section
+            ref={detailsRef}
             className="card instructor-details-panel"
             aria-labelledby="instructor-details-heading"
+            tabIndex="-1"
           >
             <div className="instructor-details-header">
               <h2 id="instructor-details-heading">
@@ -591,19 +599,26 @@ async function deleteInstructor(staff) {
         open={staffToDelete !== null}
         title="Delete staff account?"
         message={
-          staffToDelete
+          deleteError || (staffToDelete
             ? `Are you sure you want to delete ${staffToDelete.name} (${staffToDelete.email})? This action cannot be undone.`
-            : ""
+            : "")
         }
         confirmText="Delete account"
         loading={deletingId !== null}
-        onCancel={() => setStaffToDelete(null)}
+        onCancel={() => {
+          setStaffToDelete(null);
+          setDeleteError("");
+        }}
         onConfirm={async () => {
           if (!staffToDelete) return;
 
           const staff = staffToDelete;
-          await deleteInstructor(staff);
-          setStaffToDelete(null);
+          try {
+            await deleteInstructor(staff);
+            setStaffToDelete(null);
+          } catch {
+            // Keep the confirmation dialog open so a failed delete is visible.
+          }
         }}
       />
 

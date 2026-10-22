@@ -40,6 +40,22 @@
     0 1.25rem 2.5rem rgb(15 23 42 / 0.12);
 }
 
+.verification-close {
+  display: block;
+  margin: 1rem auto 0;
+  border: 0;
+  background: transparent;
+  color: #536176;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.verification-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .verification-icon {
   display: grid;
   width: 4.5rem;

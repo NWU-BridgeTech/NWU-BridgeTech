@@ -40,6 +40,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
+        var email = request.Email.Trim().ToLowerInvariant();
         bool usernameExists = await _context.Users
             .AnyAsync(u => u.Username == request.Username, cancellationToken);
 
@@ -49,7 +50,7 @@ public class AuthService : IAuthService
         }
 
         bool emailExists = await _context.Users
-            .AnyAsync(u => u.Email == request.Email, cancellationToken);
+            .AnyAsync(u => u.Email.ToLower() == email, cancellationToken);
 
         if (emailExists)
         {
@@ -65,7 +66,7 @@ public class AuthService : IAuthService
         }
 
         bool pendingEmailExists = await _context.PendingRegistrations
-            .AnyAsync(x => x.Email == request.Email, cancellationToken);
+            .AnyAsync(x => x.Email.ToLower() == email, cancellationToken);
 
         if (pendingEmailExists)
         {
@@ -78,7 +79,7 @@ public class AuthService : IAuthService
             Username = request.Username,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            Email = request.Email,
+            Email = email,
             PasswordHash = _passwordHasher.HashPassword(null!, request.Password),
             GithubUsername = request.GithubUsername,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -145,7 +146,7 @@ public class AuthService : IAuthService
 
         bool emailExists = await _context.Users
             .AnyAsync(
-                u => u.Email == email,
+                u => u.Email.ToLower() == email,
                 cancellationToken);
 
         if (emailExists)
@@ -157,7 +158,7 @@ public class AuthService : IAuthService
         bool pendingEmailExists =
             await _context.PendingRegistrations
                 .AnyAsync(
-                    x => x.Email == email,
+                    x => x.Email.ToLower() == email,
                     cancellationToken);
 
         if (pendingEmailExists)
@@ -451,8 +452,9 @@ public class AuthService : IAuthService
 
     public async Task<VerificationResponse> VerifyEmailAsync(VerificationRequest request, CancellationToken cancellationToken = default)
     {
+        var email = request.Email.Trim().ToLowerInvariant();
         var pendingRegistration = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == email, cancellationToken)
             ?? throw VerificationError("Incorrect verification code.", "VERIFICATION_FAILED");
 
         if (pendingRegistration.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
@@ -508,12 +510,13 @@ public class AuthService : IAuthService
 
     public async Task<VerificationResponse> ResendVerificationAsync(string email, CancellationToken cancellationToken = default)
     {
+        email = email.Trim().ToLowerInvariant();
         var pendingRegistration = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == email, cancellationToken);
 
         if (pendingRegistration is null)
         {
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken)
                 ?? throw new InvalidOperationException("Account not found.");
             if (existingUser.EmailVerified) throw new InvalidOperationException("Email is already verified.");
 
@@ -543,7 +546,8 @@ public class AuthService : IAuthService
 
     public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        email = email.Trim().ToLowerInvariant();
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
         if (user is null || user.AccountSetupRequired) return;
         user.PasswordResetCode = GenerateCode();
         user.PasswordResetCodeExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10);
@@ -555,7 +559,8 @@ public class AuthService : IAuthService
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken)
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken)
             ?? throw new InvalidOperationException("Invalid or expired reset code.");
         if (user.AccountSetupRequired)
             throw new InvalidOperationException("Accept your staff invitation to set your password.");
