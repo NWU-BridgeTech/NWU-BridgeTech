@@ -128,7 +128,11 @@ builder.Services.AddCors(options =>
             .Get<string[]>();
         var allowedOrigins = configuredOrigins is { Length: > 0 }
             ? configuredOrigins
-            : ["http://localhost:5173", "http://127.0.0.1:5173"];
+            : [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "https://nwu-bridge-tech.vercel.app"
+            ];
 
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
