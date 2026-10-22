@@ -206,6 +206,31 @@ public class AdministratorService(
             DateTimeOffset.UtcNow);
     }
 
+    public async Task DeleteAsync(Guid actingUserId, Guid administratorId, CancellationToken cancellationToken)
+    {
+        await RequireActorAsync(actingUserId, cancellationToken);
+        var user = await context.Users
+            .SingleOrDefaultAsync(u => u.UserId == administratorId && u.Role != UserRole.Student, cancellationToken)
+            ?? throw NotFound();
+
+        RejectIfSuperAdmin(user);
+
+        if (user.UserId == actingUserId)
+        {
+            throw AdminManagementException.Forbidden("SELF_DELETION", "You can't delete your own account.");
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await context.Reports
+            .Where(report => report.GeneratedByUserId == user.UserId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        context.Users.Remove(user);
+        await SaveAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        logger.LogInformation("Administrator {ActorId} deleted staff account {UserId}.", actingUserId, user.UserId);
+    }
+
     public async Task<InvitationResponse> ResendInvitationAsync(Guid actingUserId, Guid administratorId, CancellationToken cancellationToken)
     {
         await RequireActorAsync(actingUserId, cancellationToken);
