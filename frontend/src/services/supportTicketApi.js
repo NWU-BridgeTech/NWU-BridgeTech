@@ -16,18 +16,18 @@ export function categoryLabel(value) {
 }
 
 export function createSupportTicket(category, description) {
-  return apiFetch("/support-tickets", {
+  return apiFetch("/api/support-tickets", {
     method: "POST",
     body: JSON.stringify({ category, description }),
   });
 }
 
 export function listSupportTickets() {
-  return apiFetch("/admin/support-tickets");
+  return apiFetch("/api/admin/support-tickets");
 }
 
 export function updateSupportTicketStatus(id, status) {
-  return apiFetch(`/admin/support-tickets/${id}`, {
+  return apiFetch(`/api/admin/support-tickets/${id}`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });

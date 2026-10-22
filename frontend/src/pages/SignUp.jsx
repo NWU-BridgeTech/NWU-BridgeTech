@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
+import { API_URL } from "@/config";
 
 const initialForm = {
   name: "",
@@ -14,7 +15,6 @@ const initialForm = {
 };
 
 const signupDraftKey = "bridgetech-signup-draft";
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
 const OFFLINE_MSG =
   "Unable to connect to the server. Please make sure the backend is running.";
 

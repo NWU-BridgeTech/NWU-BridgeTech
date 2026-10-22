@@ -273,7 +273,7 @@ export default function AdminReports() {
 
           // Existing Blui API endpoint
           const bluiData = await apiFetch(
-            "/admin/reports/blui-usage"
+            "/api/admin/reports/blui-usage"
           );
 
           // Convert to the same structure as other reports
@@ -281,7 +281,7 @@ export default function AdminReports() {
         } else {
           // Existing analytics endpoints
           data = await apiFetch(
-            `/admin/reports/analytics/${activeTab}`
+            `/api/admin/reports/analytics/${activeTab}`
           );
         }
 

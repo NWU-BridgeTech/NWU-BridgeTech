@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getToken } from "../utils/authStorage";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 const ThemeContext = createContext(null);
 
 function getStoredTheme() {

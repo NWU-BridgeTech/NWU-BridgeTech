@@ -39,9 +39,9 @@ function InstructorOverview() {
     let cancelled = false;
 
     Promise.all([
-      apiFetch("/modules/admin"),
-      apiFetch("/lessons/admin"),
-      apiFetch("/admin/quizzes"),
+      apiFetch("/api/modules/admin"),
+      apiFetch("/api/lessons/admin"),
+      apiFetch("/api/admin/quizzes"),
     ])
       .then(([modules, lessons, quizzes]) => {
         if (cancelled) return;

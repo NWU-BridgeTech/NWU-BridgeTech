@@ -4,8 +4,8 @@ import { apiFetch } from "../utils/apiClient";
 export async function listCourseOutline() {
   // Load modules and staff-accessible lessons.
   const [modules, lessons] = await Promise.all([
-    apiFetch("/modules/admin"),
-    apiFetch("/lessons/admin"),
+    apiFetch("/api/modules/admin"),
+    apiFetch("/api/lessons/admin"),
   ]);
 
   // Group lessons under their corresponding modules.
@@ -28,16 +28,16 @@ export async function listCourseOutline() {
 
 
 export async function listQuizzes() {
-  return apiFetch("/admin/quizzes");
+  return apiFetch("/api/admin/quizzes");
 }
 
 export async function getQuiz(quizId) {
-  return apiFetch(`/admin/quizzes/${quizId}`);
+  return apiFetch(`/api/admin/quizzes/${quizId}`);
 }
 
 export async function saveQuiz(quiz) {
   return apiFetch(
-    quiz.quizId ? `/admin/quizzes/${quiz.quizId}` : "/admin/quizzes",
+    quiz.quizId ? `/api/admin/quizzes/${quiz.quizId}` : "/api/admin/quizzes",
     {
       method: quiz.quizId ? "PUT" : "POST",
       body: JSON.stringify(quiz),
@@ -46,5 +46,5 @@ export async function saveQuiz(quiz) {
 }
 
 export async function deleteQuiz(quizId) {
-  await apiFetch(`/admin/quizzes/${quizId}`, { method: "DELETE" });
+  await apiFetch(`/api/admin/quizzes/${quizId}`, { method: "DELETE" });
 }

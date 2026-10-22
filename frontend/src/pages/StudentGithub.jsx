@@ -4,8 +4,7 @@ import { Link } from "react-router-dom";
 import StudentLayout from "../layouts/StudentLayout";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
 import "./StudentGithub.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 function normalizeRepository(item) {
   const name = item.name || item.Name || "";

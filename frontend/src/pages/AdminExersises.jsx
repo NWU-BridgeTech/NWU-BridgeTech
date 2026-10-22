@@ -41,12 +41,12 @@ export default function AdminExersises({ readOnly = false }) {
   const cancelDelete = useCallback(() => setExerciseToDelete(null), []);
 
   const loadExercises = useCallback(async () => {
-    const rows = await apiFetch("/exercises");
+    const rows = await apiFetch("/api/exercises");
     // Listing is intentionally lightweight; fetch each record so Description
     // and Outcomes are available when the user clicks Edit.
     const details = await Promise.all(
       rows.map(async (row) => {
-        const record = await apiFetch(`/exercises/${row.exerciseId}`);
+        const record = await apiFetch(`/api/exercises/${row.exerciseId}`);
         return mapExercise(record);
       }),
     );
@@ -109,10 +109,10 @@ export default function AdminExersises({ readOnly = false }) {
         ...(editingExercise.id ? {} : { moduleId: editingExercise.moduleId }),
       };
       const result = editingExercise.id
-        ? await apiFetch(`/exercises/${editingExercise.id}`, {
+        ? await apiFetch(`/api/exercises/${editingExercise.id}`, {
             method: "PUT", body: JSON.stringify(payload),
           })
-        : await apiFetch("/exercises", {
+        : await apiFetch("/api/exercises", {
             method: "POST", body: JSON.stringify(payload),
           });
       const saved = mapExercise(result);
@@ -133,7 +133,7 @@ export default function AdminExersises({ readOnly = false }) {
     setDeletingId(exercise.id);
     setMessage("");
     try {
-      await apiFetch(`/exercises/${exercise.id}`, { method: "DELETE" });
+      await apiFetch(`/api/exercises/${exercise.id}`, { method: "DELETE" });
       setExercises((current) => current.filter((item) => item.id !== exercise.id));
       setMessage(`"${exercise.title}" deleted.`);
       setExerciseToDelete(null);

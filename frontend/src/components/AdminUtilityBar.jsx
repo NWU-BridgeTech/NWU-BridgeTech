@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, CheckCheck, LogOut, Settings, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import "../pages/Admin.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 function readStoredUser() {
   try {

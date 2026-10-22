@@ -4,10 +4,13 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminStudents.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 async function apiRequest(path, options = {}) {
+  if (!path.startsWith("/api/")) {
+    throw new Error(`API paths must start with /api/: ${path}`);
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
