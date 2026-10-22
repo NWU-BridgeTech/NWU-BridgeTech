@@ -97,11 +97,11 @@ export default function Home() {
   const [learningStatistics, setLearningStatistics] = useState(() => readHomeCache("statistics", null));
 
   useEffect(() => {
-    apiFetch("/quizzes/pending")
+    apiFetch("/api/quizzes/pending")
       .then((data) => setPendingQuizzes(Array.isArray(data) ? data : []))
       .catch(() => setPendingQuizzes([]));
 
-    apiFetch("/user/enrollments")
+    apiFetch("/api/user/enrollments")
       .then((data) => {
         setMyCourses(data);
         writeHomeCache("courses", data);
@@ -109,11 +109,11 @@ export default function Home() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
 
-    apiFetch("/users/me")
+    apiFetch("/api/users/me")
       .then((data) => setProfile(data))
       .catch(() => setProfile(null));
 
-    apiFetch("/learning-insights")
+    apiFetch("/api/learning-insights")
       .then((data) => {
         const statistics = data.statistics || null;
         setLearningStatistics(statistics);

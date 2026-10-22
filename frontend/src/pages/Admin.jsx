@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import AppLayout from "../layouts/AppLayout";
 import "./Admin.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 const trendTones = {
   "active-students": "blue",
   "course-completions": "green",

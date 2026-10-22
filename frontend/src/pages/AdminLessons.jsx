@@ -48,7 +48,7 @@ function getCurrentUser() {
 
 
 async function saveLessonVideoUrl(lessonId, videoUrl) {
-  return apiFetch(`/lessons/${lessonId}/video-url`, {
+  return apiFetch(`/api/lessons/${lessonId}/video-url`, {
     method: "PUT",
     body: JSON.stringify({ videoUrl }),
   });
@@ -249,7 +249,7 @@ export default function AdminLessons({ readOnly = false }) {
     setMessage("");
 
     try {
-      await apiFetch(`/lessons/${lesson.id}`, { method: "DELETE" });
+      await apiFetch(`/api/lessons/${lesson.id}`, { method: "DELETE" });
 
       setLessons((current) =>
         current.filter((item) => item.id !== lesson.id)
@@ -668,7 +668,7 @@ export default function AdminLessons({ readOnly = false }) {
 
                             try {
                               const video = await apiFetch(
-                                `/lessons/${lesson.id}/video-url`
+                                `/api/lessons/${lesson.id}/video-url`
                               );
 
                               setEditingLesson({

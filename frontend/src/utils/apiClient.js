@@ -1,9 +1,13 @@
-const API_BASE = `${import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app"}/api`;
+import { API_URL } from "../config.js";
 
 export async function apiFetch(path, options = {}) {
+  if (!path.startsWith("/api/")) {
+    throw new Error(`API paths must start with /api/: ${path}`);
+  }
+
   const token = localStorage.getItem("token"); // or wherever the JWT is stored after login
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

@@ -16,7 +16,7 @@ export default function ExploreCourses({ onEnrolled }) {
   useEffect(() => {
     let cancelled = false;
 
-    apiFetch("/modules/available")
+    apiFetch("/api/modules/available")
       .then((data) => {
         if (!cancelled) setAvailableModules(data);
       })
@@ -65,7 +65,7 @@ export default function ExploreCourses({ onEnrolled }) {
   async function handleEnroll(moduleId) {
     setEnrollingId(moduleId);
     try {
-      await apiFetch(`/modules/${moduleId}/enroll`, { method: "POST" });
+      await apiFetch(`/api/modules/${moduleId}/enroll`, { method: "POST" });
       setAvailableModules((prev) =>
         prev.filter((m) => m.moduleId !== moduleId),
       );

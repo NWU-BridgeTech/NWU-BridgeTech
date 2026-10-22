@@ -18,7 +18,7 @@ export default function StudentNotifications() {
   async function loadNotifications() {
     try {
       setLoading(true);
-      setNotifications(await apiFetch("/notifications"));
+      setNotifications(await apiFetch("/api/notifications"));
       setError("");
     } catch (requestError) {
       setError(requestError.message || "Unable to load notifications.");
@@ -32,14 +32,14 @@ export default function StudentNotifications() {
   }, []);
 
   async function markRead(id) {
-    await apiFetch(`/notifications/${id}/read`, { method: "POST" });
+    await apiFetch(`/api/notifications/${id}/read`, { method: "POST" });
     setNotifications((items) =>
       items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
     );
   }
 
   async function markAllRead() {
-    await apiFetch("/notifications/read-all", { method: "POST" });
+    await apiFetch("/api/notifications/read-all", { method: "POST" });
     setNotifications((items) =>
       items.map((item) => ({ ...item, isRead: true })),
     );

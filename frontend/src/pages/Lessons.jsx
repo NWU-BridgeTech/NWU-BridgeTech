@@ -29,8 +29,8 @@ export default function LessonView() {
     setActionError(null);
 
     const path = lessonId
-      ? `/lessons/${lessonId}/view`
-      : `/modules/${moduleId}/lessons/current`;
+      ? `/api/lessons/${lessonId}/view`
+      : `/api/modules/${moduleId}/lessons/current`;
 
     apiFetch(path)
       .then((data) => !cancelled && setLesson(data))
@@ -56,7 +56,7 @@ export default function LessonView() {
     setCompleting(true);
     setActionError(null);
     try {
-      await apiFetch(`/lessons/${lesson.lessonId}/complete`, {
+      await apiFetch(`/api/lessons/${lesson.lessonId}/complete`, {
         method: "POST",
       });
       lesson.nextLessonId

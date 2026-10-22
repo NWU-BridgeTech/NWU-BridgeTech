@@ -29,7 +29,7 @@ function CourseCard({ course, onChanged }) {
 
     try {
       const success = await apiFetch(
-        `/modules/${course.moduleId}/enroll`,
+        `/api/modules/${course.moduleId}/enroll`,
         { method: "DELETE" }
       );
 
@@ -143,7 +143,7 @@ export default function StudentCourses() {
     setLoading(true);
     setError(null);
 
-    return apiFetch("/user/enrollments")
+    return apiFetch("/api/user/enrollments")
       .then((data) => setMyCourses(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

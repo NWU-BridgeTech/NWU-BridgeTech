@@ -4,9 +4,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 const Login = ({ team = false }) => {
   const navigate = useNavigate();

@@ -80,7 +80,7 @@ export default function StudentPracticalWork() {
     setError("");
 
     try {
-      const data = await apiFetch("/exercises/my");
+      const data = await apiFetch("/api/exercises/my");
 
       setExercises(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -130,7 +130,7 @@ export default function StudentPracticalWork() {
 
     try {
       const result = await apiFetch(
-        `/exercises/${exercise.exerciseId}/complete`,
+        `/api/exercises/${exercise.exerciseId}/complete`,
         {
           method: "POST",
         }
