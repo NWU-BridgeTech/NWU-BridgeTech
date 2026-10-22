@@ -382,10 +382,6 @@ export default function SignUpPage() {
         <p className="au-switch">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
-        <p className="au-switch">
-          Already registered but need to verify?{" "}
-          <Link to="/verify-email">Verify your email</Link>
-        </p>
       </form>
     </AuthShell>
   );
