@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getToken } from "../utils/authStorage";
 import QuizResultModal from "../components/student/QuizResultModal";
-
-const BACKEND_URL =
-  import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 const QuizRunner = () => {
   const { quizId } = useParams();
@@ -35,8 +33,8 @@ const QuizRunner = () => {
       setAttemptError(null);
 
       try {
-        console.log(`[QuizRunner] GET: ${BACKEND_URL}/api/quizzes/${quizId}`);
-        const quizRes = await fetch(`${BACKEND_URL}/api/quizzes/${quizId}`, {
+        console.log(`[QuizRunner] GET: ${API_URL}/api/quizzes/${quizId}`);
+        const quizRes = await fetch(`${API_URL}/api/quizzes/${quizId}`, {
           headers: getAuthHeaders(),
         });
 
@@ -60,10 +58,10 @@ const QuizRunner = () => {
 
       try {
         console.log(
-          `[QuizRunner] POST: ${BACKEND_URL}/api/quizzes/${quizId}/attempts`,
+          `[QuizRunner] POST: ${API_URL}/api/quizzes/${quizId}/attempts`,
         );
         const attemptRes = await fetch(
-          `${BACKEND_URL}/api/quizzes/${quizId}/attempts`,
+          `${API_URL}/api/quizzes/${quizId}/attempts`,
           {
             method: "POST",
             headers: getAuthHeaders(),
@@ -128,7 +126,7 @@ const QuizRunner = () => {
       console.log("[QuizRunner] Submitting payload:", payload);
 
       const response = await fetch(
-        `${BACKEND_URL}/api/quizzes/${quizId}/submit`,
+        `${API_URL}/api/quizzes/${quizId}/submit`,
         {
           method: "POST",
           headers: getAuthHeaders(),

@@ -4,8 +4,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { getToken } from "../utils/authStorage";
 import StudentLayout from "../layouts/StudentLayout";
 import "./Quizzes.css";
-
-const BACKEND_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 const getAuthHeaders = () => {
   const token = getToken();
@@ -29,7 +28,7 @@ export default function Quizzes() {
         let passedQuizIds = new Set();
 
         const attemptsRes = await fetch(
-          `${BACKEND_URL}/api/quizzes/my-attempts`,
+          `${API_URL}/api/quizzes/my-attempts`,
           {
             headers: getAuthHeaders(),
           },
@@ -51,7 +50,7 @@ export default function Quizzes() {
           console.error("my-attempts failed with status", attemptsRes.status);
         }
 
-        const pendingRes = await fetch(`${BACKEND_URL}/api/quizzes/pending`, {
+        const pendingRes = await fetch(`${API_URL}/api/quizzes/pending`, {
           headers: getAuthHeaders(),
         });
         if (pendingRes.ok) {

@@ -1,10 +1,14 @@
 // API calls used by the admin Modules and Lessons pages.
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "../config.js";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`${API_URL}/api${path}`, {
+  if (!path.startsWith("/api/")) {
+    throw new Error(`API paths must start with /api/: ${path}`);
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
     ...options,
     cache: "no-store",
     headers: {
@@ -46,38 +50,38 @@ async function readErrorMessage(response) {
 
 // Modules
 export function getAdminModules() {
-  return request(`/modules/admin?timestamp=${Date.now()}`);
+  return request(`/api/modules/admin?timestamp=${Date.now()}`);
 }
 
 export function createModule(module) {
-  return request("/modules", { method: "POST", body: JSON.stringify(module) });
+  return request("/api/modules", { method: "POST", body: JSON.stringify(module) });
 }
 
 export function updateModule(moduleId, changes) {
-  return request(`/modules/${moduleId}`, {
+  return request(`/api/modules/${moduleId}`, {
     method: "PUT",
     body: JSON.stringify(changes),
   });
 }
 
 export function deleteModule(moduleId) {
-  return request(`/modules/${moduleId}`, { method: "DELETE" });
+  return request(`/api/modules/${moduleId}`, { method: "DELETE" });
 }
 
 // Lessons
 export function getAdminLessons() {
-  return request("/lessons/admin");
+  return request("/api/lessons/admin");
 }
 
 export function createLesson(moduleId, lesson) {
-  return request(`/modules/${moduleId}/lessons`, {
+  return request(`/api/modules/${moduleId}/lessons`, {
     method: "POST",
     body: JSON.stringify(lesson),
   });
 }
 
 export function updateLesson(lessonId, changes) {
-  return request(`/lessons/${lessonId}`, {
+  return request(`/api/lessons/${lessonId}`, {
     method: "PUT",
     body: JSON.stringify(changes),
   });

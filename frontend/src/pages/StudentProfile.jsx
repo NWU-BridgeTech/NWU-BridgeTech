@@ -7,8 +7,7 @@ import { LogOut } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import SupportTicketForm from "../components/student/SupportTicketForm";
 import "./StudentProfile.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 function authHeaders() {
   return {

@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { clearAuthTokens, getToken } from "../utils/authStorage";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 export default function Notifications() {
   const [open, setOpen] = useState(false);

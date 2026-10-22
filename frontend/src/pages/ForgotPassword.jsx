@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();

@@ -6,6 +6,7 @@ import {
 } from "../data/adminData";
 import "./Admin.css";
 import "./AdminSettings.css";
+import { API_URL } from "@/config";
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState(initialAdminSettings);
@@ -18,7 +19,7 @@ export default function AdminSettings() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch(`${import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app"}/api/users/me`, {
+    fetch(`${API_URL}/api/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {

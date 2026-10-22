@@ -5,8 +5,7 @@ import "./Admin.css";
 import "./AdminModules.css";
 import "./AdminAdministrators.css";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 const STAFF_ROLES = [
   { value: "Instructor", label: "Instructor" },
   { value: "Admin", label: "Administrator" },
@@ -19,6 +18,10 @@ const ROLE_DESCRIPTIONS = [
 ];
 
 async function staffRequest(path, options = {}) {
+  if (!path.startsWith("/api/")) {
+    throw new Error(`API paths must start with /api/: ${path}`);
+  }
+
   const send = (token) =>
     fetch(`${API_URL}${path}`, {
       ...options,

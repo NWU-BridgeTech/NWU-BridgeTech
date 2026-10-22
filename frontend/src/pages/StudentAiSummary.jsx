@@ -6,8 +6,7 @@ import MermaidDiagram from "../components/MermaidDiagram";
 import RichDiagram from "../components/RichDiagram";
 import { useStickToBottom } from "../hooks/useStickToBottom";
 import "./StudentAiSummary.css";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://nwu-bridgetech-production.up.railway.app";
+import { API_URL } from "@/config";
 
 function authHeaders() {
   const token = getToken();
