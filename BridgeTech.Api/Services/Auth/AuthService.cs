@@ -275,6 +275,42 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
+            if (!teamLogin)
+            {
+                var pendingRegistration = await _context.PendingRegistrations
+                    .FirstOrDefaultAsync(x =>
+                        x.Username.ToLower() == normalizedIdentifier ||
+                        x.Email.ToLower() == normalizedIdentifier, cancellationToken);
+
+                if (pendingRegistration is not null &&
+                    VerifyPassword(request.Password, pendingRegistration.PasswordHash))
+                {
+                    var pendingNow = DateTimeOffset.UtcNow;
+                    if (pendingRegistration.LastCodeSentAt.AddSeconds(60) <= pendingNow)
+                    {
+                        pendingRegistration.VerificationCode = GenerateCode();
+                        pendingRegistration.VerificationCodeExpiresAt = pendingNow.AddMinutes(10);
+                        pendingRegistration.VerificationAttempts = 0;
+                        pendingRegistration.LastCodeSentAt = pendingNow;
+                        await _context.SaveChangesAsync(cancellationToken);
+                        await _emailService.SendVerificationCodeAsync(
+                            pendingRegistration.Email,
+                            pendingRegistration.VerificationCode,
+                            cancellationToken);
+                    }
+
+                    var verificationExpiresAt =
+                        string.IsNullOrWhiteSpace(pendingRegistration.VerificationCode) ||
+                        pendingRegistration.VerificationCodeExpiresAt <= pendingNow
+                            ? pendingNow
+                            : pendingRegistration.VerificationCodeExpiresAt;
+
+                    throw EmailVerificationRequired(
+                        pendingRegistration.Email,
+                        verificationExpiresAt);
+                }
+            }
+
             throw new UnauthorizedAccessException(
                 "Invalid username/email or password.");
         }
@@ -303,8 +339,28 @@ public class AuthService : IAuthService
 
         if (!user.EmailVerified)
         {
-            var exception = new InvalidOperationException("Email verification is required.") { Data = { ["Code"] = "EMAIL_NOT_VERIFIED" } };
-            throw exception;
+            var verificationNow = DateTimeOffset.UtcNow;
+            if (user.LastCodeSentAt is null ||
+                user.LastCodeSentAt.Value.AddSeconds(60) <= verificationNow)
+            {
+                user.VerificationCode = GenerateCode();
+                user.VerificationCodeExpiresAt = verificationNow.AddMinutes(10);
+                user.VerificationAttempts = 0;
+                user.LastCodeSentAt = verificationNow;
+                await _context.SaveChangesAsync(cancellationToken);
+                await _emailService.SendVerificationCodeAsync(
+                    user.Email,
+                    user.VerificationCode,
+                    cancellationToken);
+            }
+
+            var verificationExpiresAt =
+                string.IsNullOrWhiteSpace(user.VerificationCode) ||
+                user.VerificationCodeExpiresAt <= verificationNow
+                    ? verificationNow
+                    : user.VerificationCodeExpiresAt ?? verificationNow;
+
+            throw EmailVerificationRequired(user.Email, verificationExpiresAt);
         }
 
         if (teamLogin && user.Role is not (
@@ -451,59 +507,103 @@ public class AuthService : IAuthService
 
     public async Task<VerificationResponse> VerifyEmailAsync(VerificationRequest request, CancellationToken cancellationToken = default)
     {
+        var normalizedEmail = request.Email.Trim().ToLower();
         var pendingRegistration = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
+
+        if (pendingRegistration is not null)
+        {
+            if (pendingRegistration.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
+                throw VerificationError("Verification code expired.", "CODE_EXPIRED");
+
+            if (pendingRegistration.VerificationCode != request.Code)
+            {
+                pendingRegistration.VerificationAttempts++;
+                if (pendingRegistration.VerificationAttempts >= 5)
+                {
+                    pendingRegistration.VerificationCode = string.Empty;
+                }
+
+                await _context.SaveChangesAsync(cancellationToken);
+                throw VerificationError(
+                    $"Incorrect verification code. {Math.Max(0, 5 - pendingRegistration.VerificationAttempts)} attempts remaining.",
+                    "INCORRECT_CODE");
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+            var user = new User
+            {
+                UserId = Guid.NewGuid(),
+                Username = pendingRegistration.Username,
+                FirstName = pendingRegistration.FirstName,
+                LastName = pendingRegistration.LastName,
+                Email = pendingRegistration.Email,
+                PasswordHash = pendingRegistration.PasswordHash,
+                GithubUsername = pendingRegistration.GithubUsername,
+                Role = UserRole.Student,
+                CreatedAt = pendingRegistration.CreatedAt,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                EmailVerified = true
+            };
+
+            _context.Users.Add(user);
+            _context.PendingRegistrations.Remove(pendingRegistration);
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            try
+            {
+                await _emailService.SendWelcomeEmailAsync(user.Email, user.FirstName, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Welcome email could not be sent to {Email}.", user.Email);
+            }
+
+            return new VerificationResponse { Token = GenerateAccessToken(user), RefreshToken = GenerateRefreshToken(user) };
+        }
+
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken)
             ?? throw VerificationError("Incorrect verification code.", "VERIFICATION_FAILED");
 
-        if (pendingRegistration.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow)
-            throw VerificationError("Verification code expired.", "CODE_EXPIRED");
+        if (existingUser.EmailVerified)
+            throw VerificationError("Email is already verified.", "ALREADY_VERIFIED");
 
-        if (pendingRegistration.VerificationCode != request.Code)
+        if (existingUser.VerificationCodeExpiresAt is null ||
+            existingUser.VerificationCodeExpiresAt <= DateTimeOffset.UtcNow ||
+            string.IsNullOrWhiteSpace(existingUser.VerificationCode))
         {
-            pendingRegistration.VerificationAttempts++;
-            if (pendingRegistration.VerificationAttempts >= 5)
+            throw VerificationError("Verification code expired.", "CODE_EXPIRED");
+        }
+
+        if (existingUser.VerificationCode != request.Code)
+        {
+            existingUser.VerificationAttempts++;
+            if (existingUser.VerificationAttempts >= 5)
             {
-                pendingRegistration.VerificationCode = string.Empty;
+                existingUser.VerificationCode = null;
             }
 
             await _context.SaveChangesAsync(cancellationToken);
             throw VerificationError(
-                $"Incorrect verification code. {Math.Max(0, 5 - pendingRegistration.VerificationAttempts)} attempts remaining.",
+                $"Incorrect verification code. {Math.Max(0, 5 - existingUser.VerificationAttempts)} attempts remaining.",
                 "INCORRECT_CODE");
         }
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
-        var user = new User
-        {
-            UserId = Guid.NewGuid(),
-            Username = pendingRegistration.Username,
-            FirstName = pendingRegistration.FirstName,
-            LastName = pendingRegistration.LastName,
-            Email = pendingRegistration.Email,
-            PasswordHash = pendingRegistration.PasswordHash,
-            GithubUsername = pendingRegistration.GithubUsername,
-            Role = UserRole.Student,
-            CreatedAt = pendingRegistration.CreatedAt,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            EmailVerified = true
-        };
-
-        _context.Users.Add(user);
-        _context.PendingRegistrations.Remove(pendingRegistration);
+        existingUser.EmailVerified = true;
+        existingUser.VerificationCode = null;
+        existingUser.VerificationCodeExpiresAt = null;
+        existingUser.VerificationAttempts = 0;
+        existingUser.UpdatedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
 
-        try
+        return new VerificationResponse
         {
-            await _emailService.SendWelcomeEmailAsync(user.Email, user.FirstName, cancellationToken);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Welcome email could not be sent to {Email}.", user.Email);
-        }
-
-        return new VerificationResponse { Token = GenerateAccessToken(user), RefreshToken = GenerateRefreshToken(user) };
+            Token = GenerateAccessToken(existingUser),
+            RefreshToken = GenerateRefreshToken(existingUser)
+        };
     }
 
     public async Task<VerificationResponse> ResendVerificationAsync(string email, CancellationToken cancellationToken = default)
@@ -678,6 +778,17 @@ public class AuthService : IAuthService
     {
         var exception = new InvalidOperationException(message);
         exception.Data["Code"] = code;
+        return exception;
+    }
+
+    private static InvalidOperationException EmailVerificationRequired(
+        string email,
+        DateTimeOffset verificationExpiresAt)
+    {
+        var exception = new InvalidOperationException("Email verification is required.");
+        exception.Data["Code"] = "EMAIL_NOT_VERIFIED";
+        exception.Data["Email"] = email;
+        exception.Data["VerificationExpiresAt"] = verificationExpiresAt;
         return exception;
     }
     public async Task<AuthResponse> RefreshTokenAsync(

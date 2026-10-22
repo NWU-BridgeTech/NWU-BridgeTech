@@ -179,6 +179,16 @@ public class AuthController : ControllerBase
                 message = ex.Message
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(new
+            {
+                code = ex.Data["Code"] ?? "UNAUTHORIZED",
+                message = ex.Message,
+                email = ex.Data["Email"],
+                verificationExpiresAt = ex.Data["VerificationExpiresAt"]
+            });
+        }
     }
 
     [HttpPost("team-login")]
@@ -205,7 +215,9 @@ public class AuthController : ControllerBase
             return Unauthorized(new
             {
                 code = ex.Data["Code"] ?? "UNAUTHORIZED",
-                message = ex.Message
+                message = ex.Message,
+                email = ex.Data["Email"],
+                verificationExpiresAt = ex.Data["VerificationExpiresAt"]
             });
         }
     }
