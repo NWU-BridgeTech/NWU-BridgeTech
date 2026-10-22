@@ -33,7 +33,7 @@ public sealed class BrevoEmailService(
         SendAsync(
             email,
             "Welcome to BridgeTech",
-            $"Hi {firstName},\n\nWelcome to BridgeTech! Your email has been verified and your account is ready.\n\nStart learning at http://localhost:5173/home\n\nThe BridgeTech team",
+            $"Hi {firstName},\n\nWelcome to BridgeTech! Your email has been verified and your account is ready.\n\nStart learning at https://nwu-bridge-tech.vercel.app/ \n\nThe BridgeTech team",
             cancellationToken: cancellationToken);
 
     public Task SendStaffInvitationAsync(
