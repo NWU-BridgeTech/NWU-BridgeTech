@@ -9,5 +9,6 @@ public interface IAdministratorService
     Task<AdministratorResponse> GetAsync(Guid actingUserId, Guid administratorId, CancellationToken cancellationToken);
     Task<CreateAdministratorResponse> CreateAsync(Guid actingUserId, SaveAdministratorRequest request, CancellationToken cancellationToken);
     Task<AdministratorResponse> UpdateAsync(Guid actingUserId, Guid administratorId, SaveAdministratorRequest request, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid actingUserId, Guid administratorId, CancellationToken cancellationToken);
     Task<InvitationResponse> ResendInvitationAsync(Guid actingUserId, Guid administratorId, CancellationToken cancellationToken);
 }

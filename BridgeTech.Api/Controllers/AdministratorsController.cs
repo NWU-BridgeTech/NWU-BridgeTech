@@ -45,6 +45,13 @@ public class AdministratorsController(IAdministratorService service) : Controlle
         CancellationToken cancellationToken) =>
         Ok(await service.UpdateAsync(CurrentUserId(), administratorId, request, cancellationToken));
 
+    [HttpDelete("{administratorId:guid}")]
+    public async Task<IActionResult> Delete(Guid administratorId, CancellationToken cancellationToken)
+    {
+        await service.DeleteAsync(CurrentUserId(), administratorId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{administratorId:guid}/resend-invitation")]
     public async Task<ActionResult<InvitationResponse>> ResendInvitation(
         Guid administratorId,

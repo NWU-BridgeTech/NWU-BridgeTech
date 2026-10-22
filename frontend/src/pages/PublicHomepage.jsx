@@ -380,11 +380,11 @@ export default function PublicHomepage() {
           Bridge<i>Tech</i>
         </div>
         <div className="actions">
-          <a className="button" href="/login">
-            Sign in
-          </a>
           <a className="button" href="/team-login">
             Team
+          </a>
+          <a className="button" href="/login">
+            Sign in
           </a>
           <a className="button dark" href="/signup">
             Get started

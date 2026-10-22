@@ -201,6 +201,13 @@ const Login = ({ team = false }) => {
         </p>
       )}
 
+      {!team && (
+        <p className="au-switch">
+          Already registered but need to verify?{" "}
+          <Link to="/verify-email">Verify your email</Link>
+        </p>
+      )}
+
       {verification && (
         <VerificationModal
           email={verification.email}
