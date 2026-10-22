@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
+import { setAuthTokens } from "../utils/authStorage";
 import { API_URL } from "@/config";
 
 const initialForm = {
@@ -117,8 +118,7 @@ export default function SignUpPage() {
   }
 
   function saveUser(data) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("refreshToken", data.refreshToken);
+    setAuthTokens(data.token, data.refreshToken);
     localStorage.setItem(
       "user",
       JSON.stringify({

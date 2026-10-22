@@ -4,6 +4,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import VerificationModal from "../components/VerificationModal";
 import AuthShell, { PasswordInput } from "../components/AuthShell";
 import { PHOTOS } from "../components/authPhotos";
+import { setAuthTokens } from "../utils/authStorage";
 import { API_URL } from "@/config";
 
 const Login = ({ team = false }) => {
@@ -16,8 +17,7 @@ const Login = ({ team = false }) => {
   const [verification, setVerification] = useState(null);
 
   function saveUserAndRedirect(data) {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("refreshToken", data.refreshToken);
+    setAuthTokens(data.token, data.refreshToken);
     localStorage.setItem(
       "user",
       JSON.stringify({
